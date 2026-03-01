@@ -51,6 +51,27 @@ const api = {
   }
 };
 
+// Polish translations
+const STATUS_LABELS = {
+  consultation: "Konsultacja",
+  planned: "Zaplanowany",
+  awaiting: "Oczekujący",
+  operated: "Zoperowany"
+};
+
+const VISIT_TYPE_LABELS = {
+  consultation: "Konsultacja",
+  surgery: "Operacja",
+  follow_up: "Wizyta kontrolna"
+};
+
+const PHOTO_CATEGORY_LABELS = {
+  before: "Przed",
+  after: "Po",
+  during: "W trakcie",
+  other: "Inne"
+};
+
 // ==================== LOGIN PAGE ====================
 const LoginPage = () => {
   const [password, setPassword] = useState("");
@@ -64,10 +85,10 @@ const LoginPage = () => {
     try {
       const res = await axios.post(`${API}/auth/login`, { password });
       login(res.data.token);
-      toast.success("Welcome back!");
+      toast.success("Witaj ponownie!");
       navigate("/");
     } catch (err) {
-      toast.error("Invalid password");
+      toast.error("Nieprawidłowe hasło");
     } finally {
       setLoading(false);
     }
@@ -78,7 +99,7 @@ const LoginPage = () => {
       <div className="hidden lg:flex lg:w-1/2 relative">
         <img 
           src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?crop=entropy&cs=srgb&fm=jpg&q=85" 
-          alt="Clinic" 
+          alt="Klinika" 
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-teal-700/80 to-teal-900/90" />
@@ -87,7 +108,7 @@ const LoginPage = () => {
             AestheticaMD
           </h1>
           <p className="text-xl text-teal-100 max-w-md">
-            Professional patient management for facial plastic surgery
+            Profesjonalne zarządzanie pacjentami w chirurgii plastycznej twarzy
           </p>
         </div>
       </div>
@@ -102,19 +123,19 @@ const LoginPage = () => {
           
           <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-sm">
             <h2 className="text-2xl font-semibold text-slate-900 mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              Welcome back
+              Witaj ponownie
             </h2>
-            <p className="text-slate-500 mb-8">Enter your password to continue</p>
+            <p className="text-slate-500 mb-8">Wprowadź hasło, aby kontynuować</p>
             
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Hasło</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                  placeholder="Enter your password"
+                  placeholder="Wprowadź hasło"
                   data-testid="password-input"
                   required
                 />
@@ -125,13 +146,13 @@ const LoginPage = () => {
                 className="w-full bg-teal-700 hover:bg-teal-800 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
                 data-testid="login-button"
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? "Logowanie..." : "Zaloguj się"}
               </button>
             </form>
           </div>
           
           <p className="text-center text-sm text-slate-400 mt-6">
-            Default password: doctor2024
+            Domyślne hasło: doctor2024
           </p>
         </div>
       </div>
@@ -146,11 +167,11 @@ const Sidebar = ({ currentPath }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const navItems = [
-    { path: "/", icon: Home, label: "Dashboard" },
-    { path: "/patients", icon: Users, label: "Patients" },
-    { path: "/calendar", icon: Calendar, label: "Calendar" },
-    { path: "/stats", icon: BarChart3, label: "Statistics" },
-    { path: "/settings", icon: Settings, label: "Settings" },
+    { path: "/", icon: Home, label: "Pulpit" },
+    { path: "/patients", icon: Users, label: "Pacjenci" },
+    { path: "/calendar", icon: Calendar, label: "Kalendarz" },
+    { path: "/stats", icon: BarChart3, label: "Statystyki" },
+    { path: "/settings", icon: Settings, label: "Ustawienia" },
   ];
 
   return (
@@ -198,7 +219,7 @@ const Sidebar = ({ currentPath }) => {
           data-testid="logout-button"
         >
           <LogOut className="w-5 h-5" />
-          {!collapsed && <span className="font-medium">Logout</span>}
+          {!collapsed && <span className="font-medium">Wyloguj</span>}
         </button>
       </div>
     </aside>
@@ -220,7 +241,7 @@ const Dashboard = () => {
       const res = await api.get("/dashboard");
       setData(res.data);
     } catch (err) {
-      toast.error("Failed to load dashboard");
+      toast.error("Nie udało się załadować pulpitu");
     } finally {
       setLoading(false);
     }
@@ -241,17 +262,17 @@ const Dashboard = () => {
   return (
     <div className="p-8" data-testid="dashboard-page">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Dashboard</h1>
-        <p className="text-slate-500 mt-1">Welcome back! Here's your practice overview.</p>
+        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Pulpit</h1>
+        <p className="text-slate-500 mt-1">Witaj ponownie! Oto przegląd Twojej praktyki.</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Total Patients", value: data?.stats?.total || 0, icon: Users, color: "teal" },
-          { label: "Operated", value: data?.stats?.operated || 0, icon: CheckCircle2, color: "emerald" },
-          { label: "Planned", value: data?.stats?.planned || 0, icon: Calendar, color: "blue" },
-          { label: "Awaiting", value: data?.stats?.awaiting || 0, icon: Clock, color: "amber" },
+          { label: "Wszyscy pacjenci", value: data?.stats?.total || 0, icon: Users, color: "teal" },
+          { label: "Zoperowani", value: data?.stats?.operated || 0, icon: CheckCircle2, color: "emerald" },
+          { label: "Zaplanowani", value: data?.stats?.planned || 0, icon: Calendar, color: "blue" },
+          { label: "Oczekujący", value: data?.stats?.awaiting || 0, icon: Clock, color: "amber" },
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-all" data-testid={`stat-${stat.label.toLowerCase().replace(' ', '-')}`}>
             <div className={`w-10 h-10 rounded-lg bg-${stat.color}-100 flex items-center justify-center mb-4`}>
@@ -267,8 +288,8 @@ const Dashboard = () => {
         {/* Upcoming Surgeries */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Upcoming Surgeries</h2>
-            <button onClick={() => navigate("/calendar")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">View All</button>
+            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
+            <button onClick={() => navigate("/calendar")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">Zobacz wszystkie</button>
           </div>
           <div className="p-6">
             {data?.upcoming_surgeries?.length > 0 ? (
@@ -286,20 +307,20 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
-                        <p className="text-sm text-slate-500">{patient.procedure_type || "Procedure TBD"}</p>
+                        <p className="text-sm text-slate-500">{patient.procedure_type || "Zabieg do ustalenia"}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-slate-900">{patient.surgery_date}</p>
                       <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
-                        {patient.status}
+                        {STATUS_LABELS[patient.status] || patient.status}
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 text-center py-8">No upcoming surgeries in the next 7 days</p>
+              <p className="text-slate-500 text-center py-8">Brak nadchodzących operacji w ciągu 7 dni</p>
             )}
           </div>
         </div>
@@ -307,8 +328,8 @@ const Dashboard = () => {
         {/* Recent Patients */}
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Recent Patients</h2>
-            <button onClick={() => navigate("/patients")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">View All</button>
+            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Ostatni pacjenci</h2>
+            <button onClick={() => navigate("/patients")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">Zobacz wszystkich</button>
           </div>
           <div className="p-6">
             {data?.recent_patients?.length > 0 ? (
@@ -325,16 +346,16 @@ const Dashboard = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-900 truncate">{patient.first_name} {patient.last_name}</p>
-                      <p className="text-xs text-slate-500">{new Date(patient.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-500">{new Date(patient.created_at).toLocaleDateString('pl-PL')}</p>
                     </div>
                     <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
-                      {patient.status}
+                      {STATUS_LABELS[patient.status] || patient.status}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 text-center py-8">No patients yet</p>
+              <p className="text-slate-500 text-center py-8">Brak pacjentów</p>
             )}
           </div>
         </div>
@@ -368,7 +389,7 @@ const PatientsList = () => {
       const res = await api.get(`/patients?${params.toString()}`);
       setPatients(res.data);
     } catch (err) {
-      toast.error("Failed to load patients");
+      toast.error("Nie udało się załadować pacjentów");
     } finally {
       setLoading(false);
     }
@@ -396,13 +417,13 @@ const PatientsList = () => {
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this patient?")) return;
+    if (!window.confirm("Czy na pewno chcesz usunąć tego pacjenta?")) return;
     try {
       await api.delete(`/patients/${id}`);
-      toast.success("Patient deleted");
+      toast.success("Pacjent usunięty");
       loadPatients();
     } catch (err) {
-      toast.error("Failed to delete patient");
+      toast.error("Nie udało się usunąć pacjenta");
     }
   };
 
@@ -410,8 +431,8 @@ const PatientsList = () => {
     <div className="p-8" data-testid="patients-page">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Patients</h1>
-          <p className="text-slate-500 mt-1">{patients.length} total patients</p>
+          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Pacjenci</h1>
+          <p className="text-slate-500 mt-1">{patients.length} pacjentów łącznie</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -419,7 +440,7 @@ const PatientsList = () => {
           data-testid="add-patient-button"
         >
           <Plus className="w-5 h-5" />
-          Add Patient
+          Dodaj pacjenta
         </button>
       </div>
 
@@ -430,7 +451,7 @@ const PatientsList = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Search patients..."
+              placeholder="Szukaj pacjentów..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -443,11 +464,11 @@ const PatientsList = () => {
             className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             data-testid="status-filter"
           >
-            <option value="">All Status</option>
-            <option value="consultation">Consultation</option>
-            <option value="planned">Planned</option>
-            <option value="awaiting">Awaiting</option>
-            <option value="operated">Operated</option>
+            <option value="">Wszystkie statusy</option>
+            <option value="consultation">Konsultacja</option>
+            <option value="planned">Zaplanowany</option>
+            <option value="awaiting">Oczekujący</option>
+            <option value="operated">Zoperowany</option>
           </select>
           <select
             value={sortBy}
@@ -455,17 +476,17 @@ const PatientsList = () => {
             className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             data-testid="sort-by"
           >
-            <option value="created_at">Date Added</option>
-            <option value="surgery_date">Surgery Date</option>
-            <option value="preferred_date_start">Preferred Date</option>
-            <option value="last_name">Last Name</option>
+            <option value="created_at">Data dodania</option>
+            <option value="surgery_date">Data operacji</option>
+            <option value="preferred_date_start">Preferowana data</option>
+            <option value="last_name">Nazwisko</option>
           </select>
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
             className="px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
             data-testid="sort-order"
           >
-            {sortOrder === "asc" ? "↑ Asc" : "↓ Desc"}
+            {sortOrder === "asc" ? "↑ Rosnąco" : "↓ Malejąco"}
           </button>
         </div>
       </div>
@@ -479,12 +500,12 @@ const PatientsList = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Patient</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Contact</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Pacjent</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Kontakt</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Surgery Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Procedure</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-slate-600">Actions</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Data operacji</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Zabieg</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-slate-600">Akcje</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -502,7 +523,7 @@ const PatientsList = () => {
                         </div>
                         <div>
                           <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
-                          {patient.date_of_birth && <p className="text-sm text-slate-500">DOB: {patient.date_of_birth}</p>}
+                          {patient.date_of_birth && <p className="text-sm text-slate-500">Ur.: {patient.date_of_birth}</p>}
                         </div>
                       </div>
                     </td>
@@ -514,7 +535,7 @@ const PatientsList = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
-                        {patient.status}
+                        {STATUS_LABELS[patient.status] || patient.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-600">
@@ -549,7 +570,7 @@ const PatientsList = () => {
           {filteredPatients.length === 0 && (
             <div className="p-12 text-center">
               <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">No patients found</p>
+              <p className="text-slate-500">Nie znaleziono pacjentów</p>
             </div>
           )}
         </div>
@@ -590,7 +611,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       const res = await api.get("/locations");
       setLocations(res.data);
     } catch (err) {
-      console.error("Failed to load locations");
+      console.error("Nie udało się załadować lokalizacji");
     }
   };
 
@@ -604,14 +625,14 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       
       if (initialData) {
         await api.put(`/patients/${initialData.id}`, data);
-        toast.success("Patient updated");
+        toast.success("Pacjent zaktualizowany");
       } else {
         await api.post("/patients", data);
-        toast.success("Patient added");
+        toast.success("Pacjent dodany");
       }
       onSuccess();
     } catch (err) {
-      toast.error(initialData ? "Failed to update patient" : "Failed to add patient");
+      toast.error(initialData ? "Nie udało się zaktualizować pacjenta" : "Nie udało się dodać pacjenta");
     } finally {
       setLoading(false);
     }
@@ -622,7 +643,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white">
           <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            {initialData ? "Edit Patient" : "Add New Patient"}
+            {initialData ? "Edytuj pacjenta" : "Dodaj nowego pacjenta"}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg" data-testid="close-modal">
             <X className="w-5 h-5" />
@@ -632,7 +653,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">First Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Imię *</label>
               <input
                 type="text"
                 required
@@ -643,7 +664,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Last Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Nazwisko *</label>
               <input
                 type="text"
                 required
@@ -667,7 +688,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Telefon</label>
               <input
                 type="tel"
                 value={formData.phone}
@@ -680,7 +701,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Date of Birth</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Data urodzenia</label>
               <input
                 type="date"
                 value={formData.date_of_birth}
@@ -690,17 +711,17 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Gender</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Płeć</label>
               <select
                 value={formData.gender}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 data-testid="gender-select"
               >
-                <option value="">Select</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="other">Other</option>
+                <option value="">Wybierz</option>
+                <option value="female">Kobieta</option>
+                <option value="male">Mężczyzna</option>
+                <option value="other">Inna</option>
               </select>
             </div>
           </div>
@@ -714,19 +735,19 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 data-testid="status-select"
               >
-                <option value="consultation">Consultation (Hasn't Decided)</option>
-                <option value="planned">Planned</option>
-                <option value="awaiting">Awaiting Term</option>
-                <option value="operated">Operated</option>
+                <option value="consultation">Konsultacja (Niezdecydowany)</option>
+                <option value="planned">Zaplanowany</option>
+                <option value="awaiting">Oczekujący na termin</option>
+                <option value="operated">Zoperowany</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Procedure Type</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Rodzaj zabiegu</label>
               <input
                 type="text"
                 value={formData.procedure_type}
                 onChange={(e) => setFormData({ ...formData, procedure_type: e.target.value })}
-                placeholder="e.g., Rhinoplasty"
+                placeholder="np. Rinoplastyka"
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 data-testid="procedure-input"
               />
@@ -734,7 +755,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Preferred Date Range</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Preferowany zakres dat</label>
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="date"
@@ -755,7 +776,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Surgery Date</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Data operacji</label>
               <input
                 type="date"
                 value={formData.surgery_date}
@@ -765,14 +786,14 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Location</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Lokalizacja</label>
               <select
                 value={formData.location_id}
                 onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 data-testid="location-select"
               >
-                <option value="">Select Location</option>
+                <option value="">Wybierz lokalizację</option>
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>{loc.name}</option>
                 ))}
@@ -781,7 +802,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Price</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Cena (PLN)</label>
             <input
               type="number"
               value={formData.price}
@@ -793,7 +814,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Notes</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Notatki</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -809,7 +830,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               onClick={onClose}
               className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
             >
-              Cancel
+              Anuluj
             </button>
             <button
               type="submit"
@@ -817,7 +838,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
               data-testid="submit-patient"
             >
-              {loading ? "Saving..." : (initialData ? "Update Patient" : "Add Patient")}
+              {loading ? "Zapisywanie..." : (initialData ? "Zaktualizuj" : "Dodaj pacjenta")}
             </button>
           </div>
         </form>
@@ -848,7 +869,7 @@ const PatientDetail = () => {
       const res = await api.get(`/patients/${id}`);
       setPatient(res.data);
     } catch (err) {
-      toast.error("Failed to load patient");
+      toast.error("Nie udało się załadować pacjenta");
       navigate("/patients");
     } finally {
       setLoading(false);
@@ -860,7 +881,7 @@ const PatientDetail = () => {
       const res = await api.get("/locations");
       setLocations(res.data);
     } catch (err) {
-      console.error("Failed to load locations");
+      console.error("Nie udało się załadować lokalizacji");
     }
   };
 
@@ -894,7 +915,7 @@ const PatientDetail = () => {
           data-testid="back-button"
         >
           <ChevronLeft className="w-4 h-4" />
-          Back to Patients
+          Powrót do pacjentów
         </button>
 
         <div className="flex items-center gap-4 mb-6">
@@ -906,7 +927,7 @@ const PatientDetail = () => {
               {patient.first_name} {patient.last_name}
             </h1>
             <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
-              {patient.status}
+              {STATUS_LABELS[patient.status] || patient.status}
             </span>
           </div>
         </div>
@@ -917,7 +938,7 @@ const PatientDetail = () => {
           data-testid="edit-patient-button"
         >
           <Edit className="w-4 h-4" />
-          Edit Patient
+          Edytuj pacjenta
         </button>
 
         <div className="space-y-4">
@@ -942,27 +963,27 @@ const PatientDetail = () => {
           {patient.price && (
             <div className="flex items-center gap-3">
               <DollarSign className="w-5 h-5 text-slate-400" />
-              <span className="text-slate-600">${patient.price.toLocaleString()}</span>
+              <span className="text-slate-600">{patient.price.toLocaleString('pl-PL')} PLN</span>
             </div>
           )}
         </div>
 
         <div className="border-t border-slate-100 mt-6 pt-6">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase mb-4">Procedure Details</h3>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase mb-4">Szczegóły zabiegu</h3>
           <div className="space-y-3">
             <div>
-              <p className="text-sm text-slate-500">Procedure Type</p>
+              <p className="text-sm text-slate-500">Rodzaj zabiegu</p>
               <p className="font-medium text-slate-900">{patient.procedure_type || "-"}</p>
             </div>
             <div>
-              <p className="text-sm text-slate-500">Surgery Date</p>
+              <p className="text-sm text-slate-500">Data operacji</p>
               <p className="font-medium text-slate-900">{patient.surgery_date || "-"}</p>
             </div>
             <div>
-              <p className="text-sm text-slate-500">Preferred Date Range</p>
+              <p className="text-sm text-slate-500">Preferowany zakres dat</p>
               <p className="font-medium text-slate-900">
                 {patient.preferred_date_start && patient.preferred_date_end 
-                  ? `${patient.preferred_date_start} to ${patient.preferred_date_end}`
+                  ? `${patient.preferred_date_start} do ${patient.preferred_date_end}`
                   : "-"}
               </p>
             </div>
@@ -971,7 +992,7 @@ const PatientDetail = () => {
 
         {patient.notes && (
           <div className="border-t border-slate-100 mt-6 pt-6">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase mb-4">Notes</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase mb-4">Notatki</h3>
             <p className="text-slate-600 whitespace-pre-wrap">{patient.notes}</p>
           </div>
         )}
@@ -980,7 +1001,7 @@ const PatientDetail = () => {
       {/* Right Panel - Visits & Photos */}
       <div className="flex-1 bg-slate-50 p-6 md:p-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Visits & Photos</h2>
+          <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Wizyty i zdjęcia</h2>
           <div className="flex gap-3">
             {allPhotos.length >= 2 && (
               <button
@@ -989,7 +1010,7 @@ const PatientDetail = () => {
                 data-testid="compare-photos-button"
               >
                 <ArrowLeftRight className="w-4 h-4" />
-                Compare
+                Porównaj
               </button>
             )}
             <button
@@ -998,7 +1019,7 @@ const PatientDetail = () => {
               data-testid="add-visit-button"
             >
               <Plus className="w-4 h-4" />
-              Add Visit
+              Dodaj wizytę
             </button>
           </div>
         </div>
@@ -1018,12 +1039,12 @@ const PatientDetail = () => {
         ) : (
           <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
             <Camera className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500">No visits recorded yet</p>
+            <p className="text-slate-500">Brak zarejestrowanych wizyt</p>
             <button
               onClick={() => setShowAddVisit(true)}
               className="mt-4 text-teal-600 hover:text-teal-700 font-medium"
             >
-              Add First Visit
+              Dodaj pierwszą wizytę
             </button>
           </div>
         )}
@@ -1061,34 +1082,25 @@ const VisitCard = ({ visit, patientId, onUpdate }) => {
   const [expandedPhoto, setExpandedPhoto] = useState(null);
 
   const handleDeletePhoto = async (photoId) => {
-    if (!window.confirm("Delete this photo?")) return;
+    if (!window.confirm("Usunąć to zdjęcie?")) return;
     try {
       await api.delete(`/patients/${patientId}/visits/${visit.id}/photos/${photoId}`);
-      toast.success("Photo deleted");
+      toast.success("Zdjęcie usunięte");
       onUpdate();
     } catch (err) {
-      toast.error("Failed to delete photo");
+      toast.error("Nie udało się usunąć zdjęcia");
     }
   };
 
   const handleDeleteVisit = async () => {
-    if (!window.confirm("Delete this visit and all its photos?")) return;
+    if (!window.confirm("Usunąć tę wizytę i wszystkie jej zdjęcia?")) return;
     try {
       await api.delete(`/patients/${patientId}/visits/${visit.id}`);
-      toast.success("Visit deleted");
+      toast.success("Wizyta usunięta");
       onUpdate();
     } catch (err) {
-      toast.error("Failed to delete visit");
+      toast.error("Nie udało się usunąć wizyty");
     }
-  };
-
-  const getVisitTypeLabel = (type) => {
-    const labels = {
-      consultation: "Consultation",
-      surgery: "Surgery",
-      follow_up: "Follow-up"
-    };
-    return labels[type] || type;
   };
 
   return (
@@ -1098,7 +1110,7 @@ const VisitCard = ({ visit, patientId, onUpdate }) => {
           <div className="flex items-center gap-3">
             <span className="font-semibold text-slate-900">{visit.date}</span>
             <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">
-              {getVisitTypeLabel(visit.type)}
+              {VISIT_TYPE_LABELS[visit.type] || visit.type}
             </span>
           </div>
           {visit.notes && <p className="text-sm text-slate-500 mt-1">{visit.notes}</p>}
@@ -1128,7 +1140,7 @@ const VisitCard = ({ visit, patientId, onUpdate }) => {
               <div key={photo.id} className="relative group">
                 <img
                   src={photo.data}
-                  alt={photo.caption || "Patient photo"}
+                  alt={photo.caption || "Zdjęcie pacjenta"}
                   className="w-full h-32 object-cover rounded-lg cursor-pointer"
                   onClick={() => setExpandedPhoto(photo)}
                   data-testid={`photo-${photo.id}`}
@@ -1149,14 +1161,14 @@ const VisitCard = ({ visit, patientId, onUpdate }) => {
                 </div>
                 {photo.category && (
                   <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded">
-                    {photo.category}
+                    {PHOTO_CATEGORY_LABELS[photo.category] || photo.category}
                   </span>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-slate-400 text-center py-4">No photos for this visit</p>
+          <p className="text-slate-400 text-center py-4">Brak zdjęć dla tej wizyty</p>
         )}
       </div>
 
@@ -1176,7 +1188,7 @@ const VisitCard = ({ visit, patientId, onUpdate }) => {
           </button>
           <img
             src={expandedPhoto.data}
-            alt={expandedPhoto.caption || "Patient photo"}
+            alt={expandedPhoto.caption || "Zdjęcie pacjenta"}
             className="max-w-full max-h-[90vh] object-contain"
           />
         </div>
@@ -1199,10 +1211,10 @@ const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
     setLoading(true);
     try {
       await api.post(`/patients/${patientId}/visits`, formData);
-      toast.success("Visit added");
+      toast.success("Wizyta dodana");
       onSuccess();
     } catch (err) {
-      toast.error("Failed to add visit");
+      toast.error("Nie udało się dodać wizyty");
     } finally {
       setLoading(false);
     }
@@ -1212,7 +1224,7 @@ const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="add-visit-modal">
       <div className="bg-white rounded-xl max-w-md w-full">
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-slate-900">Add Visit</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Dodaj wizytę</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
@@ -1220,7 +1232,7 @@ const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Date</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Data</label>
             <input
               type="date"
               required
@@ -1231,20 +1243,20 @@ const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Type</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Typ</label>
             <select
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               data-testid="visit-type-select"
             >
-              <option value="consultation">Consultation</option>
-              <option value="surgery">Surgery</option>
-              <option value="follow_up">Follow-up</option>
+              <option value="consultation">Konsultacja</option>
+              <option value="surgery">Operacja</option>
+              <option value="follow_up">Wizyta kontrolna</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Notes</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Notatki</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -1255,7 +1267,7 @@ const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
           </div>
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
-              Cancel
+              Anuluj
             </button>
             <button
               type="submit"
@@ -1263,7 +1275,7 @@ const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
               className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
               data-testid="submit-visit"
             >
-              {loading ? "Adding..." : "Add Visit"}
+              {loading ? "Dodawanie..." : "Dodaj wizytę"}
             </button>
           </div>
         </form>
@@ -1300,10 +1312,10 @@ const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
           category: category
         });
       }
-      toast.success(`${files.length} photo(s) uploaded`);
+      toast.success(`Przesłano ${files.length} zdjęć`);
       onSuccess();
     } catch (err) {
-      toast.error("Failed to upload photos");
+      toast.error("Nie udało się przesłać zdjęć");
     } finally {
       setUploading(false);
     }
@@ -1322,7 +1334,7 @@ const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="photo-upload-modal">
       <div className="bg-white rounded-xl max-w-lg w-full">
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-slate-900">Upload Photos</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Prześlij zdjęcia</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
@@ -1330,17 +1342,17 @@ const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
         
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Kategoria</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               data-testid="photo-category-select"
             >
-              <option value="before">Before</option>
-              <option value="after">After</option>
-              <option value="during">During Procedure</option>
-              <option value="other">Other</option>
+              <option value="before">Przed</option>
+              <option value="after">Po</option>
+              <option value="during">W trakcie zabiegu</option>
+              <option value="other">Inne</option>
             </select>
           </div>
 
@@ -1356,8 +1368,8 @@ const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
             />
             <label htmlFor="photo-input" className="cursor-pointer">
               <Camera className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-600 font-medium">Click to select photos</p>
-              <p className="text-sm text-slate-400 mt-1">or drag and drop</p>
+              <p className="text-slate-600 font-medium">Kliknij, aby wybrać zdjęcia</p>
+              <p className="text-sm text-slate-400 mt-1">lub przeciągnij i upuść</p>
             </label>
           </div>
 
@@ -1383,7 +1395,7 @@ const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
 
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
-              Cancel
+              Anuluj
             </button>
             <button
               onClick={handleUpload}
@@ -1391,7 +1403,7 @@ const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
               className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
               data-testid="upload-photos-button"
             >
-              {uploading ? "Uploading..." : `Upload ${files.length} Photo(s)`}
+              {uploading ? "Przesyłanie..." : `Prześlij ${files.length} zdjęć`}
             </button>
           </div>
         </div>
@@ -1408,7 +1420,7 @@ const PhotoCompareModal = ({ photos, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/90 flex flex-col z-50" data-testid="photo-compare-modal">
       <div className="p-4 flex justify-between items-center border-b border-white/10">
-        <h2 className="text-xl font-semibold text-white">Before & After Comparison</h2>
+        <h2 className="text-xl font-semibold text-white">Porównanie Przed i Po</h2>
         <button onClick={onClose} className="text-white p-2 hover:bg-white/10 rounded-lg">
           <X className="w-6 h-6" />
         </button>
@@ -1425,14 +1437,14 @@ const PhotoCompareModal = ({ photos, onClose }) => {
             >
               {photos.map((photo, i) => (
                 <option key={photo.id} value={i} className="text-black">
-                  {photo.visitDate} - {photo.category || "Photo"} {i + 1}
+                  {photo.visitDate} - {PHOTO_CATEGORY_LABELS[photo.category] || "Zdjęcie"} {i + 1}
                 </option>
               ))}
             </select>
           </div>
           {leftPhoto && (
             <div className="flex-1 flex items-center justify-center">
-              <img src={leftPhoto.data} alt="Left comparison" className="max-w-full max-h-[60vh] object-contain rounded-lg" />
+              <img src={leftPhoto.data} alt="Porównanie lewe" className="max-w-full max-h-[60vh] object-contain rounded-lg" />
             </div>
           )}
         </div>
@@ -1451,14 +1463,14 @@ const PhotoCompareModal = ({ photos, onClose }) => {
             >
               {photos.map((photo, i) => (
                 <option key={photo.id} value={i} className="text-black">
-                  {photo.visitDate} - {photo.category || "Photo"} {i + 1}
+                  {photo.visitDate} - {PHOTO_CATEGORY_LABELS[photo.category] || "Zdjęcie"} {i + 1}
                 </option>
               ))}
             </select>
           </div>
           {rightPhoto && (
             <div className="flex-1 flex items-center justify-center">
-              <img src={rightPhoto.data} alt="Right comparison" className="max-w-full max-h-[60vh] object-contain rounded-lg" />
+              <img src={rightPhoto.data} alt="Porównanie prawe" className="max-w-full max-h-[60vh] object-contain rounded-lg" />
             </div>
           )}
         </div>
@@ -1466,11 +1478,11 @@ const PhotoCompareModal = ({ photos, onClose }) => {
 
       {leftPhoto && rightPhoto && (
         <div className="p-4 border-t border-white/10">
-          <p className="text-white text-center mb-4">Slider Comparison</p>
+          <p className="text-white text-center mb-4">Porównanie suwakiem</p>
           <div className="max-w-4xl mx-auto h-[300px]">
             <ReactCompareSlider
-              itemOne={<ReactCompareSliderImage src={leftPhoto.data} alt="Before" />}
-              itemTwo={<ReactCompareSliderImage src={rightPhoto.data} alt="After" />}
+              itemOne={<ReactCompareSliderImage src={leftPhoto.data} alt="Przed" />}
+              itemTwo={<ReactCompareSliderImage src={rightPhoto.data} alt="Po" />}
               style={{ height: "100%" }}
             />
           </div>
@@ -1496,7 +1508,7 @@ const CalendarPage = () => {
       const res = await api.get("/patients");
       setPatients(res.data.filter(p => p.surgery_date));
     } catch (err) {
-      toast.error("Failed to load calendar");
+      toast.error("Nie udało się załadować kalendarza");
     } finally {
       setLoading(false);
     }
@@ -1536,15 +1548,17 @@ const CalendarPage = () => {
   };
 
   const days = getDaysInMonth(currentMonth);
-  const monthName = currentMonth.toLocaleString("default", { month: "long", year: "numeric" });
+  const monthName = currentMonth.toLocaleString("pl-PL", { month: "long", year: "numeric" });
+
+  const dayNames = ["Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "So"];
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
     <div className="p-8" data-testid="calendar-page">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Surgery Calendar</h1>
-        <p className="text-slate-500 mt-1">View and manage scheduled surgeries</p>
+        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Kalendarz operacji</h1>
+        <p className="text-slate-500 mt-1">Przeglądaj i zarządzaj zaplanowanymi operacjami</p>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200">
@@ -1556,7 +1570,7 @@ const CalendarPage = () => {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-xl font-semibold text-slate-900">{monthName}</h2>
+          <h2 className="text-xl font-semibold text-slate-900 capitalize">{monthName}</h2>
           <button
             onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
             className="p-2 hover:bg-slate-100 rounded-lg"
@@ -1568,7 +1582,7 @@ const CalendarPage = () => {
 
         <div className="p-6">
           <div className="grid grid-cols-7 gap-2 mb-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            {dayNames.map((day) => (
               <div key={day} className="text-center text-sm font-semibold text-slate-500 py-2">
                 {day}
               </div>
@@ -1604,7 +1618,7 @@ const CalendarPage = () => {
                           </div>
                         ))}
                         {dayPatients.length > 3 && (
-                          <p className="text-xs text-slate-500">+{dayPatients.length - 3} more</p>
+                          <p className="text-xs text-slate-500">+{dayPatients.length - 3} więcej</p>
                         )}
                       </div>
                     </>
@@ -1621,9 +1635,9 @@ const CalendarPage = () => {
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
           <div>
-            <p className="font-medium text-amber-800">Google Calendar Integration</p>
+            <p className="font-medium text-amber-800">Integracja z Kalendarzem Google</p>
             <p className="text-sm text-amber-700 mt-1">
-              Google Calendar sync is not configured yet. Add your Google API credentials in Settings to enable automatic sync.
+              Synchronizacja z Kalendarzem Google nie jest jeszcze skonfigurowana. Dodaj dane API Google w Ustawieniach, aby włączyć automatyczną synchronizację.
             </p>
           </div>
         </div>
@@ -1647,7 +1661,7 @@ const StatsPage = () => {
       const res = await api.get(`/stats?year=${year}`);
       setStats(res.data);
     } catch (err) {
-      toast.error("Failed to load statistics");
+      toast.error("Nie udało się załadować statystyk");
     } finally {
       setLoading(false);
     }
@@ -1663,15 +1677,15 @@ const StatsPage = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `patients_${year}.xlsx`;
+      a.download = `pacjenci_${year}.xlsx`;
       a.click();
-      toast.success("Export downloaded");
+      toast.success("Eksport pobrany");
     } catch (err) {
-      toast.error("Failed to export");
+      toast.error("Nie udało się wyeksportować");
     }
   };
 
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const months = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"];
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
@@ -1691,8 +1705,8 @@ const StatsPage = () => {
     <div className="p-8" data-testid="statistics-page">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Statistics</h1>
-          <p className="text-slate-500 mt-1">Practice performance overview</p>
+          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Statystyki</h1>
+          <p className="text-slate-500 mt-1">Przegląd wyników praktyki</p>
         </div>
         <div className="flex gap-3">
           <select
@@ -1711,7 +1725,7 @@ const StatsPage = () => {
             data-testid="export-button"
           >
             <Download className="w-4 h-4" />
-            Export Excel
+            Eksport Excel
           </button>
         </div>
       </div>
@@ -1719,19 +1733,19 @@ const StatsPage = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <p className="text-sm text-slate-500">Total Patients</p>
+          <p className="text-sm text-slate-500">Wszyscy pacjenci</p>
           <p className="text-3xl font-semibold text-slate-900 mt-2">{stats?.total_patients || 0}</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <p className="text-sm text-slate-500">Operated</p>
+          <p className="text-sm text-slate-500">Zoperowani</p>
           <p className="text-3xl font-semibold text-emerald-600 mt-2">{stats?.by_status?.operated || 0}</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <p className="text-sm text-slate-500">Planned</p>
+          <p className="text-sm text-slate-500">Zaplanowani</p>
           <p className="text-3xl font-semibold text-blue-600 mt-2">{stats?.by_status?.planned || 0}</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <p className="text-sm text-slate-500">Awaiting</p>
+          <p className="text-sm text-slate-500">Oczekujący</p>
           <p className="text-3xl font-semibold text-amber-600 mt-2">{stats?.by_status?.awaiting || 0}</p>
         </div>
       </div>
@@ -1739,7 +1753,7 @@ const StatsPage = () => {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-6">Procedures by Month</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-6">Zabiegi wg miesiąca</h3>
           <div className="h-64 flex items-end gap-2">
             {procedureData.map((item, i) => {
               const maxCount = Math.max(...procedureData.map(d => d.count), 1);
@@ -1759,7 +1773,7 @@ const StatsPage = () => {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-6">Revenue by Month</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-6">Przychód wg miesiąca</h3>
           <div className="h-64 flex items-end gap-2">
             {revenueData.map((item, i) => {
               const maxRevenue = Math.max(...revenueData.map(d => d.revenue), 1);
@@ -1771,7 +1785,7 @@ const StatsPage = () => {
                     style={{ height: `${height}%`, minHeight: item.revenue > 0 ? "8px" : "0" }}
                   />
                   <p className="text-xs text-slate-500 mt-2">{item.month}</p>
-                  <p className="text-xs font-medium text-slate-700">${(item.revenue / 1000).toFixed(0)}k</p>
+                  <p className="text-xs font-medium text-slate-700">{(item.revenue / 1000).toFixed(0)}k</p>
                 </div>
               );
             })}
@@ -1781,7 +1795,7 @@ const StatsPage = () => {
 
       {/* Procedures by Location */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-6">Procedures by Location</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-6">Zabiegi wg lokalizacji</h3>
         {stats?.procedures_by_location?.length > 0 ? (
           <div className="space-y-4">
             {stats.procedures_by_location.map((item, i) => {
@@ -1791,7 +1805,7 @@ const StatsPage = () => {
                 <div key={i}>
                   <div className="flex justify-between mb-1">
                     <span className="text-slate-700">{item.location}</span>
-                    <span className="font-medium text-slate-900">{item.count} procedures</span>
+                    <span className="font-medium text-slate-900">{item.count} zabiegów</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-3">
                     <div className="bg-teal-500 h-3 rounded-full" style={{ width: `${width}%` }} />
@@ -1801,7 +1815,7 @@ const StatsPage = () => {
             })}
           </div>
         ) : (
-          <p className="text-slate-500 text-center py-8">No data available. Add locations and complete procedures to see statistics.</p>
+          <p className="text-slate-500 text-center py-8">Brak danych. Dodaj lokalizacje i wykonaj zabiegi, aby zobaczyć statystyki.</p>
         )}
       </div>
     </div>
@@ -1829,20 +1843,20 @@ const SettingsPage = () => {
       setLocations(locRes.data);
       setCalendarStatus(calRes.data);
     } catch (err) {
-      toast.error("Failed to load settings");
+      toast.error("Nie udało się załadować ustawień");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteLocation = async (id) => {
-    if (!window.confirm("Delete this location?")) return;
+    if (!window.confirm("Usunąć tę lokalizację?")) return;
     try {
       await api.delete(`/locations/${id}`);
-      toast.success("Location deleted");
+      toast.success("Lokalizacja usunięta");
       loadData();
     } catch (err) {
-      toast.error("Failed to delete location");
+      toast.error("Nie udało się usunąć lokalizacji");
     }
   };
 
@@ -1851,21 +1865,21 @@ const SettingsPage = () => {
   return (
     <div className="p-8" data-testid="settings-page">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Settings</h1>
-        <p className="text-slate-500 mt-1">Manage your practice settings</p>
+        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Ustawienia</h1>
+        <p className="text-slate-500 mt-1">Zarządzaj ustawieniami praktyki</p>
       </div>
 
       {/* Locations */}
       <div className="bg-white rounded-xl border border-slate-200 mb-6">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-slate-900">Locations / Clinics</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Lokalizacje / Kliniki</h2>
           <button
             onClick={() => setShowAddLocation(true)}
             className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             data-testid="add-location-button"
           >
             <Plus className="w-4 h-4" />
-            Add Location
+            Dodaj lokalizację
           </button>
         </div>
         <div className="p-6">
@@ -1897,7 +1911,7 @@ const SettingsPage = () => {
               ))}
             </div>
           ) : (
-            <p className="text-slate-500 text-center py-8">No locations added yet</p>
+            <p className="text-slate-500 text-center py-8">Brak dodanych lokalizacji</p>
           )}
         </div>
       </div>
@@ -1905,7 +1919,7 @@ const SettingsPage = () => {
       {/* Google Calendar */}
       <div className="bg-white rounded-xl border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-900">Google Calendar Integration</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Integracja z Kalendarzem Google</h2>
         </div>
         <div className="p-6">
           <div className={`p-4 rounded-lg ${calendarStatus?.configured ? "bg-emerald-50 border border-emerald-200" : "bg-amber-50 border border-amber-200"}`}>
@@ -1917,21 +1931,24 @@ const SettingsPage = () => {
               )}
               <div>
                 <p className={`font-medium ${calendarStatus?.configured ? "text-emerald-800" : "text-amber-800"}`}>
-                  {calendarStatus?.configured ? "Connected" : "Not Configured"}
+                  {calendarStatus?.configured ? "Połączono" : "Nie skonfigurowano"}
                 </p>
                 <p className={`text-sm mt-1 ${calendarStatus?.configured ? "text-emerald-700" : "text-amber-700"}`}>
-                  {calendarStatus?.message}
+                  {calendarStatus?.configured 
+                    ? "Integracja z Kalendarzem Google jest aktywna"
+                    : "Kalendarz Google nie jest skonfigurowany. Dodaj GOOGLE_CLIENT_ID i GOOGLE_CLIENT_SECRET, aby włączyć."
+                  }
                 </p>
                 {!calendarStatus?.configured && (
                   <div className="mt-4 p-4 bg-white rounded-lg text-sm text-slate-600">
-                    <p className="font-medium text-slate-800 mb-2">Setup Instructions:</p>
+                    <p className="font-medium text-slate-800 mb-2">Instrukcja konfiguracji:</p>
                     <ol className="list-decimal list-inside space-y-1">
-                      <li>Go to Google Cloud Console</li>
-                      <li>Create a new project and enable Google Calendar API</li>
-                      <li>Configure OAuth consent screen</li>
-                      <li>Create OAuth credentials (Web application)</li>
-                      <li>Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to backend .env</li>
-                      <li>Restart the server</li>
+                      <li>Przejdź do Google Cloud Console</li>
+                      <li>Utwórz nowy projekt i włącz Google Calendar API</li>
+                      <li>Skonfiguruj ekran zgody OAuth</li>
+                      <li>Utwórz dane uwierzytelniające OAuth (Aplikacja webowa)</li>
+                      <li>Dodaj GOOGLE_CLIENT_ID i GOOGLE_CLIENT_SECRET do pliku .env backendu</li>
+                      <li>Zrestartuj serwer</li>
                     </ol>
                   </div>
                 )}
@@ -1966,14 +1983,14 @@ const LocationModal = ({ location, onClose, onSuccess }) => {
     try {
       if (location) {
         await api.put(`/locations/${location.id}`, formData);
-        toast.success("Location updated");
+        toast.success("Lokalizacja zaktualizowana");
       } else {
         await api.post("/locations", formData);
-        toast.success("Location added");
+        toast.success("Lokalizacja dodana");
       }
       onSuccess();
     } catch (err) {
-      toast.error(location ? "Failed to update location" : "Failed to add location");
+      toast.error(location ? "Nie udało się zaktualizować lokalizacji" : "Nie udało się dodać lokalizacji");
     } finally {
       setLoading(false);
     }
@@ -1983,7 +2000,7 @@ const LocationModal = ({ location, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="location-modal">
       <div className="bg-white rounded-xl max-w-md w-full">
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-slate-900">{location ? "Edit Location" : "Add Location"}</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{location ? "Edytuj lokalizację" : "Dodaj lokalizację"}</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
@@ -1991,31 +2008,31 @@ const LocationModal = ({ location, onClose, onSuccess }) => {
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Name *</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Nazwa *</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Main Clinic"
+              placeholder="np. Klinika Główna"
               className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               data-testid="location-name-input"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Address</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Adres</label>
             <input
               type="text"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="123 Medical Center Dr"
+              placeholder="ul. Medyczna 123"
               className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               data-testid="location-address-input"
             />
           </div>
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
-              Cancel
+              Anuluj
             </button>
             <button
               type="submit"
@@ -2023,7 +2040,7 @@ const LocationModal = ({ location, onClose, onSuccess }) => {
               className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
               data-testid="submit-location"
             >
-              {loading ? "Saving..." : (location ? "Update" : "Add")}
+              {loading ? "Zapisywanie..." : (location ? "Zaktualizuj" : "Dodaj")}
             </button>
           </div>
         </form>
