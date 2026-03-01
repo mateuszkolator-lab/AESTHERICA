@@ -2474,8 +2474,17 @@ const CalendarPage = () => {
                             {dayPatients.slice(0, 3).map((patient) => (
                               <div
                                 key={patient.id}
-                                onClick={() => navigate(`/patients/${patient.id}`)}
-                                className={`px-2 py-1 rounded text-xs text-white cursor-pointer truncate ${getStatusColor(patient.status)}`}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.stopPropagation();
+                                  handleDragStart(e, patient);
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/patients/${patient.id}`);
+                                }}
+                                className={`px-2 py-1 rounded text-xs text-white cursor-grab active:cursor-grabbing truncate shadow-sm hover:shadow-md transition-shadow ${getStatusColor(patient.status)}`}
+                                title={`${patient.first_name} ${patient.last_name} - przeciągnij aby zmienić datę`}
                                 data-testid={`calendar-event-${patient.id}`}
                               >
                                 {patient.first_name} {patient.last_name[0]}.
