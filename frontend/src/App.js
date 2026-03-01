@@ -3388,7 +3388,7 @@ const CalendarPage = () => {
               <span>Zoperowany</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-1.5 py-0.5 bg-purple-600 text-white text-[9px] font-bold rounded">PRO</span>
+              <div className="w-4 h-4 rounded-sm border-l-4 border-l-orange-500 bg-slate-100" />
               <span>Lokalizacja</span>
             </div>
           </div>
