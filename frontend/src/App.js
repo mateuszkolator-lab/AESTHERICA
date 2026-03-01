@@ -2848,8 +2848,122 @@ const CalendarPage = () => {
               <span>Zoperowany</span>
             </div>
           </div>
+          
+          <p className="mt-3 text-sm text-slate-500 text-center">
+            Kliknij na dzień z pacjentami lub terminem, aby zobaczyć szczegóły
+          </p>
         </div>
       </div>
+      
+      {/* Day Detail Modal */}
+      {selectedDay && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedDay(null)}>
+          <div 
+            className="bg-white rounded-xl max-w-lg w-full max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {selectedDay.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </h2>
+                {(() => {
+                  const slot = getSlotByDate(selectedDay);
+                  return slot && (
+                    <div className="flex items-center gap-2 mt-1">
+                      {slot.is_full && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">Pełny</span>
+                      )}
+                      {slot.location_name && (
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {slot.location_name}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+              <button onClick={() => setSelectedDay(null)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {(() => {
+                const dayPatients = getPatientsByDate(selectedDay);
+                const slot = getSlotByDate(selectedDay);
+                
+                if (dayPatients.length === 0 && slot) {
+                  return (
+                    <div className="text-center py-8">
+                      <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-500">Brak umówionych pacjentów</p>
+                      <p className="text-sm text-slate-400 mt-1">Ten termin jest dostępny do rezerwacji</p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
+                      Umówieni pacjenci ({dayPatients.length})
+                    </h3>
+                    {dayPatients.map((patient) => (
+                      <div 
+                        key={patient.id}
+                        className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
+                        onClick={() => navigate(`/patients/${patient.id}`)}
+                      >
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${getStatusColor(patient.status)}`}>
+                          <User className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900">{patient.first_name} {patient.last_name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                              {patient.procedure_type || "Zabieg nieokreślony"}
+                            </span>
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                              patient.status === 'planned' ? 'bg-blue-100 text-blue-800' :
+                              patient.status === 'operated' ? 'bg-emerald-100 text-emerald-800' :
+                              'bg-slate-100 text-slate-800'
+                            }`}>
+                              {STATUS_LABELS[patient.status] || patient.status}
+                            </span>
+                          </div>
+                          {patient.phone && (
+                            <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {patient.phone}
+                            </p>
+                          )}
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+            
+            <div className="px-6 py-4 border-t border-slate-200 flex gap-3">
+              <button
+                onClick={() => setSelectedDay(null)}
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium"
+              >
+                Zamknij
+              </button>
+              <button
+                onClick={() => navigate('/planning')}
+                className="flex-1 px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-lg font-medium"
+              >
+                Zarządzaj terminami
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
