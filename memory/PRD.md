@@ -49,6 +49,8 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - [x] **NOWE: Pulpit - statystyki kompaktowe na dole**
 - [x] **NOWE: Pulpit - nazwiska i typy zabiegów** w kalendarzu (znaczniki RIN, BLE, LIF itp.)
 - [x] **NOWE: Kalendarz - podgląd szczegółów dnia** (modal z pacjentami i zabiegami)
+- [x] **NOWE: Pulpit - edycja terminów z kalendarza** (modal z pełną edycją slotu)
+- [x] **NOWE: Dodawanie zdjęć w formularzu pacjenta** (zakładka "Zdjęcia" z uploadem)
 
 ## Endpointy API
 - POST /api/auth/login - Logowanie
