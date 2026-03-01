@@ -503,6 +503,7 @@ const PatientsList = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Pacjent</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Kontakt</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Preferowana data</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Data operacji</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Zabieg</th>
                   <th className="px-6 py-4 text-right text-sm font-semibold text-slate-600">Akcje</th>
@@ -537,6 +538,16 @@ const PatientsList = () => {
                       <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
                         {STATUS_LABELS[patient.status] || patient.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {patient.preferred_date_start || patient.preferred_date_end ? (
+                        <div className="text-sm">
+                          <p className="text-slate-600">{patient.preferred_date_start || "?"}</p>
+                          <p className="text-slate-400">do {patient.preferred_date_end || "?"}</p>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-slate-600">
                       {patient.surgery_date || "-"}
