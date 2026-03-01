@@ -3253,19 +3253,32 @@ const CalendarPage = () => {
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => (dayPatients.length > 0 || hasSlot) && setSelectedDay(day)}
                           >
-                            <p className={`text-sm font-medium ${isToday ? "text-teal-700" : "text-slate-600"}`}>
-                              {day.getDate()}
-                            </p>
-                            {isFull && (
-                              <span className="px-1.5 py-0.5 bg-red-200 text-red-800 text-[10px] font-medium rounded">
-                                Pełny
-                              </span>
-                            )}
-                            {hasSlot && !isFull && !slot.assigned_patient_id && (
-                              <span className="px-1.5 py-0.5 bg-teal-200 text-teal-800 text-[10px] font-medium rounded">
-                                Termin
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1">
+                              <p className={`text-sm font-medium ${isToday ? "text-teal-700" : "text-slate-600"}`}>
+                                {day.getDate()}
+                              </p>
+                              {/* Location badge */}
+                              {hasSlot && slot.location_name && (
+                                <span 
+                                  className="px-1.5 py-0.5 bg-purple-600 text-white text-[9px] font-bold rounded"
+                                  title={slot.location_name}
+                                >
+                                  {slot.location_name.substring(0, 3).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {isFull && (
+                                <span className="px-1.5 py-0.5 bg-red-200 text-red-800 text-[10px] font-medium rounded">
+                                  Pełny
+                                </span>
+                              )}
+                              {hasSlot && !isFull && !slot.assigned_patient_id && (
+                                <span className="px-1.5 py-0.5 bg-teal-200 text-teal-800 text-[10px] font-medium rounded">
+                                  Termin
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="mt-1 space-y-1">
                             {dayPatients.slice(0, 3).map((patient) => (
