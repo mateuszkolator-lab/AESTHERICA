@@ -395,7 +395,7 @@ const Dashboard = () => {
                         ? "" 
                         : isToday 
                           ? "ring-2 ring-teal-500 ring-offset-1" 
-                          : "hover:bg-slate-50"
+                          : borderColor || "hover:bg-slate-50"
                     } ${bgColor}`}
                   >
                     {day && (
