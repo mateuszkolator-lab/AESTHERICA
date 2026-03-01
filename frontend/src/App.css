@@ -1,34 +1,267 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #fafafa;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.App-link {
-    color: #61dafb;
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Custom Selection */
+::selection {
+  background-color: #0f766e;
+  color: white;
+}
+
+/* Focus Styles */
+*:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+/* Input Placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* Table Styling */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Animation Classes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Stat Cards Color Classes */
+.bg-teal-100 {
+  background-color: #ccfbf1;
+}
+.text-teal-600 {
+  color: #0d9488;
+}
+.bg-emerald-100 {
+  background-color: #d1fae5;
+}
+.text-emerald-600 {
+  color: #059669;
+}
+.bg-blue-100 {
+  background-color: #dbeafe;
+}
+.text-blue-600 {
+  color: #2563eb;
+}
+.bg-amber-100 {
+  background-color: #fef3c7;
+}
+.text-amber-600 {
+  color: #d97706;
+}
+
+/* Compare Slider Customization */
+[data-rcs="root"] {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+[data-rcs="handle-container"] {
+  width: 40px !important;
+}
+
+[data-rcs="handle"] {
+  width: 40px !important;
+  height: 40px !important;
+  background: #0f766e !important;
+  border-radius: 50% !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Responsive Mobile Adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* Status Badge Colors */
+.status-consultation {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.status-planned {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-awaiting {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.status-operated {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+/* Calendar Day Hover */
+.calendar-day:hover {
+  background-color: #f0fdfa;
+}
+
+.calendar-day.today {
+  background-color: #f0fdfa;
+  border-color: #0f766e;
+}
+
+/* Photo Grid Hover Effect */
+.photo-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.photo-item img {
+  transition: transform 0.3s ease;
+}
+
+.photo-item:hover img {
+  transform: scale(1.05);
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid #f3f4f6;
+  border-top-color: #0f766e;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast Customization */
+[data-sonner-toast] {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Charts Bar Animation */
+.chart-bar {
+  transition: height 0.5s ease-out;
+}
+
+/* Card Hover Effect */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Button Active State */
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Input Focus Ring */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+/* Ensure proper text contrast */
+.text-slate-900 {
+  color: #0f172a;
+}
+
+.text-slate-700 {
+  color: #334155;
+}
+
+.text-slate-600 {
+  color: #475569;
+}
+
+.text-slate-500 {
+  color: #64748b;
 }
