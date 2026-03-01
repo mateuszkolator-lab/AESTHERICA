@@ -293,7 +293,7 @@ const Dashboard = () => {
           </div>
           <div className="p-6">
             {data?.upcoming_surgeries?.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[400px] overflow-y-auto">
                 {data.upcoming_surgeries.map((patient) => (
                   <div 
                     key={patient.id} 
