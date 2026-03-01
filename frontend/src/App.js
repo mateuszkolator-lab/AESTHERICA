@@ -934,7 +934,8 @@ const PatientsList = () => {
     );
     const matchesStatus = statusFilters.length === 0 || statusFilters.includes(p.status);
     const matchesLocation = !locationFilter || p.location_id === locationFilter;
-    return matchesSearch && matchesStatus && matchesLocation;
+    const matchesAsap = !asapFilter || p.asap === true;
+    return matchesSearch && matchesStatus && matchesLocation && matchesAsap;
   });
 
   const getStatusColor = (status) => {
