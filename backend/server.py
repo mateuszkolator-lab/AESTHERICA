@@ -534,12 +534,11 @@ async def export_patients(
 async def get_dashboard(user: dict = Depends(verify_token)):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # Upcoming surgeries (next 7 days)
-    next_week = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
+    # All upcoming surgeries (from today onwards)
     upcoming = await db.patients.find(
-        {"surgery_date": {"$gte": today, "$lte": next_week}, "status": {"$in": ["planned", "awaiting"]}},
+        {"surgery_date": {"$gte": today}, "status": {"$in": ["planned", "awaiting"]}},
         {"_id": 0}
-    ).sort("surgery_date", 1).to_list(10)
+    ).sort("surgery_date", 1).to_list(100)
     
     # Recent patients
     recent = await db.patients.find({}, {"_id": 0}).sort("created_at", -1).to_list(5)
