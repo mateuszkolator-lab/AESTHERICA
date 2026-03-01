@@ -132,6 +132,7 @@ class Patient(BaseModel):
     location_id: Optional[str] = None
     price: Optional[float] = None
     notes: Optional[str] = None
+    asap: bool = False  # "jak najszybciej" - patient is ready for earlier date
     visits: List[Visit] = []
     google_calendar_event_id: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -152,6 +153,7 @@ class PatientCreate(BaseModel):
     location_id: Optional[str] = None
     price: Optional[float] = None
     notes: Optional[str] = None
+    asap: bool = False
 
 class PatientUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -168,6 +170,7 @@ class PatientUpdate(BaseModel):
     location_id: Optional[str] = None
     price: Optional[float] = None
     notes: Optional[str] = None
+    asap: Optional[bool] = None
 
 class VisitCreate(BaseModel):
     date: str
