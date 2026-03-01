@@ -1203,9 +1203,16 @@ const PatientsList = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
-                        {STATUS_LABELS[patient.status] || patient.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
+                          {STATUS_LABELS[patient.status] || patient.status}
+                        </span>
+                        {patient.asap && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700" title="Jak najszybciej">
+                            <Sparkles className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       {patient.preferred_date_start || patient.preferred_date_end ? (
