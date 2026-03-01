@@ -1633,6 +1633,7 @@ const PlanningPage = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddSlot, setShowAddSlot] = useState(false);
+  const [editSlot, setEditSlot] = useState(null);
   const [activeTab, setActiveTab] = useState("slots"); // slots | suggestions
   const navigate = useNavigate();
 
@@ -1675,6 +1676,16 @@ const PlanningPage = () => {
       loadData();
     } catch (err) {
       toast.error("Nie udało się usunąć terminu");
+    }
+  };
+
+  const handleToggleFull = async (id) => {
+    try {
+      await api.post(`/surgery-slots/${id}/toggle-full`);
+      toast.success("Status terminu zmieniony");
+      loadData();
+    } catch (err) {
+      toast.error("Nie udało się zmienić statusu");
     }
   };
 
@@ -1759,17 +1770,29 @@ const PlanningPage = () => {
                   <div 
                     key={slot.id} 
                     className={`flex items-center justify-between p-4 rounded-lg border ${
-                      slot.assigned_patient_id 
-                        ? "bg-emerald-50 border-emerald-200" 
-                        : "bg-slate-50 border-slate-200"
+                      slot.is_full 
+                        ? "bg-red-50 border-red-200" 
+                        : slot.assigned_patient_id 
+                          ? "bg-emerald-50 border-emerald-200" 
+                          : "bg-slate-50 border-slate-200"
                     }`}
                     data-testid={`slot-${slot.id}`}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        slot.assigned_patient_id ? "bg-emerald-100" : "bg-teal-100"
+                        slot.is_full 
+                          ? "bg-red-100" 
+                          : slot.assigned_patient_id 
+                            ? "bg-emerald-100" 
+                            : "bg-teal-100"
                       }`}>
-                        <Calendar className={`w-6 h-6 ${slot.assigned_patient_id ? "text-emerald-600" : "text-teal-600"}`} />
+                        <Calendar className={`w-6 h-6 ${
+                          slot.is_full 
+                            ? "text-red-600" 
+                            : slot.assigned_patient_id 
+                              ? "text-emerald-600" 
+                              : "text-teal-600"
+                        }`} />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900 text-lg">{slot.date}</p>
@@ -1785,7 +1808,11 @@ const PlanningPage = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {slot.assigned_patient_id ? (
+                      {slot.is_full ? (
+                        <span className="px-3 py-1.5 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                          Pełny
+                        </span>
+                      ) : slot.assigned_patient_id ? (
                         <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
                           <UserCheck className="w-4 h-4" />
                           Przypisany
@@ -1795,6 +1822,24 @@ const PlanningPage = () => {
                           Wolny
                         </span>
                       )}
+                      <button
+                        onClick={() => handleToggleFull(slot.id)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          slot.is_full 
+                            ? "bg-slate-100 text-slate-700 hover:bg-slate-200" 
+                            : "bg-red-100 text-red-700 hover:bg-red-200"
+                        }`}
+                        data-testid={`toggle-full-${slot.id}`}
+                      >
+                        {slot.is_full ? "Odblokuj" : "Oznacz pełny"}
+                      </button>
+                      <button
+                        onClick={() => setEditSlot(slot)}
+                        className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                        data-testid={`edit-slot-${slot.id}`}
+                      >
+                        <Edit className="w-4 h-4 text-slate-600" />
+                      </button>
                       <button
                         onClick={() => handleDeleteSlot(slot.id)}
                         className="p-2 hover:bg-red-100 rounded-lg transition-colors"
@@ -1915,11 +1960,12 @@ const PlanningPage = () => {
         </div>
       )}
 
-      {showAddSlot && (
+      {(showAddSlot || editSlot) && (
         <AddSlotModal
           locations={locations}
-          onClose={() => setShowAddSlot(false)}
-          onSuccess={() => { setShowAddSlot(false); loadData(); }}
+          slot={editSlot}
+          onClose={() => { setShowAddSlot(false); setEditSlot(null); }}
+          onSuccess={() => { setShowAddSlot(false); setEditSlot(null); loadData(); }}
         />
       )}
     </div>
