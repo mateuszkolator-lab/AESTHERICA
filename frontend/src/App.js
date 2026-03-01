@@ -576,6 +576,19 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
+      {/* Day Detail Modal for Dashboard */}
+      {selectedDay && (
+        <DashboardDayModal
+          day={selectedDay}
+          surgeries={getSurgeriesForDate(selectedDay)}
+          slot={getSlotForDate(selectedDay)}
+          locations={locations}
+          onClose={() => setSelectedDay(null)}
+          onRefresh={loadDashboard}
+          navigate={navigate}
+        />
+      )}
     </div>
   );
 };
