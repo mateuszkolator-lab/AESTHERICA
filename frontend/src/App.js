@@ -2392,7 +2392,7 @@ const CalendarPage = () => {
               )}
             </div>
             <div className="px-4 py-3 border-t border-slate-100 text-xs text-slate-500">
-              Przeciągnij pacjenta na dzień w kalendarzu
+              Przeciągnij pacjenta na dzień w kalendarzu. Możesz też przenosić zaplanowanych pacjentów.
             </div>
           </div>
         )}
