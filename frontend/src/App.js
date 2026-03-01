@@ -1626,6 +1626,395 @@ const PhotoCompareModal = ({ photos, onClose }) => {
   );
 };
 
+// ==================== PLANNING PAGE ====================
+const PlanningPage = () => {
+  const [slots, setSlots] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddSlot, setShowAddSlot] = useState(false);
+  const [activeTab, setActiveTab] = useState("slots"); // slots | suggestions
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [slotsRes, locRes] = await Promise.all([
+        api.get("/surgery-slots"),
+        api.get("/locations")
+      ]);
+      setSlots(slotsRes.data);
+      setLocations(locRes.data);
+    } catch (err) {
+      toast.error("Nie udało się załadować danych");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSuggestions = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/surgery-slots/suggestions");
+      setSuggestions(res.data);
+    } catch (err) {
+      toast.error("Nie udało się załadować sugestii");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSlot = async (id) => {
+    if (!window.confirm("Usunąć ten termin operacji?")) return;
+    try {
+      await api.delete(`/surgery-slots/${id}`);
+      toast.success("Termin usunięty");
+      loadData();
+    } catch (err) {
+      toast.error("Nie udało się usunąć terminu");
+    }
+  };
+
+  const handleAssignPatient = async (slotId, patientId) => {
+    try {
+      await api.post(`/surgery-slots/${slotId}/assign/${patientId}`);
+      toast.success("Pacjent przypisany do terminu operacji");
+      loadSuggestions();
+      loadData();
+    } catch (err) {
+      toast.error("Nie udało się przypisać pacjenta");
+    }
+  };
+
+  const getLocationName = (locationId) => {
+    const loc = locations.find((l) => l.id === locationId);
+    return loc ? loc.name : "-";
+  };
+
+  useEffect(() => {
+    if (activeTab === "suggestions") {
+      loadSuggestions();
+    }
+  }, [activeTab]);
+
+  if (loading && activeTab === "slots") return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
+
+  return (
+    <div className="p-8" data-testid="planning-page">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Planowanie operacji</h1>
+          <p className="text-slate-500 mt-1">Zarządzaj terminami i przypisuj pacjentów</p>
+        </div>
+        <button
+          onClick={() => setShowAddSlot(true)}
+          className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+          data-testid="add-slot-button"
+        >
+          <Plus className="w-5 h-5" />
+          Dodaj termin
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab("slots")}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === "slots" 
+              ? "bg-teal-700 text-white" 
+              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+          }`}
+          data-testid="tab-slots"
+        >
+          <CalendarPlus className="w-4 h-4 inline mr-2" />
+          Terminy operacji
+        </button>
+        <button
+          onClick={() => setActiveTab("suggestions")}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === "suggestions" 
+              ? "bg-teal-700 text-white" 
+              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+          }`}
+          data-testid="tab-suggestions"
+        >
+          <Sparkles className="w-4 h-4 inline mr-2" />
+          Automatyczne dopasowanie
+        </button>
+      </div>
+
+      {activeTab === "slots" && (
+        <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-6 py-4 border-b border-slate-100">
+            <h2 className="text-lg font-semibold text-slate-900">Dostępne terminy operacji</h2>
+          </div>
+          <div className="p-6">
+            {slots.length > 0 ? (
+              <div className="space-y-3">
+                {slots.map((slot) => (
+                  <div 
+                    key={slot.id} 
+                    className={`flex items-center justify-between p-4 rounded-lg border ${
+                      slot.assigned_patient_id 
+                        ? "bg-emerald-50 border-emerald-200" 
+                        : "bg-slate-50 border-slate-200"
+                    }`}
+                    data-testid={`slot-${slot.id}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        slot.assigned_patient_id ? "bg-emerald-100" : "bg-teal-100"
+                      }`}>
+                        <Calendar className={`w-6 h-6 ${slot.assigned_patient_id ? "text-emerald-600" : "text-teal-600"}`} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900 text-lg">{slot.date}</p>
+                        <div className="flex items-center gap-3 text-sm text-slate-500">
+                          {slot.location_id && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {getLocationName(slot.location_id)}
+                            </span>
+                          )}
+                          {slot.notes && <span>{slot.notes}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {slot.assigned_patient_id ? (
+                        <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
+                          <UserCheck className="w-4 h-4" />
+                          Przypisany
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
+                          Wolny
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDeleteSlot(slot.id)}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                        data-testid={`delete-slot-${slot.id}`}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <CalendarPlus className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500">Brak dodanych terminów operacji</p>
+                <button
+                  onClick={() => setShowAddSlot(true)}
+                  className="mt-4 text-teal-600 hover:text-teal-700 font-medium"
+                >
+                  Dodaj pierwszy termin
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "suggestions" && (
+        <div className="space-y-6">
+          {loading ? (
+            <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>
+          ) : suggestions.length > 0 ? (
+            suggestions.map((item) => (
+              <div key={item.slot.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 bg-gradient-to-r from-teal-50 to-white border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900 text-lg">{item.slot.date}</p>
+                      <p className="text-sm text-slate-500">
+                        {item.slot.location_name || "Lokalizacja nie wybrana"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500">Pasujących pacjentów</p>
+                    <p className="text-2xl font-semibold text-teal-700">{item.suggested_patients.length}</p>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  {item.suggested_patients.length > 0 ? (
+                    <div className="space-y-3">
+                      {item.suggested_patients.map((patient) => (
+                        <div 
+                          key={patient.id}
+                          className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                              <User className="w-5 h-5 text-teal-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
+                              <div className="flex items-center gap-3 text-sm text-slate-500">
+                                <span>{patient.procedure_type || "Zabieg nieokreślony"}</span>
+                                {patient.phone && (
+                                  <span className="flex items-center gap-1">
+                                    <Phone className="w-3 h-3" />
+                                    {patient.phone}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-xs text-slate-500">Preferowany zakres</p>
+                              <p className="text-sm font-medium text-slate-700">
+                                {patient.preferred_date_start} - {patient.preferred_date_end}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleAssignPatient(item.slot.id, patient.id)}
+                              className="flex items-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg font-medium transition-colors"
+                              data-testid={`assign-${item.slot.id}-${patient.id}`}
+                            >
+                              <UserCheck className="w-4 h-4" />
+                              Przypisz
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-slate-500">Brak pasujących pacjentów dla tego terminu</p>
+                      <p className="text-sm text-slate-400 mt-1">
+                        Sprawdź czy pacjenci mają ustawione preferowane daty
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+              <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500">Brak wolnych terminów do dopasowania</p>
+              <p className="text-sm text-slate-400 mt-1">
+                Dodaj terminy operacji, aby zobaczyć sugestie pacjentów
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showAddSlot && (
+        <AddSlotModal
+          locations={locations}
+          onClose={() => setShowAddSlot(false)}
+          onSuccess={() => { setShowAddSlot(false); loadData(); }}
+        />
+      )}
+    </div>
+  );
+};
+
+// ==================== ADD SLOT MODAL ====================
+const AddSlotModal = ({ locations, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    date: "",
+    location_id: "",
+    notes: ""
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post("/surgery-slots", formData);
+      toast.success("Termin operacji dodany");
+      onSuccess();
+    } catch (err) {
+      toast.error("Nie udało się dodać terminu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="add-slot-modal">
+      <div className="bg-white rounded-xl max-w-md w-full">
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-slate-900">Dodaj termin operacji</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Data operacji *</label>
+            <input
+              type="date"
+              required
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              data-testid="slot-date-input"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Lokalizacja</label>
+            <select
+              value={formData.location_id}
+              onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              data-testid="slot-location-select"
+            >
+              <option value="">Wybierz lokalizację</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Notatki</label>
+            <input
+              type="text"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="np. Rano, sala 2"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              data-testid="slot-notes-input"
+            />
+          </div>
+          <div className="flex gap-4 pt-4">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
+              Anuluj
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
+              data-testid="submit-slot"
+            >
+              {loading ? "Dodawanie..." : "Dodaj termin"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ==================== CALENDAR PAGE ====================
 const CalendarPage = () => {
   const [patients, setPatients] = useState([]);
