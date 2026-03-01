@@ -1095,9 +1095,21 @@ const PatientsList = () => {
                 </button>
               </span>
             ))}
-            {statusFilters.length > 0 && (
+            {locationFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                <MapPin className="w-3 h-3" />
+                {locations.find(l => l.id === locationFilter)?.name || "Lokalizacja"}
+                <button
+                  onClick={() => setLocationFilter("")}
+                  className="ml-1 hover:opacity-70"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {(statusFilters.length > 0 || locationFilter) && (
               <button
-                onClick={clearStatusFilters}
+                onClick={() => { clearStatusFilters(); setLocationFilter(""); }}
                 className="text-xs text-slate-500 hover:text-slate-700"
               >
                 Wyczyść wszystko
