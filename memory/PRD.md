@@ -39,6 +39,12 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - [x] Design responsywny dla mobile
 - [x] Czysty medyczny styl (turkusowy/biały motyw)
 - [x] **PEŁNA LOKALIZACJA POLSKA**
+- [x] Planowanie operacji z automatycznym dopasowaniem pacjentów
+- [x] Drag-and-drop kalendarz do przypisywania pacjentów
+- [x] Zarządzanie slotami operacyjnymi (oznaczanie jako pełny)
+- [x] **NOWE: Wyraziste kolory w kalendarzu** (zielony=zaplanowany, czerwony=pełny, żółty=wolny)
+- [x] **NOWE: Przenoszenie zaplanowanych pacjentów** (drag-and-drop z kalendarza)
+- [x] **NOWE: Masowe dodawanie terminów operacji** (zakres dat + dni tygodnia)
 
 ## Endpointy API
 - POST /api/auth/login - Logowanie
