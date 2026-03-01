@@ -276,6 +276,193 @@ async def delete_procedure_type(procedure_type_id: str, user: dict = Depends(ver
         raise HTTPException(status_code=404, detail="Procedure type not found")
     return {"message": "Procedure type deleted"}
 
+# ==================== SURGERY SLOTS ROUTES ====================
+
+@api_router.get("/surgery-slots", response_model=List[SurgerySlot])
+async def get_surgery_slots(
+    include_past: bool = False,
+    user: dict = Depends(verify_token)
+):
+    query = {}
+    if not include_past:
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        query["date"] = {"$gte": today}
+    
+    slots = await db.surgery_slots.find(query, {"_id": 0}).sort("date", 1).to_list(200)
+    return slots
+
+@api_router.post("/surgery-slots", response_model=SurgerySlot)
+async def create_surgery_slot(slot: SurgerySlotCreate, user: dict = Depends(verify_token)):
+    slot_obj = SurgerySlot(**slot.model_dump())
+    await db.surgery_slots.insert_one(slot_obj.model_dump())
+    return slot_obj
+
+@api_router.put("/surgery-slots/{slot_id}", response_model=SurgerySlot)
+async def update_surgery_slot(slot_id: str, slot: SurgerySlotCreate, user: dict = Depends(verify_token)):
+    result = await db.surgery_slots.find_one_and_update(
+        {"id": slot_id},
+        {"$set": slot.model_dump()},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Surgery slot not found")
+    del result["_id"]
+    return result
+
+@api_router.delete("/surgery-slots/{slot_id}")
+async def delete_surgery_slot(slot_id: str, user: dict = Depends(verify_token)):
+    result = await db.surgery_slots.delete_one({"id": slot_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Surgery slot not found")
+    return {"message": "Surgery slot deleted"}
+
+@api_router.get("/surgery-slots/suggestions")
+async def get_slot_suggestions(user: dict = Depends(verify_token)):
+    """Get surgery slots with suggested patients based on preferred dates"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get all future unassigned slots
+    slots = await db.surgery_slots.find(
+        {"date": {"$gte": today}, "assigned_patient_id": None},
+        {"_id": 0}
+    ).sort("date", 1).to_list(100)
+    
+    # Get all patients waiting for surgery (consultation or awaiting status, no surgery date)
+    waiting_patients = await db.patients.find(
+        {
+            "status": {"$in": ["consultation", "awaiting"]},
+            "$or": [
+                {"surgery_date": None},
+                {"surgery_date": ""}
+            ]
+        },
+        {"_id": 0}
+    ).to_list(500)
+    
+    # Get locations for display
+    locations = await db.locations.find({}, {"_id": 0}).to_list(100)
+    location_map = {loc["id"]: loc["name"] for loc in locations}
+    
+    suggestions = []
+    for slot in slots:
+        slot_date = slot["date"]
+        matching_patients = []
+        
+        for patient in waiting_patients:
+            pref_start = patient.get("preferred_date_start")
+            pref_end = patient.get("preferred_date_end")
+            
+            # Check if slot date falls within patient's preferred range
+            if pref_start and pref_end:
+                if pref_start <= slot_date <= pref_end:
+                    matching_patients.append({
+                        "id": patient["id"],
+                        "first_name": patient["first_name"],
+                        "last_name": patient["last_name"],
+                        "procedure_type": patient.get("procedure_type"),
+                        "preferred_date_start": pref_start,
+                        "preferred_date_end": pref_end,
+                        "phone": patient.get("phone"),
+                        "match_score": 100  # Perfect match
+                    })
+            elif pref_start and not pref_end:
+                if slot_date >= pref_start:
+                    matching_patients.append({
+                        "id": patient["id"],
+                        "first_name": patient["first_name"],
+                        "last_name": patient["last_name"],
+                        "procedure_type": patient.get("procedure_type"),
+                        "preferred_date_start": pref_start,
+                        "preferred_date_end": pref_end,
+                        "phone": patient.get("phone"),
+                        "match_score": 80
+                    })
+            elif pref_end and not pref_start:
+                if slot_date <= pref_end:
+                    matching_patients.append({
+                        "id": patient["id"],
+                        "first_name": patient["first_name"],
+                        "last_name": patient["last_name"],
+                        "procedure_type": patient.get("procedure_type"),
+                        "preferred_date_start": pref_start,
+                        "preferred_date_end": pref_end,
+                        "phone": patient.get("phone"),
+                        "match_score": 80
+                    })
+        
+        # Sort by match score
+        matching_patients.sort(key=lambda x: x["match_score"], reverse=True)
+        
+        suggestions.append({
+            "slot": {
+                **slot,
+                "location_name": location_map.get(slot.get("location_id"), "")
+            },
+            "suggested_patients": matching_patients[:10]  # Top 10 matches
+        })
+    
+    return suggestions
+
+@api_router.post("/surgery-slots/{slot_id}/assign/{patient_id}")
+async def assign_patient_to_slot(slot_id: str, patient_id: str, user: dict = Depends(verify_token)):
+    """Assign a patient to a surgery slot"""
+    # Get the slot
+    slot = await db.surgery_slots.find_one({"id": slot_id})
+    if not slot:
+        raise HTTPException(status_code=404, detail="Surgery slot not found")
+    
+    # Get the patient
+    patient = await db.patients.find_one({"id": patient_id})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    # Update the slot with assigned patient
+    await db.surgery_slots.update_one(
+        {"id": slot_id},
+        {"$set": {"assigned_patient_id": patient_id}}
+    )
+    
+    # Update patient with surgery date and status
+    await db.patients.update_one(
+        {"id": patient_id},
+        {"$set": {
+            "surgery_date": slot["date"],
+            "status": "planned",
+            "location_id": slot.get("location_id"),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Patient assigned to surgery slot", "surgery_date": slot["date"]}
+
+@api_router.post("/surgery-slots/{slot_id}/unassign")
+async def unassign_patient_from_slot(slot_id: str, user: dict = Depends(verify_token)):
+    """Remove patient assignment from a surgery slot"""
+    slot = await db.surgery_slots.find_one({"id": slot_id})
+    if not slot:
+        raise HTTPException(status_code=404, detail="Surgery slot not found")
+    
+    patient_id = slot.get("assigned_patient_id")
+    
+    # Clear the slot assignment
+    await db.surgery_slots.update_one(
+        {"id": slot_id},
+        {"$set": {"assigned_patient_id": None}}
+    )
+    
+    # If there was a patient, clear their surgery date
+    if patient_id:
+        await db.patients.update_one(
+            {"id": patient_id},
+            {"$set": {
+                "surgery_date": None,
+                "status": "awaiting",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    
+    return {"message": "Patient unassigned from surgery slot"}
+
 # ==================== PATIENT ROUTES ====================
 
 @api_router.get("/patients", response_model=List[Patient])
