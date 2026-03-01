@@ -1564,6 +1564,22 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                 </div>
               </div>
 
+              {/* ASAP Checkbox */}
+              <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <input
+                  type="checkbox"
+                  id="asap"
+                  checked={formData.asap}
+                  onChange={(e) => setFormData({ ...formData, asap: e.target.checked })}
+                  className="w-5 h-5 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
+                  data-testid="asap-checkbox"
+                />
+                <label htmlFor="asap" className="flex-1">
+                  <span className="font-medium text-amber-900">Jak najszybciej</span>
+                  <p className="text-xs text-amber-700 mt-0.5">Pacjent jest gotowy zmienić termin na wcześniejszy w razie rezygnacji innego pacjenta</p>
+                </label>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Data operacji</label>
