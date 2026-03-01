@@ -2759,10 +2759,9 @@ const CalendarPage = () => {
                       key={i}
                       onDragOver={day ? handleDragOver : undefined}
                       onDrop={day ? (e) => handleDrop(e, day) : undefined}
-                      onClick={() => day && (dayPatients.length > 0 || hasSlot) && setSelectedDay(day)}
-                      className={`min-h-[100px] p-2 rounded-lg border-2 transition-colors cursor-pointer ${
+                      className={`min-h-[100px] p-2 rounded-lg border-2 transition-colors ${
                         !day 
-                          ? "border-transparent cursor-default" 
+                          ? "border-transparent" 
                           : isFull 
                             ? "border-red-400 bg-red-100" 
                             : dayPatients.length > 0
@@ -2776,7 +2775,10 @@ const CalendarPage = () => {
                     >
                       {day && (
                         <>
-                          <div className="flex items-center justify-between">
+                          <div 
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => (dayPatients.length > 0 || hasSlot) && setSelectedDay(day)}
+                          >
                             <p className={`text-sm font-medium ${isToday ? "text-teal-700" : "text-slate-600"}`}>
                               {day.getDate()}
                             </p>
