@@ -385,10 +385,10 @@ const Dashboard = () => {
                 return (
                   <div
                     key={i}
-                    onClick={() => day && navigate("/calendar")}
+                    onClick={() => day && (hasSlot || hasPatients) && setSelectedDay(day)}
                     className={`min-h-[70px] p-1 rounded-lg cursor-pointer transition-all relative ${
                       !day 
-                        ? "" 
+                        ? "cursor-default" 
                         : isToday 
                           ? "ring-2 ring-teal-500 ring-offset-1" 
                           : borderColor || "hover:bg-slate-50"
