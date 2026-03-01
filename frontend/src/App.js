@@ -1973,11 +1973,12 @@ const PlanningPage = () => {
 };
 
 // ==================== ADD SLOT MODAL ====================
-const AddSlotModal = ({ locations, onClose, onSuccess }) => {
+const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    date: "",
-    location_id: "",
-    notes: ""
+    date: slot?.date || "",
+    location_id: slot?.location_id || "",
+    notes: slot?.notes || "",
+    is_full: slot?.is_full || false
   });
   const [loading, setLoading] = useState(false);
 
@@ -1985,11 +1986,16 @@ const AddSlotModal = ({ locations, onClose, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post("/surgery-slots", formData);
-      toast.success("Termin operacji dodany");
+      if (slot) {
+        await api.put(`/surgery-slots/${slot.id}`, formData);
+        toast.success("Termin operacji zaktualizowany");
+      } else {
+        await api.post("/surgery-slots", formData);
+        toast.success("Termin operacji dodany");
+      }
       onSuccess();
     } catch (err) {
-      toast.error("Nie udało się dodać terminu");
+      toast.error(slot ? "Nie udało się zaktualizować terminu" : "Nie udało się dodać terminu");
     } finally {
       setLoading(false);
     }
@@ -1999,7 +2005,7 @@ const AddSlotModal = ({ locations, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="add-slot-modal">
       <div className="bg-white rounded-xl max-w-md w-full">
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-slate-900">Dodaj termin operacji</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{slot ? "Edytuj termin operacji" : "Dodaj termin operacji"}</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
@@ -2042,6 +2048,17 @@ const AddSlotModal = ({ locations, onClose, onSuccess }) => {
               data-testid="slot-notes-input"
             />
           </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="is_full"
+              checked={formData.is_full}
+              onChange={(e) => setFormData({ ...formData, is_full: e.target.checked })}
+              className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+              data-testid="slot-full-checkbox"
+            />
+            <label htmlFor="is_full" className="text-sm text-slate-700">Oznacz jako pełny (niedostępny)</label>
+          </div>
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
               Anuluj
@@ -2052,7 +2069,7 @@ const AddSlotModal = ({ locations, onClose, onSuccess }) => {
               className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
               data-testid="submit-slot"
             >
-              {loading ? "Dodawanie..." : "Dodaj termin"}
+              {loading ? "Zapisywanie..." : (slot ? "Zaktualizuj" : "Dodaj termin")}
             </button>
           </div>
         </form>
