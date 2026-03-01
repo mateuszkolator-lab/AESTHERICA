@@ -95,6 +95,11 @@ class SurgerySlotCreate(BaseModel):
     notes: Optional[str] = None
     is_full: bool = False
 
+class SurgerySlotUpdate(BaseModel):
+    location_id: Optional[str] = None
+    notes: Optional[str] = None
+    is_full: Optional[bool] = None
+
 class Photo(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     data: str  # Base64 encoded
