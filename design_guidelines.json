@@ -1,0 +1,180 @@
+{
+  "identity": {
+    "name": "AestheticaMD",
+    "tone": "Clinical Beauty",
+    "description": "A high-end, trustworthy, and precise patient management system for facial plastic surgery. Balances medical functionality with aesthetic elegance.",
+    "emotional_archetype": "Organic & Earthy (Trust, Calm, Precision)",
+    "keywords": ["Clean", "Precise", "Trustworthy", "Elegant", "Clinical"]
+  },
+  "typography": {
+    "headings": {
+      "family": "Manrope",
+      "weights": ["500", "600", "700"],
+      "tracking": "-0.02em",
+      "usage": "Use for all page titles, section headers, and card titles. Avoid using 'Bold' (700) excessively; prefer 'Semibold' (600) for a modern look."
+    },
+    "body": {
+      "family": "Inter",
+      "weights": ["400", "500"],
+      "usage": "Use for all standard text, labels, and inputs. Prioritize readability."
+    },
+    "mono": {
+        "family": "JetBrains Mono",
+        "usage": "Use for medical record numbers (MRN), dates, and precise data values."
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#0f766e",
+        "foreground": "#ffffff",
+        "50": "#f0fdfa",
+        "100": "#ccfbf1",
+        "200": "#99f6e4",
+        "300": "#5eead4",
+        "400": "#2dd4bf",
+        "500": "#14b8a6",
+        "600": "#0d9488",
+        "700": "#0f766e",
+        "800": "#115e59",
+        "900": "#134e4a"
+      },
+      "secondary": {
+        "DEFAULT": "#f5f5f4",
+        "foreground": "#1c1917",
+        "50": "#fafaf9",
+        "100": "#f5f5f4",
+        "200": "#e7e5e4",
+        "300": "#d6d3d1",
+        "400": "#a8a29e",
+        "500": "#78716c",
+        "600": "#57534e",
+        "700": "#44403c"
+      },
+      "background": "#fafafa",
+      "surface": "#ffffff",
+      "text": {
+        "primary": "#0f172a",
+        "secondary": "#64748b",
+        "muted": "#94a3b8"
+      },
+      "status": {
+        "success": "#10b981",
+        "warning": "#f59e0b",
+        "error": "#ef4444",
+        "info": "#3b82f6"
+      }
+    },
+    "gradients": {
+        "subtle": "linear-gradient(to bottom right, #ffffff, #f0fdfa)"
+    }
+  },
+  "layout_strategy": {
+    "global": {
+      "spacing_scale": "generous",
+      "container_padding": "p-6 md:p-10",
+      "border_radius": "rounded-xl",
+      "card_style": "bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200"
+    },
+    "dashboard": {
+      "type": "bento_grid",
+      "columns": "grid-cols-1 md:grid-cols-12",
+      "gap": "gap-6",
+      "structure": [
+        { "name": "Stats Overview", "span": "col-span-full" },
+        { "name": "Upcoming Surgeries", "span": "col-span-12 md:col-span-8" },
+        { "name": "Recent Patients", "span": "col-span-12 md:col-span-4" }
+      ]
+    },
+    "patient_detail": {
+      "type": "split_view",
+      "left_panel": "w-full md:w-1/3 border-r bg-white h-[calc(100vh-4rem)] overflow-y-auto sticky top-16",
+      "right_panel": "w-full md:w-2/3 p-8 bg-slate-50/50"
+    }
+  },
+  "components": {
+    "cards": {
+      "base": "bg-white rounded-xl border border-slate-200 shadow-sm",
+      "header": "px-6 py-4 border-b border-slate-100 flex justify-between items-center",
+      "content": "p-6"
+    },
+    "buttons": {
+      "primary": "bg-primary-700 hover:bg-primary-800 text-white shadow-sm rounded-lg px-4 py-2 font-medium transition-colors",
+      "secondary": "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm rounded-lg px-4 py-2 font-medium transition-colors",
+      "ghost": "text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-lg px-3 py-2 transition-colors"
+    },
+    "inputs": {
+      "style": "bg-white border-slate-200 focus:border-primary-500 focus:ring-primary-500 rounded-lg"
+    },
+    "badges": {
+      "style": "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+      "variants": {
+        "operated": "bg-emerald-100 text-emerald-800",
+        "planned": "bg-blue-100 text-blue-800",
+        "awaiting": "bg-amber-100 text-amber-800",
+        "consultation": "bg-slate-100 text-slate-800"
+      }
+    }
+  },
+  "assets": {
+    "login_background": {
+      "url": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Clean medical clinic interior with sink and white aesthetics",
+      "usage": "Login page background, subtle overlay opacity"
+    },
+    "doctor_profile": {
+      "url": "https://images.unsplash.com/photo-1642975967602-653d378f3b5b?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Dr. Alex Thorne",
+      "usage": "Sidebar profile, Dashboard welcome message"
+    },
+    "patients": [
+      {
+        "url": "https://images.unsplash.com/photo-1672794776762-18dddc72982e?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Patient Sarah M.",
+        "category": "female_young"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1648967711484-c08ed128dbae?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Patient Elena R.",
+        "category": "female_mid"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1581883556531-e5f8027f557f?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Patient Jessica L.",
+        "category": "female_portrait"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1634149588279-ffa42e1e64e6?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Patient David K.",
+        "category": "male_young"
+      }
+    ]
+  },
+  "universal_guidelines": {
+    "design_philosophy": [
+      "No Gradients: Use solid colors and subtle borders.",
+      "No Shadows: Use borders to define edges (1px border-slate-200), except for floating elements.",
+      "Whitespace: Increase padding by 2x everywhere.",
+      "Typography: Use standard font weights (400/500/600). Avoid 300 or 900.",
+      "Radius: Use 'rounded-xl' for containers, 'rounded-lg' for internal elements."
+    ],
+    "interaction": [
+      "Hover States: Every clickable element must have a hover state (bg change or border color change).",
+      "Transitions: 'transition-all duration-200 ease-in-out' on interactive elements.",
+      "Feedback: Use Sonner toasts for all actions (Save, Delete, Update)."
+    ],
+    "accessibility": [
+      "Contrast: Ensure text is Slate-900 on white, or White on Primary-700.",
+      "Focus: Visible focus rings (ring-2 ring-primary-500) for keyboard navigation."
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install 'lucide-react' for icons.",
+    "Install 'recharts' for the statistics dashboard.",
+    "Install 'react-day-picker' (via Shadcn) for the calendar.",
+    "For the 'Before/After' comparison, if a library like 'react-compare-slider' is not available, build a simple custom component using a range input overlaid on two absolute positioned images.",
+    "Use the provided image URLs for seeding the database or displaying mock data.",
+    "Ensure the 'Patient Detail' page is the masterpiece: Split screen, sticky left sidebar for info, scrollable right side for the photo grid.",
+    "Use 'data-testid' on all interactive elements."
+  ]
+}
