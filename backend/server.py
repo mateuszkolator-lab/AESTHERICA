@@ -78,6 +78,21 @@ class ProcedureTypeCreate(BaseModel):
     description: Optional[str] = None
     default_price: Optional[float] = None
 
+class SurgerySlot(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    date: str
+    location_id: Optional[str] = None
+    max_patients: int = 1
+    notes: Optional[str] = None
+    assigned_patient_id: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class SurgerySlotCreate(BaseModel):
+    date: str
+    location_id: Optional[str] = None
+    max_patients: int = 1
+    notes: Optional[str] = None
+
 class Photo(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     data: str  # Base64 encoded
