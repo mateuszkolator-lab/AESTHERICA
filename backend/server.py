@@ -66,6 +66,18 @@ class LocationCreate(BaseModel):
     name: str
     address: Optional[str] = None
 
+class ProcedureType(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: Optional[str] = None
+    default_price: Optional[float] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class ProcedureTypeCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    default_price: Optional[float] = None
+
 class Photo(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     data: str  # Base64 encoded
