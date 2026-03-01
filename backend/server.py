@@ -558,6 +558,7 @@ async def get_patients(
     preferred_date_end: Optional[str] = None,
     surgery_date_start: Optional[str] = None,
     surgery_date_end: Optional[str] = None,
+    asap_only: bool = False,
     sort_by: str = "created_at",
     sort_order: str = "desc",
     user: dict = Depends(verify_token)
@@ -578,9 +579,16 @@ async def get_patients(
             query["surgery_date"]["$lte"] = surgery_date_end
         else:
             query["surgery_date"] = {"$lte": surgery_date_end}
+    if asap_only:
+        query["asap"] = True
     
     sort_direction = -1 if sort_order == "desc" else 1
-    patients = await db.patients.find(query, {"_id": 0}).sort(sort_by, sort_direction).to_list(1000)
+    
+    # Special sorting: asap first, then by other criteria
+    if sort_by == "asap":
+        patients = await db.patients.find(query, {"_id": 0}).sort([("asap", -1), ("created_at", -1)]).to_list(1000)
+    else:
+        patients = await db.patients.find(query, {"_id": 0}).sort(sort_by, sort_direction).to_list(1000)
     return patients
 
 @api_router.get("/patients/{patient_id}", response_model=Patient)
