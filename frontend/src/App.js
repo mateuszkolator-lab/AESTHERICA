@@ -230,7 +230,9 @@ const Sidebar = ({ currentPath }) => {
 // ==================== DASHBOARD ====================
 const Dashboard = () => {
   const [data, setData] = useState(null);
+  const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -239,8 +241,12 @@ const Dashboard = () => {
 
   const loadDashboard = async () => {
     try {
-      const res = await api.get("/dashboard");
-      setData(res.data);
+      const [dashRes, slotsRes] = await Promise.all([
+        api.get("/dashboard"),
+        api.get("/surgery-slots")
+      ]);
+      setData(dashRes.data);
+      setSlots(slotsRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować pulpitu");
     } finally {
@@ -257,6 +263,40 @@ const Dashboard = () => {
     };
     return colors[status] || colors.consultation;
   };
+
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    
+    const days = [];
+    for (let i = 0; i < startingDay; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const getSlotForDate = (date) => {
+    if (!date) return null;
+    const dateStr = date.toISOString().split("T")[0];
+    return slots.find(s => s.date === dateStr);
+  };
+
+  const getUpcomingSurgeryForDate = (date) => {
+    if (!date || !data?.upcoming_surgeries) return null;
+    const dateStr = date.toISOString().split("T")[0];
+    return data.upcoming_surgeries.find(p => p.surgery_date === dateStr);
+  };
+
+  const days = getDaysInMonth(currentMonth);
+  const monthName = currentMonth.toLocaleString("pl-PL", { month: "long", year: "numeric" });
+  const dayNames = ["Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "So"];
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
@@ -286,43 +326,108 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upcoming Surgeries */}
+        {/* Calendar Preview */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
-            <button onClick={() => navigate("/calendar")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">Zobacz wszystkie</button>
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Kalendarz operacji</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                className="p-1.5 hover:bg-slate-100 rounded-lg"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-medium text-slate-700 capitalize min-w-[120px] text-center">{monthName}</span>
+              <button
+                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                className="p-1.5 hover:bg-slate-100 rounded-lg"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div className="p-6">
-            {data?.upcoming_surgeries?.length > 0 ? (
-              <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                {data.upcoming_surgeries.map((patient) => (
-                  <div 
-                    key={patient.id} 
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/patients/${patient.id}`)}
-                    data-testid={`upcoming-${patient.id}`}
+          <div className="p-4">
+            {/* Day names */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {dayNames.map((day) => (
+                <div key={day} className="text-center text-xs font-semibold text-slate-500 py-1">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            {/* Calendar days */}
+            <div className="grid grid-cols-7 gap-1">
+              {days.map((day, i) => {
+                const slot = getSlotForDate(day);
+                const surgery = getUpcomingSurgeryForDate(day);
+                const isToday = day && day.toDateString() === new Date().toDateString();
+                const hasSlot = !!slot;
+                const isFull = slot?.is_full;
+                const hasAssignedPatient = slot?.assigned_patient_id || surgery;
+                
+                let bgColor = "";
+                let dotColor = "";
+                
+                if (day) {
+                  if (isFull) {
+                    bgColor = "bg-red-50";
+                    dotColor = "bg-red-500";
+                  } else if (hasAssignedPatient) {
+                    bgColor = "bg-emerald-50";
+                    dotColor = "bg-emerald-500";
+                  } else if (hasSlot) {
+                    bgColor = "bg-amber-50";
+                    dotColor = "bg-amber-500";
+                  }
+                }
+                
+                return (
+                  <div
+                    key={i}
+                    onClick={() => day && navigate("/calendar")}
+                    className={`aspect-square p-1 rounded-lg cursor-pointer transition-all relative ${
+                      !day 
+                        ? "" 
+                        : isToday 
+                          ? "ring-2 ring-teal-500 ring-offset-1" 
+                          : "hover:bg-slate-50"
+                    } ${bgColor}`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-                        <User className="w-5 h-5 text-teal-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
-                        <p className="text-sm text-slate-500">{patient.procedure_type || "Zabieg do ustalenia"}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-slate-900">{patient.surgery_date}</p>
-                      <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
-                        {STATUS_LABELS[patient.status] || patient.status}
-                      </span>
-                    </div>
+                    {day && (
+                      <>
+                        <p className={`text-xs font-medium text-center ${
+                          isToday ? "text-teal-700" : hasSlot ? "text-slate-900" : "text-slate-600"
+                        }`}>
+                          {day.getDate()}
+                        </p>
+                        {(hasSlot || surgery) && (
+                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+                            <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                ))}
+                );
+              })}
+            </div>
+            
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span>Zaplanowana operacja</span>
               </div>
-            ) : (
-              <p className="text-slate-500 text-center py-8">Brak nadchodzących operacji</p>
-            )}
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <span>Wolny termin</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <span>Pełny/Niedostępny</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -359,6 +464,39 @@ const Dashboard = () => {
               <p className="text-slate-500 text-center py-8">Brak pacjentów</p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Upcoming Surgeries */}
+      <div className="mt-6 bg-white rounded-xl border border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
+          <button onClick={() => navigate("/calendar")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">Zobacz kalendarz</button>
+        </div>
+        <div className="p-6">
+          {data?.upcoming_surgeries?.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {data.upcoming_surgeries.slice(0, 6).map((patient) => (
+                <div 
+                  key={patient.id} 
+                  className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/patients/${patient.id}`)}
+                  data-testid={`upcoming-${patient.id}`}
+                >
+                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
+                    <p className="text-sm text-slate-500">{patient.procedure_type || "Zabieg do ustalenia"}</p>
+                    <p className="text-sm font-medium text-teal-600 mt-1">{patient.surgery_date}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-500 text-center py-8">Brak nadchodzących operacji</p>
+          )}
         </div>
       </div>
     </div>
