@@ -403,12 +403,12 @@ async def get_calendar_data(user: dict = Depends(verify_token)):
 
 @api_router.get("/surgery-slots/suggestions")
 async def get_slot_suggestions(user: dict = Depends(verify_token)):
-    """Get surgery slots with suggested patients based on preferred dates"""
+    """Get surgery slots with suggested patients based on preferred dates and location matching"""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # Get all future unassigned slots
+    # Get all future unassigned slots that are not full
     slots = await db.surgery_slots.find(
-        {"date": {"$gte": today}, "assigned_patient_id": None},
+        {"date": {"$gte": today}, "assigned_patient_id": None, "is_full": {"$ne": True}},
         {"_id": 0}
     ).sort("date", 1).to_list(100)
     
@@ -431,52 +431,78 @@ async def get_slot_suggestions(user: dict = Depends(verify_token)):
     suggestions = []
     for slot in slots:
         slot_date = slot["date"]
+        slot_location_id = slot.get("location_id")
         matching_patients = []
         
         for patient in waiting_patients:
             pref_start = patient.get("preferred_date_start")
             pref_end = patient.get("preferred_date_end")
+            patient_location_id = patient.get("location_id")
+            patient_asap = patient.get("asap", False)
             
-            # Check if slot date falls within patient's preferred range
+            # Calculate match score
+            match_score = 0
+            location_match = False
+            date_match = False
+            
+            # Location matching (most important)
+            if slot_location_id and patient_location_id:
+                if slot_location_id == patient_location_id:
+                    match_score += 50  # Perfect location match
+                    location_match = True
+                else:
+                    continue  # Skip patients with different location preference
+            elif slot_location_id and not patient_location_id:
+                # Slot has location, patient has no preference - can match
+                match_score += 20
+            elif not slot_location_id and patient_location_id:
+                # Slot has no location, patient wants specific location - lower score
+                match_score += 10
+            else:
+                # Neither has location preference
+                match_score += 25
+            
+            # Date matching
             if pref_start and pref_end:
                 if pref_start <= slot_date <= pref_end:
-                    matching_patients.append({
-                        "id": patient["id"],
-                        "first_name": patient["first_name"],
-                        "last_name": patient["last_name"],
-                        "procedure_type": patient.get("procedure_type"),
-                        "preferred_date_start": pref_start,
-                        "preferred_date_end": pref_end,
-                        "phone": patient.get("phone"),
-                        "match_score": 100  # Perfect match
-                    })
+                    match_score += 40  # Perfect date match
+                    date_match = True
             elif pref_start and not pref_end:
                 if slot_date >= pref_start:
-                    matching_patients.append({
-                        "id": patient["id"],
-                        "first_name": patient["first_name"],
-                        "last_name": patient["last_name"],
-                        "procedure_type": patient.get("procedure_type"),
-                        "preferred_date_start": pref_start,
-                        "preferred_date_end": pref_end,
-                        "phone": patient.get("phone"),
-                        "match_score": 80
-                    })
+                    match_score += 30
+                    date_match = True
             elif pref_end and not pref_start:
                 if slot_date <= pref_end:
-                    matching_patients.append({
-                        "id": patient["id"],
-                        "first_name": patient["first_name"],
-                        "last_name": patient["last_name"],
-                        "procedure_type": patient.get("procedure_type"),
-                        "preferred_date_start": pref_start,
-                        "preferred_date_end": pref_end,
-                        "phone": patient.get("phone"),
-                        "match_score": 80
-                    })
+                    match_score += 30
+                    date_match = True
+            else:
+                # No date preference - still consider but lower score
+                match_score += 10
+            
+            # ASAP bonus
+            if patient_asap:
+                match_score += 15
+            
+            # Only include if there's some relevance (at least date or location match, or ASAP)
+            if match_score >= 25 or patient_asap:
+                matching_patients.append({
+                    "id": patient["id"],
+                    "first_name": patient["first_name"],
+                    "last_name": patient["last_name"],
+                    "procedure_type": patient.get("procedure_type"),
+                    "preferred_date_start": pref_start,
+                    "preferred_date_end": pref_end,
+                    "phone": patient.get("phone"),
+                    "location_id": patient_location_id,
+                    "location_name": location_map.get(patient_location_id, "") if patient_location_id else "",
+                    "asap": patient_asap,
+                    "match_score": match_score,
+                    "location_match": location_match,
+                    "date_match": date_match
+                })
         
-        # Sort by match score
-        matching_patients.sort(key=lambda x: x["match_score"], reverse=True)
+        # Sort by match score (highest first), then by ASAP
+        matching_patients.sort(key=lambda x: (x["match_score"], x["asap"]), reverse=True)
         
         suggestions.append({
             "slot": {
