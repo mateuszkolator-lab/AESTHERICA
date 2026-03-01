@@ -2439,17 +2439,19 @@ const CalendarPage = () => {
                       key={i}
                       onDragOver={day ? handleDragOver : undefined}
                       onDrop={day ? (e) => handleDrop(e, day) : undefined}
-                      className={`min-h-[100px] p-2 rounded-lg border transition-colors ${
+                      className={`min-h-[100px] p-2 rounded-lg border-2 transition-colors ${
                         !day 
                           ? "border-transparent" 
                           : isFull 
-                            ? "border-red-200 bg-red-50" 
-                            : hasSlot 
-                              ? "border-teal-200 bg-teal-50 hover:bg-teal-100" 
-                              : isToday 
-                                ? "border-teal-300 bg-teal-50" 
-                                : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
-                      } ${draggedPatient && day && !isFull ? "ring-2 ring-teal-300 ring-opacity-50" : ""}`}
+                            ? "border-red-400 bg-red-100" 
+                            : dayPatients.length > 0
+                              ? "border-emerald-400 bg-emerald-50 hover:bg-emerald-100"
+                              : hasSlot 
+                                ? "border-amber-400 bg-amber-50 hover:bg-amber-100" 
+                                : isToday 
+                                  ? "border-teal-400 bg-teal-50" 
+                                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                      } ${draggedPatient && day && !isFull ? "ring-2 ring-teal-400 ring-opacity-70" : ""}`}
                     >
                       {day && (
                         <>
