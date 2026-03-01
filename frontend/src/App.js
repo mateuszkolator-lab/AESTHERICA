@@ -2281,9 +2281,9 @@ const CalendarPage = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      planned: "bg-blue-500",
+      planned: "bg-blue-600",
       awaiting: "bg-amber-500",
-      operated: "bg-emerald-500"
+      operated: "bg-emerald-600"
     };
     return colors[status] || "bg-slate-500";
   };
