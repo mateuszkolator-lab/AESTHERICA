@@ -305,10 +305,16 @@ async def create_surgery_slot(slot: SurgerySlotCreate, user: dict = Depends(veri
     return slot_obj
 
 @api_router.put("/surgery-slots/{slot_id}", response_model=SurgerySlot)
-async def update_surgery_slot(slot_id: str, slot: SurgerySlotCreate, user: dict = Depends(verify_token)):
+async def update_surgery_slot(slot_id: str, slot_update: SurgerySlotUpdate, user: dict = Depends(verify_token)):
+    # Build update dict with only provided fields
+    update_data = {k: v for k, v in slot_update.model_dump().items() if v is not None}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
     result = await db.surgery_slots.find_one_and_update(
         {"id": slot_id},
-        {"$set": slot.model_dump()},
+        {"$set": update_data},
         return_document=True
     )
     if not result:
