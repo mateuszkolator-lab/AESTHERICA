@@ -910,10 +910,13 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               <input
                 type="date"
                 value={formData.surgery_date}
-                onChange={(e) => setFormData({ ...formData, surgery_date: e.target.value })}
+                onChange={(e) => handleSurgeryDateChange(e.target.value)}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 data-testid="surgery-date-input"
               />
+              {formData.surgery_date && (formData.status === "consultation" || formData.status === "awaiting") && (
+                <p className="text-xs text-teal-600 mt-1">Status zostanie automatycznie zmieniony na "Zaplanowany"</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Lokalizacja</label>
