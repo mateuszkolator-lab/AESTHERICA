@@ -85,6 +85,7 @@ class SurgerySlot(BaseModel):
     max_patients: int = 1
     notes: Optional[str] = None
     assigned_patient_id: Optional[str] = None
+    is_full: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class SurgerySlotCreate(BaseModel):
@@ -92,6 +93,7 @@ class SurgerySlotCreate(BaseModel):
     location_id: Optional[str] = None
     max_patients: int = 1
     notes: Optional[str] = None
+    is_full: bool = False
 
 class Photo(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
