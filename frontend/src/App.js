@@ -736,6 +736,12 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
     }
   };
 
+  const handleSurgeryDateChange = (value) => {
+    // Auto-set status to "planned" when surgery date is set
+    const newStatus = value && formData.status === "consultation" ? "planned" : formData.status;
+    setFormData({ ...formData, surgery_date: value, status: value ? (formData.status === "consultation" || formData.status === "awaiting" ? "planned" : formData.status) : formData.status });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
