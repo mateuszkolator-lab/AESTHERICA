@@ -229,6 +229,38 @@ async def delete_location(location_id: str, user: dict = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="Location not found")
     return {"message": "Location deleted"}
 
+# ==================== PROCEDURE TYPE ROUTES ====================
+
+@api_router.get("/procedure-types", response_model=List[ProcedureType])
+async def get_procedure_types(user: dict = Depends(verify_token)):
+    procedure_types = await db.procedure_types.find({}, {"_id": 0}).to_list(100)
+    return procedure_types
+
+@api_router.post("/procedure-types", response_model=ProcedureType)
+async def create_procedure_type(procedure_type: ProcedureTypeCreate, user: dict = Depends(verify_token)):
+    pt = ProcedureType(**procedure_type.model_dump())
+    await db.procedure_types.insert_one(pt.model_dump())
+    return pt
+
+@api_router.put("/procedure-types/{procedure_type_id}", response_model=ProcedureType)
+async def update_procedure_type(procedure_type_id: str, procedure_type: ProcedureTypeCreate, user: dict = Depends(verify_token)):
+    result = await db.procedure_types.find_one_and_update(
+        {"id": procedure_type_id},
+        {"$set": procedure_type.model_dump()},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Procedure type not found")
+    del result["_id"]
+    return result
+
+@api_router.delete("/procedure-types/{procedure_type_id}")
+async def delete_procedure_type(procedure_type_id: str, user: dict = Depends(verify_token)):
+    result = await db.procedure_types.delete_one({"id": procedure_type_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Procedure type not found")
+    return {"message": "Procedure type deleted"}
+
 # ==================== PATIENT ROUTES ====================
 
 @api_router.get("/patients", response_model=List[Patient])
