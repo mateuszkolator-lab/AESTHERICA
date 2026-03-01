@@ -243,7 +243,7 @@ const Dashboard = () => {
     try {
       const [dashRes, slotsRes] = await Promise.all([
         api.get("/dashboard"),
-        api.get("/surgery-slots")
+        api.get("/surgery-slots?include_past=true")
       ]);
       setData(dashRes.data);
       setSlots(slotsRes.data);
@@ -288,10 +288,24 @@ const Dashboard = () => {
     return slots.find(s => s.date === dateStr);
   };
 
-  const getUpcomingSurgeryForDate = (date) => {
-    if (!date || !data?.upcoming_surgeries) return null;
+  const getSurgeriesForDate = (date) => {
+    if (!date || !data?.upcoming_surgeries) return [];
     const dateStr = date.toISOString().split("T")[0];
-    return data.upcoming_surgeries.find(p => p.surgery_date === dateStr);
+    return data.upcoming_surgeries.filter(p => p.surgery_date === dateStr);
+  };
+
+  // Get procedure type abbreviation (first 2-3 letters)
+  const getProcedureAbbrev = (procedureType) => {
+    if (!procedureType) return "?";
+    const abbrevMap = {
+      "Rinoplastyka": "RIN",
+      "Rhinoplasty": "RIN",
+      "Blefaroplastyka": "BLE",
+      "Lifting": "LIF",
+      "Otoplastyka": "OTO",
+      "Liposukcja": "LIP"
+    };
+    return abbrevMap[procedureType] || procedureType.substring(0, 3).toUpperCase();
   };
 
   const days = getDaysInMonth(currentMonth);
@@ -302,31 +316,13 @@ const Dashboard = () => {
 
   return (
     <div className="p-8" data-testid="dashboard-page">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Pulpit</h1>
         <p className="text-slate-500 mt-1">Witaj ponownie! Oto przegląd Twojej praktyki.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: "Wszyscy pacjenci", value: data?.stats?.total || 0, icon: Users, color: "teal" },
-          { label: "Zoperowani", value: data?.stats?.operated || 0, icon: CheckCircle2, color: "emerald" },
-          { label: "Zaplanowani", value: data?.stats?.planned || 0, icon: Calendar, color: "blue" },
-          { label: "Oczekujący", value: data?.stats?.awaiting || 0, icon: Clock, color: "amber" },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-all" data-testid={`stat-${stat.label.toLowerCase().replace(' ', '-')}`}>
-            <div className={`w-10 h-10 rounded-lg bg-${stat.color}-100 flex items-center justify-center mb-4`}>
-              <stat.icon className={`w-5 h-5 text-${stat.color}-600`} />
-            </div>
-            <p className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>{stat.value}</p>
-            <p className="text-sm text-slate-500">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar Preview */}
+        {/* Calendar Preview - larger with patient info */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Kalendarz operacji</h2>
@@ -356,32 +352,28 @@ const Dashboard = () => {
               ))}
             </div>
             
-            {/* Calendar days */}
+            {/* Calendar days with patient names */}
             <div className="grid grid-cols-7 gap-1">
               {days.map((day, i) => {
                 const slot = getSlotForDate(day);
-                const surgery = getUpcomingSurgeryForDate(day);
+                const surgeries = getSurgeriesForDate(day);
                 const isToday = day && day.toDateString() === new Date().toDateString();
                 const hasSlot = !!slot;
                 const isFull = slot?.is_full;
-                const hasAssignedPatient = slot?.assigned_patient_id || surgery;
+                const hasPatients = surgeries.length > 0;
                 
                 let bgColor = "";
-                let dotColor = "";
                 let borderColor = "";
                 
                 if (day) {
                   if (isFull) {
                     bgColor = "bg-red-100";
-                    dotColor = "bg-red-600";
                     borderColor = "ring-2 ring-red-400";
-                  } else if (hasAssignedPatient) {
+                  } else if (hasPatients) {
                     bgColor = "bg-emerald-100";
-                    dotColor = "bg-emerald-600";
                     borderColor = "ring-2 ring-emerald-400";
                   } else if (hasSlot) {
                     bgColor = "bg-amber-100";
-                    dotColor = "bg-amber-500";
                     borderColor = "ring-2 ring-amber-300";
                   }
                 }
@@ -390,7 +382,7 @@ const Dashboard = () => {
                   <div
                     key={i}
                     onClick={() => day && navigate("/calendar")}
-                    className={`aspect-square p-1 rounded-lg cursor-pointer transition-all relative ${
+                    className={`min-h-[70px] p-1 rounded-lg cursor-pointer transition-all relative ${
                       !day 
                         ? "" 
                         : isToday 
@@ -400,16 +392,37 @@ const Dashboard = () => {
                   >
                     {day && (
                       <>
-                        <p className={`text-xs font-medium text-center ${
-                          isToday ? "text-teal-700" : hasSlot ? "text-slate-900" : "text-slate-600"
+                        <p className={`text-xs font-medium ${
+                          isToday ? "text-teal-700" : hasSlot || hasPatients ? "text-slate-900" : "text-slate-600"
                         }`}>
                           {day.getDate()}
                         </p>
-                        {(hasSlot || surgery) && (
-                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-                            <div className={`w-2 h-2 rounded-full ${dotColor} shadow-sm`} />
-                          </div>
-                        )}
+                        {/* Show patient names and procedure abbreviations */}
+                        <div className="mt-0.5 space-y-0.5 overflow-hidden">
+                          {surgeries.slice(0, 2).map((patient, idx) => (
+                            <div 
+                              key={idx}
+                              className="flex items-center gap-0.5 text-[9px] leading-tight"
+                              title={`${patient.first_name} ${patient.last_name} - ${patient.procedure_type || 'Zabieg'}`}
+                            >
+                              <span className="px-1 py-0.5 bg-blue-600 text-white rounded font-bold shrink-0">
+                                {getProcedureAbbrev(patient.procedure_type)}
+                              </span>
+                              <span className="truncate text-slate-700 font-medium">
+                                {patient.last_name}
+                              </span>
+                            </div>
+                          ))}
+                          {surgeries.length > 2 && (
+                            <p className="text-[9px] text-slate-500 font-medium">+{surgeries.length - 2}</p>
+                          )}
+                          {!hasPatients && hasSlot && !isFull && (
+                            <span className="text-[9px] text-amber-700 font-medium">Wolny</span>
+                          )}
+                          {isFull && (
+                            <span className="text-[9px] text-red-700 font-medium">Pełny</span>
+                          )}
+                        </div>
                       </>
                     )}
                   </div>
@@ -420,30 +433,85 @@ const Dashboard = () => {
             {/* Legend */}
             <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-emerald-600 ring-2 ring-emerald-300" />
-                <span>Zaplanowana operacja</span>
+                <div className="w-3 h-3 rounded bg-emerald-100 ring-2 ring-emerald-400" />
+                <span>Z pacjentem</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-200" />
+                <div className="w-3 h-3 rounded bg-amber-100 ring-2 ring-amber-300" />
                 <span>Wolny termin</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-600 ring-2 ring-red-300" />
-                <span>Pełny/Niedostępny</span>
+                <div className="w-3 h-3 rounded bg-red-100 ring-2 ring-red-400" />
+                <span>Niedostępny</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="px-1 py-0.5 bg-blue-600 text-white rounded text-[9px] font-bold">RIN</span>
+                <span>Typ zabiegu</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Patients */}
+        {/* Upcoming Surgeries as List */}
         <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
+            <span className="px-2 py-0.5 bg-teal-100 text-teal-800 text-xs font-medium rounded-full">
+              {data?.upcoming_surgeries?.length || 0}
+            </span>
+          </div>
+          <div className="p-4 max-h-[400px] overflow-y-auto">
+            {data?.upcoming_surgeries?.length > 0 ? (
+              <div className="space-y-2">
+                {data.upcoming_surgeries.map((patient) => (
+                  <div 
+                    key={patient.id} 
+                    className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/patients/${patient.id}`)}
+                    data-testid={`upcoming-${patient.id}`}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
+                      <Calendar className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 text-sm truncate">{patient.first_name} {patient.last_name}</p>
+                      <p className="text-xs text-slate-500 truncate">{patient.procedure_type || "Zabieg do ustalenia"}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold text-teal-700">{patient.surgery_date}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-slate-500 text-sm">Brak nadchodzących operacji</p>
+              </div>
+            )}
+          </div>
+          <div className="px-4 py-3 border-t border-slate-100">
+            <button 
+              onClick={() => navigate("/calendar")} 
+              className="w-full text-sm text-teal-600 hover:text-teal-700 font-medium"
+            >
+              Zobacz pełny kalendarz →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom row - Recent Patients and Stats */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Patients */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Ostatni pacjenci</h2>
             <button onClick={() => navigate("/patients")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">Zobacz wszystkich</button>
           </div>
-          <div className="p-6">
+          <div className="p-4">
             {data?.recent_patients?.length > 0 ? (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {data.recent_patients.map((patient) => (
                   <div 
                     key={patient.id}
@@ -455,7 +523,7 @@ const Dashboard = () => {
                       <User className="w-4 h-4 text-slate-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-900 truncate">{patient.first_name} {patient.last_name}</p>
+                      <p className="font-medium text-slate-900 text-sm truncate">{patient.first_name} {patient.last_name}</p>
                       <p className="text-xs text-slate-500">{new Date(patient.created_at).toLocaleDateString('pl-PL')}</p>
                     </div>
                     <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
@@ -469,38 +537,39 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Upcoming Surgeries */}
-      <div className="mt-6 bg-white rounded-xl border border-slate-200">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
-          <button onClick={() => navigate("/calendar")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">Zobacz kalendarz</button>
-        </div>
-        <div className="p-6">
-          {data?.upcoming_surgeries?.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.upcoming_surgeries.slice(0, 6).map((patient) => (
-                <div 
-                  key={patient.id} 
-                  className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/patients/${patient.id}`)}
-                  data-testid={`upcoming-${patient.id}`}
-                >
-                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-teal-600" />
+        {/* Stats - Compact */}
+        <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-6 py-4 border-b border-slate-100">
+            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Statystyki</h2>
+          </div>
+          <div className="p-4 space-y-3">
+            {[
+              { label: "Wszyscy", value: data?.stats?.total || 0, icon: Users, color: "teal" },
+              { label: "Zoperowani", value: data?.stats?.operated || 0, icon: CheckCircle2, color: "emerald" },
+              { label: "Zaplanowani", value: data?.stats?.planned || 0, icon: Calendar, color: "blue" },
+              { label: "Oczekujący", value: data?.stats?.awaiting || 0, icon: Clock, color: "amber" },
+              { label: "Konsultacje", value: data?.stats?.consultation || 0, icon: User, color: "slate" },
+            ].map((stat, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                <div className="flex items-center gap-2">
+                  <div className={`w-7 h-7 rounded-lg bg-${stat.color}-100 flex items-center justify-center`}>
+                    <stat.icon className={`w-4 h-4 text-${stat.color}-600`} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
-                    <p className="text-sm text-slate-500">{patient.procedure_type || "Zabieg do ustalenia"}</p>
-                    <p className="text-sm font-medium text-teal-600 mt-1">{patient.surgery_date}</p>
-                  </div>
+                  <span className="text-sm text-slate-600">{stat.label}</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-center py-8">Brak nadchodzących operacji</p>
-          )}
+                <span className="text-lg font-semibold text-slate-900">{stat.value}</span>
+              </div>
+            ))}
+          </div>
+          <div className="px-4 py-3 border-t border-slate-100">
+            <button 
+              onClick={() => navigate("/stats")} 
+              className="w-full text-sm text-teal-600 hover:text-teal-700 font-medium"
+            >
+              Zobacz szczegółowe statystyki →
+            </button>
+          </div>
         </div>
       </div>
     </div>
