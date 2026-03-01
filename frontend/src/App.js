@@ -369,7 +369,8 @@ const PatientsList = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilters, setStatusFilters] = useState([]);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -377,12 +378,11 @@ const PatientsList = () => {
 
   useEffect(() => {
     loadPatients();
-  }, [statusFilter, sortBy, sortOrder]);
+  }, [sortBy, sortOrder]);
 
   const loadPatients = async () => {
     try {
       const params = new URLSearchParams();
-      if (statusFilter) params.append("status", statusFilter);
       params.append("sort_by", sortBy);
       params.append("sort_order", sortOrder);
       
@@ -395,14 +395,28 @@ const PatientsList = () => {
     }
   };
 
+  const toggleStatusFilter = (status) => {
+    if (statusFilters.includes(status)) {
+      setStatusFilters(statusFilters.filter(s => s !== status));
+    } else {
+      setStatusFilters([...statusFilters, status]);
+    }
+  };
+
+  const clearStatusFilters = () => {
+    setStatusFilters([]);
+  };
+
   const filteredPatients = patients.filter((p) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       p.first_name.toLowerCase().includes(query) ||
       p.last_name.toLowerCase().includes(query) ||
       (p.email && p.email.toLowerCase().includes(query)) ||
       (p.phone && p.phone.includes(query))
     );
+    const matchesStatus = statusFilters.length === 0 || statusFilters.includes(p.status);
+    return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (status) => {
@@ -426,6 +440,13 @@ const PatientsList = () => {
       toast.error("Nie udało się usunąć pacjenta");
     }
   };
+
+  const statusOptions = [
+    { value: "consultation", label: "Konsultacja" },
+    { value: "planned", label: "Zaplanowany" },
+    { value: "awaiting", label: "Oczekujący" },
+    { value: "operated", label: "Zoperowany" }
+  ];
 
   return (
     <div className="p-8" data-testid="patients-page">
@@ -458,18 +479,54 @@ const PatientsList = () => {
               data-testid="search-input"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-            data-testid="status-filter"
-          >
-            <option value="">Wszystkie statusy</option>
-            <option value="consultation">Konsultacja</option>
-            <option value="planned">Zaplanowany</option>
-            <option value="awaiting">Oczekujący</option>
-            <option value="operated">Zoperowany</option>
-          </select>
+          
+          {/* Multi-select Status Filter */}
+          <div className="relative">
+            <button
+              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+              className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white flex items-center gap-2 min-w-[180px]"
+              data-testid="status-filter-button"
+            >
+              <Filter className="w-4 h-4 text-slate-500" />
+              <span className="text-slate-700">
+                {statusFilters.length === 0 ? "Wszystkie statusy" : `Wybrano: ${statusFilters.length}`}
+              </span>
+              <ChevronRight className={`w-4 h-4 text-slate-400 ml-auto transition-transform ${showStatusDropdown ? 'rotate-90' : ''}`} />
+            </button>
+            
+            {showStatusDropdown && (
+              <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg z-20" data-testid="status-dropdown">
+                <div className="p-2 border-b border-slate-100">
+                  <button
+                    onClick={clearStatusFilters}
+                    className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                  >
+                    Wyczyść filtry
+                  </button>
+                </div>
+                <div className="p-2 space-y-1">
+                  {statusOptions.map((option) => (
+                    <label
+                      key={option.value}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={statusFilters.includes(option.value)}
+                        onChange={() => toggleStatusFilter(option.value)}
+                        className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                        data-testid={`status-checkbox-${option.value}`}
+                      />
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(option.value)}`}>
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -489,7 +546,46 @@ const PatientsList = () => {
             {sortOrder === "asc" ? "↑ Rosnąco" : "↓ Malejąco"}
           </button>
         </div>
+
+        {/* Active filters and counter */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center gap-2 flex-wrap">
+            {statusFilters.map((status) => (
+              <span
+                key={status}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(status)}`}
+              >
+                {STATUS_LABELS[status]}
+                <button
+                  onClick={() => toggleStatusFilter(status)}
+                  className="ml-1 hover:opacity-70"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            {statusFilters.length > 0 && (
+              <button
+                onClick={clearStatusFilters}
+                className="text-xs text-slate-500 hover:text-slate-700"
+              >
+                Wyczyść wszystko
+              </button>
+            )}
+          </div>
+          <div className="text-sm font-medium text-slate-600" data-testid="results-counter">
+            Wyświetlono: <span className="text-teal-700">{filteredPatients.length}</span> z {patients.length}
+          </div>
+        </div>
       </div>
+
+      {/* Click outside to close dropdown */}
+      {showStatusDropdown && (
+        <div 
+          className="fixed inset-0 z-10" 
+          onClick={() => setShowStatusDropdown(false)}
+        />
+      )}
 
       {/* Patients Table */}
       {loading ? (
