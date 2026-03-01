@@ -2080,19 +2080,26 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
 
 // ==================== CALENDAR PAGE ====================
 const CalendarPage = () => {
+  const [calendarData, setCalendarData] = useState(null);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [draggedPatient, setDraggedPatient] = useState(null);
+  const [showUnassigned, setShowUnassigned] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadPatients();
+    loadData();
   }, []);
 
-  const loadPatients = async () => {
+  const loadData = async () => {
     try {
-      const res = await api.get("/patients");
-      setPatients(res.data.filter(p => p.surgery_date));
+      const [calRes, patientsRes] = await Promise.all([
+        api.get("/surgery-slots/calendar-data"),
+        api.get("/patients")
+      ]);
+      setCalendarData(calRes.data);
+      setPatients(patientsRes.data.filter(p => p.surgery_date));
     } catch (err) {
       toast.error("Nie udało się załadować kalendarza");
     } finally {
@@ -2124,6 +2131,12 @@ const CalendarPage = () => {
     return patients.filter(p => p.surgery_date === dateStr);
   };
 
+  const getSlotByDate = (date) => {
+    if (!date || !calendarData?.slots) return null;
+    const dateStr = date.toISOString().split("T")[0];
+    return calendarData.slots.find(s => s.date === dateStr);
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       planned: "bg-blue-500",
@@ -2133,98 +2146,228 @@ const CalendarPage = () => {
     return colors[status] || "bg-slate-500";
   };
 
+  const handleDragStart = (e, patient) => {
+    setDraggedPatient(patient);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = async (e, date) => {
+    e.preventDefault();
+    if (!draggedPatient || !date) return;
+
+    const dateStr = date.toISOString().split("T")[0];
+    const slot = calendarData?.slots?.find(s => s.date === dateStr);
+
+    // Check if slot is full
+    if (slot?.is_full) {
+      toast.error("Ten termin jest oznaczony jako pełny");
+      setDraggedPatient(null);
+      return;
+    }
+
+    try {
+      if (slot) {
+        // Assign to existing slot
+        await api.post(`/surgery-slots/${slot.id}/assign/${draggedPatient.id}`);
+      } else {
+        // Create new slot and assign
+        const newSlot = await api.post("/surgery-slots", { date: dateStr });
+        await api.post(`/surgery-slots/${newSlot.data.id}/assign/${draggedPatient.id}`);
+      }
+      toast.success(`Pacjent przypisany do ${dateStr}`);
+      loadData();
+    } catch (err) {
+      toast.error("Nie udało się przypisać pacjenta");
+    }
+    setDraggedPatient(null);
+  };
+
   const days = getDaysInMonth(currentMonth);
   const monthName = currentMonth.toLocaleString("pl-PL", { month: "long", year: "numeric" });
-
   const dayNames = ["Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "So"];
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
     <div className="p-8" data-testid="calendar-page">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Kalendarz operacji</h1>
-        <p className="text-slate-500 mt-1">Przeglądaj i zarządzaj zaplanowanymi operacjami</p>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <button
-            onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
-            className="p-2 hover:bg-slate-100 rounded-lg"
-            data-testid="prev-month"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h2 className="text-xl font-semibold text-slate-900 capitalize">{monthName}</h2>
-          <button
-            onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
-            className="p-2 hover:bg-slate-100 rounded-lg"
-            data-testid="next-month"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6">
-          <div className="grid grid-cols-7 gap-2 mb-2">
-            {dayNames.map((day) => (
-              <div key={day} className="text-center text-sm font-semibold text-slate-500 py-2">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-2">
-            {days.map((day, i) => {
-              const dayPatients = getPatientsByDate(day);
-              const isToday = day && day.toDateString() === new Date().toDateString();
-              
-              return (
-                <div
-                  key={i}
-                  className={`min-h-[100px] p-2 rounded-lg border ${
-                    day ? "border-slate-100 hover:border-slate-200" : "border-transparent"
-                  } ${isToday ? "bg-teal-50 border-teal-200" : ""}`}
-                >
-                  {day && (
-                    <>
-                      <p className={`text-sm font-medium ${isToday ? "text-teal-700" : "text-slate-600"}`}>
-                        {day.getDate()}
-                      </p>
-                      <div className="mt-1 space-y-1">
-                        {dayPatients.slice(0, 3).map((patient) => (
-                          <div
-                            key={patient.id}
-                            onClick={() => navigate(`/patients/${patient.id}`)}
-                            className={`px-2 py-1 rounded text-xs text-white cursor-pointer truncate ${getStatusColor(patient.status)}`}
-                            data-testid={`calendar-event-${patient.id}`}
-                          >
-                            {patient.first_name} {patient.last_name[0]}.
-                          </div>
-                        ))}
-                        {dayPatients.length > 3 && (
-                          <p className="text-xs text-slate-500">+{dayPatients.length - 3} więcej</p>
-                        )}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Unassigned Patients Panel */}
+        {showUnassigned && (
+          <div className="lg:w-80 bg-white rounded-xl border border-slate-200 h-fit lg:sticky lg:top-8">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Pacjenci bez terminu</h3>
+              <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded-full">
+                {calendarData?.unassigned_patients?.length || 0}
+              </span>
+            </div>
+            <div className="p-3 max-h-[600px] overflow-y-auto">
+              {calendarData?.unassigned_patients?.length > 0 ? (
+                <div className="space-y-2">
+                  {calendarData.unassigned_patients.map((patient) => (
+                    <div
+                      key={patient.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, patient)}
+                      className="p-3 bg-slate-50 rounded-lg cursor-grab active:cursor-grabbing hover:bg-slate-100 transition-colors border border-slate-200"
+                      data-testid={`draggable-patient-${patient.id}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-slate-400" />
+                        <span className="font-medium text-slate-900 text-sm">{patient.first_name} {patient.last_name}</span>
                       </div>
-                    </>
-                  )}
+                      <div className="mt-1 text-xs text-slate-500">
+                        {patient.procedure_type || "Zabieg nieokreślony"}
+                      </div>
+                      {(patient.preferred_date_start || patient.preferred_date_end) && (
+                        <div className="mt-1 text-xs text-teal-600">
+                          Pref: {patient.preferred_date_start || "?"} - {patient.preferred_date_end || "?"}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
+              ) : (
+                <p className="text-slate-400 text-sm text-center py-4">Wszyscy pacjenci mają przypisane terminy</p>
+              )}
+            </div>
+            <div className="px-4 py-3 border-t border-slate-100 text-xs text-slate-500">
+              Przeciągnij pacjenta na dzień w kalendarzu
+            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Google Calendar Status */}
-      <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-          <div>
-            <p className="font-medium text-amber-800">Integracja z Kalendarzem Google</p>
-            <p className="text-sm text-amber-700 mt-1">
-              Synchronizacja z Kalendarzem Google nie jest jeszcze skonfigurowana. Dodaj dane API Google w Ustawieniach, aby włączyć automatyczną synchronizację.
-            </p>
+        {/* Calendar */}
+        <div className="flex-1">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Kalendarz operacji</h1>
+              <p className="text-slate-500 mt-1">Przeciągnij pacjentów na wybrane daty</p>
+            </div>
+            <button
+              onClick={() => setShowUnassigned(!showUnassigned)}
+              className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium text-sm"
+            >
+              {showUnassigned ? "Ukryj panel" : "Pokaż pacjentów"}
+            </button>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <button
+                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                className="p-2 hover:bg-slate-100 rounded-lg"
+                data-testid="prev-month"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-semibold text-slate-900 capitalize">{monthName}</h2>
+              <button
+                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                className="p-2 hover:bg-slate-100 rounded-lg"
+                data-testid="next-month"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {dayNames.map((day) => (
+                  <div key={day} className="text-center text-sm font-semibold text-slate-500 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {days.map((day, i) => {
+                  const dayPatients = getPatientsByDate(day);
+                  const slot = getSlotByDate(day);
+                  const isToday = day && day.toDateString() === new Date().toDateString();
+                  const isFull = slot?.is_full;
+                  const hasSlot = !!slot;
+                  
+                  return (
+                    <div
+                      key={i}
+                      onDragOver={day ? handleDragOver : undefined}
+                      onDrop={day ? (e) => handleDrop(e, day) : undefined}
+                      className={`min-h-[100px] p-2 rounded-lg border transition-colors ${
+                        !day 
+                          ? "border-transparent" 
+                          : isFull 
+                            ? "border-red-200 bg-red-50" 
+                            : hasSlot 
+                              ? "border-teal-200 bg-teal-50 hover:bg-teal-100" 
+                              : isToday 
+                                ? "border-teal-300 bg-teal-50" 
+                                : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
+                      } ${draggedPatient && day && !isFull ? "ring-2 ring-teal-300 ring-opacity-50" : ""}`}
+                    >
+                      {day && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <p className={`text-sm font-medium ${isToday ? "text-teal-700" : "text-slate-600"}`}>
+                              {day.getDate()}
+                            </p>
+                            {isFull && (
+                              <span className="px-1.5 py-0.5 bg-red-200 text-red-800 text-[10px] font-medium rounded">
+                                Pełny
+                              </span>
+                            )}
+                            {hasSlot && !isFull && !slot.assigned_patient_id && (
+                              <span className="px-1.5 py-0.5 bg-teal-200 text-teal-800 text-[10px] font-medium rounded">
+                                Termin
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 space-y-1">
+                            {dayPatients.slice(0, 3).map((patient) => (
+                              <div
+                                key={patient.id}
+                                onClick={() => navigate(`/patients/${patient.id}`)}
+                                className={`px-2 py-1 rounded text-xs text-white cursor-pointer truncate ${getStatusColor(patient.status)}`}
+                                data-testid={`calendar-event-${patient.id}`}
+                              >
+                                {patient.first_name} {patient.last_name[0]}.
+                              </div>
+                            ))}
+                            {dayPatients.length > 3 && (
+                              <p className="text-xs text-slate-500">+{dayPatients.length - 3} więcej</p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="mt-4 flex items-center gap-6 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-teal-100 border border-teal-200" />
+              <span>Termin operacji</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-red-100 border border-red-200" />
+              <span>Pełny/Niedostępny</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-blue-500" />
+              <span>Zaplanowany</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-emerald-500" />
+              <span>Zoperowany</span>
+            </div>
           </div>
         </div>
       </div>
