@@ -368,17 +368,21 @@ const Dashboard = () => {
                 
                 let bgColor = "";
                 let dotColor = "";
+                let borderColor = "";
                 
                 if (day) {
                   if (isFull) {
-                    bgColor = "bg-red-50";
-                    dotColor = "bg-red-500";
+                    bgColor = "bg-red-100";
+                    dotColor = "bg-red-600";
+                    borderColor = "ring-2 ring-red-400";
                   } else if (hasAssignedPatient) {
-                    bgColor = "bg-emerald-50";
-                    dotColor = "bg-emerald-500";
+                    bgColor = "bg-emerald-100";
+                    dotColor = "bg-emerald-600";
+                    borderColor = "ring-2 ring-emerald-400";
                   } else if (hasSlot) {
-                    bgColor = "bg-amber-50";
+                    bgColor = "bg-amber-100";
                     dotColor = "bg-amber-500";
+                    borderColor = "ring-2 ring-amber-300";
                   }
                 }
                 
