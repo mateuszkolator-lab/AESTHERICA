@@ -2303,28 +2303,42 @@ const CalendarPage = () => {
     if (!draggedPatient || !date) return;
 
     const dateStr = date.toISOString().split("T")[0];
-    const slot = calendarData?.slots?.find(s => s.date === dateStr);
+    const targetSlot = calendarData?.slots?.find(s => s.date === dateStr);
 
     // Check if slot is full
-    if (slot?.is_full) {
+    if (targetSlot?.is_full) {
       toast.error("Ten termin jest oznaczony jako pełny");
       setDraggedPatient(null);
       return;
     }
 
+    // Check if dropping to the same date
+    if (draggedPatient.surgery_date === dateStr) {
+      setDraggedPatient(null);
+      return;
+    }
+
     try {
-      if (slot) {
+      // If patient already has a surgery date, unassign from previous slot first
+      if (draggedPatient.surgery_date) {
+        const previousSlot = calendarData?.slots?.find(s => s.date === draggedPatient.surgery_date && s.assigned_patient_id === draggedPatient.id);
+        if (previousSlot) {
+          await api.post(`/surgery-slots/${previousSlot.id}/unassign`);
+        }
+      }
+
+      if (targetSlot) {
         // Assign to existing slot
-        await api.post(`/surgery-slots/${slot.id}/assign/${draggedPatient.id}`);
+        await api.post(`/surgery-slots/${targetSlot.id}/assign/${draggedPatient.id}`);
       } else {
         // Create new slot and assign
         const newSlot = await api.post("/surgery-slots", { date: dateStr });
         await api.post(`/surgery-slots/${newSlot.data.id}/assign/${draggedPatient.id}`);
       }
-      toast.success(`Pacjent przypisany do ${dateStr}`);
+      toast.success(`Pacjent przeniesiony na ${dateStr}`);
       loadData();
     } catch (err) {
-      toast.error("Nie udało się przypisać pacjenta");
+      toast.error("Nie udało się przenieść pacjenta");
     }
     setDraggedPatient(null);
   };
