@@ -728,7 +728,7 @@ const Dashboard = () => {
                 <span>Typ zabiegu</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="px-1 py-0.5 bg-purple-600 text-white rounded text-[8px] font-bold">PRO</span>
+                <div className="w-3 h-3 rounded-sm border-l-4 border-l-orange-500 bg-slate-100" />
                 <span>Lokalizacja</span>
               </div>
             </div>
