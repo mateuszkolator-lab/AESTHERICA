@@ -880,6 +880,7 @@ const PatientsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilters, setStatusFilters] = useState([]);
   const [locationFilter, setLocationFilter] = useState("");
+  const [asapFilter, setAsapFilter] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
