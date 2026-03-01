@@ -2816,6 +2816,17 @@ const CalendarPage = () => {
                             {dayPatients.length > 3 && (
                               <p className="text-xs text-slate-500">+{dayPatients.length - 3} więcej</p>
                             )}
+                            {(dayPatients.length > 0 || hasSlot) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDay(day);
+                                }}
+                                className="w-full text-[10px] text-teal-600 hover:text-teal-700 font-medium mt-1 pt-1 border-t border-slate-200/50"
+                              >
+                                Szczegóły →
+                              </button>
+                            )}
                           </div>
                         </>
                       )}
