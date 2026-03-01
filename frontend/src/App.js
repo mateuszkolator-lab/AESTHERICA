@@ -3275,7 +3275,7 @@ const CalendarPage = () => {
                       key={i}
                       onDragOver={day ? handleDragOver : undefined}
                       onDrop={day ? (e) => handleDrop(e, day) : undefined}
-                      className={`min-h-[100px] p-2 rounded-lg border-2 transition-colors ${
+                      className={`min-h-[100px] p-2 rounded-lg border-2 transition-colors overflow-hidden ${
                         !day 
                           ? "border-transparent" 
                           : isFull 
@@ -3287,7 +3287,7 @@ const CalendarPage = () => {
                                 : isToday 
                                   ? "border-teal-400 bg-teal-50" 
                                   : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                      } ${draggedPatient && day && !isFull ? "ring-2 ring-teal-400 ring-opacity-70" : ""}`}
+                      } ${draggedPatient && day && !isFull ? "ring-2 ring-teal-400 ring-opacity-70" : ""} ${hasSlot && slot.location_name ? `border-l-4 ${getLocationColor(slot.location_name)?.border}` : ""}`}
                     >
                       {day && (
                         <>
@@ -3295,18 +3295,16 @@ const CalendarPage = () => {
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => (dayPatients.length > 0 || hasSlot) && setSelectedDay(day)}
                           >
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                               <p className={`text-sm font-medium ${isToday ? "text-teal-700" : "text-slate-600"}`}>
                                 {day.getDate()}
                               </p>
-                              {/* Location badge */}
+                              {/* Location indicator dot */}
                               {hasSlot && slot.location_name && (
-                                <span 
-                                  className="px-1.5 py-0.5 bg-purple-600 text-white text-[9px] font-bold rounded"
+                                <div 
+                                  className={`w-2.5 h-2.5 rounded-full ${getLocationColor(slot.location_name)?.dot}`}
                                   title={slot.location_name}
-                                >
-                                  {slot.location_name.substring(0, 3).toUpperCase()}
-                                </span>
+                                />
                               )}
                             </div>
                             <div className="flex items-center gap-1">
