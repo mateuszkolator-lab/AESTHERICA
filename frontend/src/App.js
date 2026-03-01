@@ -320,7 +320,7 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 text-center py-8">Brak nadchodzących operacji w ciągu 7 dni</p>
+              <p className="text-slate-500 text-center py-8">Brak nadchodzących operacji</p>
             )}
           </div>
         </div>
