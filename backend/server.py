@@ -318,6 +318,68 @@ async def delete_surgery_slot(slot_id: str, user: dict = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="Surgery slot not found")
     return {"message": "Surgery slot deleted"}
 
+@api_router.post("/surgery-slots/{slot_id}/toggle-full")
+async def toggle_slot_full(slot_id: str, user: dict = Depends(verify_token)):
+    """Toggle the full status of a surgery slot"""
+    slot = await db.surgery_slots.find_one({"id": slot_id})
+    if not slot:
+        raise HTTPException(status_code=404, detail="Surgery slot not found")
+    
+    new_status = not slot.get("is_full", False)
+    await db.surgery_slots.update_one(
+        {"id": slot_id},
+        {"$set": {"is_full": new_status}}
+    )
+    return {"message": "Slot status updated", "is_full": new_status}
+
+@api_router.get("/surgery-slots/calendar-data")
+async def get_calendar_data(user: dict = Depends(verify_token)):
+    """Get all data needed for calendar drag & drop"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get all future slots
+    slots = await db.surgery_slots.find(
+        {"date": {"$gte": today}},
+        {"_id": 0}
+    ).sort("date", 1).to_list(200)
+    
+    # Get unassigned patients (waiting for surgery)
+    unassigned_patients = await db.patients.find(
+        {
+            "status": {"$in": ["consultation", "awaiting"]},
+            "$or": [
+                {"surgery_date": None},
+                {"surgery_date": ""}
+            ]
+        },
+        {"_id": 0}
+    ).to_list(500)
+    
+    # Get locations
+    locations = await db.locations.find({}, {"_id": 0}).to_list(100)
+    location_map = {loc["id"]: loc["name"] for loc in locations}
+    
+    # Enrich slots with location names and assigned patient info
+    enriched_slots = []
+    for slot in slots:
+        slot_data = {**slot, "location_name": location_map.get(slot.get("location_id"), "")}
+        if slot.get("assigned_patient_id"):
+            patient = await db.patients.find_one({"id": slot["assigned_patient_id"]}, {"_id": 0})
+            if patient:
+                slot_data["assigned_patient"] = {
+                    "id": patient["id"],
+                    "first_name": patient["first_name"],
+                    "last_name": patient["last_name"],
+                    "procedure_type": patient.get("procedure_type")
+                }
+        enriched_slots.append(slot_data)
+    
+    return {
+        "slots": enriched_slots,
+        "unassigned_patients": unassigned_patients,
+        "locations": locations
+    }
+
 @api_router.get("/surgery-slots/suggestions")
 async def get_slot_suggestions(user: dict = Depends(verify_token)):
     """Get surgery slots with suggested patients based on preferred dates"""
