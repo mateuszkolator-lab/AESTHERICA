@@ -652,30 +652,30 @@ const Dashboard = () => {
                     key={i}
                     onClick={() => day && (hasSlot || hasPatients) && setSelectedDay(day)}
                     data-testid={day ? `dashboard-day-${day.getDate()}` : undefined}
-                    className={`min-h-[70px] p-1 rounded-lg cursor-pointer transition-all relative ${
+                    className={`min-h-[70px] p-1 rounded-lg cursor-pointer transition-all relative overflow-hidden ${
                       !day 
                         ? "cursor-default" 
                         : isToday 
                           ? "ring-2 ring-teal-500 ring-offset-1" 
                           : borderColor || "hover:bg-slate-50"
-                    } ${bgColor}`}
+                    } ${bgColor} ${hasSlot && slot.location_name ? `border-l-4 ${getLocationColor(slot.location_name)?.border}` : ""}`}
                   >
                     {day && (
                       <>
-                        <p className={`text-xs font-medium ${
-                          isToday ? "text-teal-700" : hasSlot || hasPatients ? "text-slate-900" : "text-slate-600"
-                        }`}>
-                          {day.getDate()}
-                        </p>
-                        {/* Show location badge if slot has location */}
-                        {hasSlot && slot.location_name && (
-                          <span 
-                            className="absolute top-0.5 right-0.5 px-1 py-0.5 text-[8px] font-bold rounded bg-purple-600 text-white"
-                            title={slot.location_name}
-                          >
-                            {slot.location_name.substring(0, 3).toUpperCase()}
-                          </span>
-                        )}
+                        <div className="flex items-center justify-between">
+                          <p className={`text-xs font-medium ${
+                            isToday ? "text-teal-700" : hasSlot || hasPatients ? "text-slate-900" : "text-slate-600"
+                          }`}>
+                            {day.getDate()}
+                          </p>
+                          {/* Show location indicator */}
+                          {hasSlot && slot.location_name && (
+                            <div 
+                              className={`w-2 h-2 rounded-full ${getLocationColor(slot.location_name)?.dot}`}
+                              title={slot.location_name}
+                            />
+                          )}
+                        </div>
                         {/* Show patient names and procedure abbreviations */}
                         <div className="mt-0.5 space-y-0.5 overflow-hidden">
                           {surgeries.slice(0, 2).map((patient, idx) => (
