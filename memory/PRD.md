@@ -1,86 +1,73 @@
-# AestheticaMD - Patient Management System
+# AestheticaMD - System Zarządzania Pacjentami
 
-## Original Problem Statement
-Build a patient management app for a facial plastic surgeon with:
-- Patient database with CRUD operations and sorting
-- Google Calendar integration for surgery dates (placeholder ready)
-- Sorting by preferred date range, surgery date, status
-- Status tracking: Consultation, Planned, Awaiting Term, Operated
-- Photo uploads (7-10 per visit) with before/after comparison
-- Statistics per month/year/location with Excel export
-- Surgery price tracking
-- Single-user password protected
-- Web and mobile responsive
+## Oryginalny Problem
+Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z funkcjami:
+- Baza pacjentów z operacjami CRUD i sortowaniem
+- Integracja z Kalendarzem Google dla dat operacji (placeholder gotowy)
+- Sortowanie wg preferowanego zakresu dat, daty operacji, statusu
+- Śledzenie statusu: Konsultacja, Zaplanowany, Oczekujący, Zoperowany
+- Upload zdjęć (7-10 na wizytę) z porównaniem przed/po
+- Statystyki wg miesiąca/roku/lokalizacji z eksportem Excel
+- Śledzenie ceny operacji
+- Ochrona hasłem (jeden użytkownik)
+- Responsywność web i mobile
+- **JĘZYK: POLSKI**
 
-## User Persona
-- **Primary User**: Facial Plastic Surgeon
-- **Technical Level**: Non-technical
-- **Use Case**: Managing patient records, surgery schedules, and clinical photos
+## Persona Użytkownika
+- **Główny użytkownik**: Chirurg plastyk twarzy
+- **Poziom techniczny**: Nietechniczny
+- **Przypadek użycia**: Zarządzanie kartotekami pacjentów, harmonogramem operacji i zdjęciami klinicznymi
 
-## Tech Stack
+## Stack Technologiczny
 - **Frontend**: React 19 + TailwindCSS + Radix UI
 - **Backend**: FastAPI + Python
-- **Database**: MongoDB
-- **Authentication**: JWT (single-user password: doctor2024)
+- **Baza danych**: MongoDB
+- **Autoryzacja**: JWT (hasło: doctor2024)
 
-## Core Requirements (Static)
-1. ✅ Patient CRUD with full data management
-2. ✅ Multi-visit support per patient
-3. ✅ Photo upload and gallery per visit
-4. ✅ Before/after photo comparison slider
-5. ✅ Status tracking workflow
-6. ✅ Surgery date and preferred date range management
-7. ✅ Location/clinic management
-8. ✅ Statistics dashboard with charts
-9. ✅ Excel export functionality
-10. ⏳ Google Calendar sync (placeholder ready - needs API credentials)
+## Zaimplementowane Funkcje (Marzec 2026)
+- [x] System autoryzacji z JWT
+- [x] Pulpit z przeglądem statystyk i nadchodzącymi operacjami
+- [x] Lista pacjentów z wyszukiwaniem, filtrowaniem, sortowaniem
+- [x] Strona szczegółów pacjenta (widok podzielony)
+- [x] Zarządzanie wizytami (konsultacja, operacja, kontrola)
+- [x] Upload zdjęć z kategoriami (przed, po, w trakcie, inne)
+- [x] Narzędzie porównywania zdjęć z suwakiem
+- [x] Widok kalendarza dla dat operacji
+- [x] Strona statystyk z wykresami słupkowymi
+- [x] Zarządzanie lokalizacjami w ustawieniach
+- [x] Eksport Excel danych pacjentów
+- [x] Design responsywny dla mobile
+- [x] Czysty medyczny styl (turkusowy/biały motyw)
+- [x] **PEŁNA LOKALIZACJA POLSKA**
 
-## What's Been Implemented (Jan 2026)
-- [x] Authentication system with JWT
-- [x] Dashboard with stats overview and upcoming surgeries
-- [x] Patient list with search, filtering, sorting
-- [x] Patient detail page (split-view design)
-- [x] Visit management (consultation, surgery, follow-up)
-- [x] Photo upload with categories (before, after, during, other)
-- [x] Photo comparison tool with slider
-- [x] Calendar view for surgery dates
-- [x] Statistics page with bar charts
-- [x] Location management in settings
-- [x] Excel export for patient data
-- [x] Mobile-responsive design
-- [x] Clean medical aesthetic (teal/white theme)
+## Endpointy API
+- POST /api/auth/login - Logowanie
+- GET /api/dashboard - Dane pulpitu
+- CRUD /api/patients - Zarządzanie pacjentami
+- CRUD /api/patients/{id}/visits - Zarządzanie wizytami
+- CRUD /api/patients/{id}/visits/{vid}/photos - Zarządzanie zdjęciami
+- CRUD /api/locations - Zarządzanie lokalizacjami
+- GET /api/stats - Dane statystyk
+- GET /api/export/patients - Eksport Excel
+- GET /api/calendar/status - Status Kalendarza Google
 
-## API Endpoints
-- POST /api/auth/login - Login
-- GET /api/dashboard - Dashboard data
-- CRUD /api/patients - Patient management
-- CRUD /api/patients/{id}/visits - Visit management
-- CRUD /api/patients/{id}/visits/{vid}/photos - Photo management
-- CRUD /api/locations - Location management
-- GET /api/stats - Statistics data
-- GET /api/export/patients - Excel export
-- GET /api/calendar/status - Google Calendar status
+## Zaległości (Backlog)
 
-## Prioritized Backlog
+### P1 (Wysoki priorytet)
+- Integracja z Kalendarzem Google (gdy użytkownik poda dane dostępowe)
+- Generowanie numeru kartoteki pacjenta (MRN)
 
-### P0 (Critical)
-- None currently
+### P2 (Średni priorytet)
+- Masowy upload zdjęć z drag-and-drop
+- Zaawansowane filtry wyszukiwania pacjentów
+- Przypomnienia email/SMS o wizytach
 
-### P1 (High Priority)
-- Google Calendar integration (when credentials provided)
-- Patient medical record number (MRN) generation
+### P3 (Niski priorytet)
+- Opcja trybu ciemnego
+- Generowanie raportów PDF
+- Funkcja backup/przywracanie
 
-### P2 (Medium Priority)
-- Bulk photo upload with drag-and-drop
-- Patient search with advanced filters
-- Email/SMS appointment reminders
-
-### P3 (Low Priority)
-- Dark mode option
-- PDF report generation
-- Backup/restore functionality
-
-## Next Tasks
-1. Add Google Calendar integration when user provides API credentials
-2. Consider adding procedure templates for common surgeries
-3. Implement patient consent form tracking
+## Następne Zadania
+1. Dodać integrację z Kalendarzem Google gdy użytkownik poda dane API
+2. Rozważyć dodanie szablonów zabiegów dla typowych operacji
+3. Implementacja śledzenia formularzy zgody pacjenta
