@@ -233,6 +233,8 @@ const Dashboard = () => {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [locations, setLocations] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -241,12 +243,14 @@ const Dashboard = () => {
 
   const loadDashboard = async () => {
     try {
-      const [dashRes, slotsRes] = await Promise.all([
+      const [dashRes, slotsRes, locsRes] = await Promise.all([
         api.get("/dashboard"),
-        api.get("/surgery-slots?include_past=true")
+        api.get("/surgery-slots?include_past=true"),
+        api.get("/locations")
       ]);
       setData(dashRes.data);
       setSlots(slotsRes.data);
+      setLocations(locsRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować pulpitu");
     } finally {
