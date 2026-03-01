@@ -50,7 +50,9 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - [x] **NOWE: Pulpit - nazwiska i typy zabiegów** w kalendarzu (znaczniki RIN, BLE, LIF itp.)
 - [x] **NOWE: Kalendarz - podgląd szczegółów dnia** (modal z pacjentami i zabiegami)
 - [x] **NOWE: Wyróżnienie lokalizacji w kalendarzu** - kolorowe paski boczne (pomarańczowy=Pro-Familia, fioletowy=Medicus) + kropki
-- [x] **NOWE: Filtrowanie i sortowanie po lokalizacji** w zakładce Pacjenci
+- [x] **NOWE: Opcja "Jak najszybciej"** - flaga ASAP dla pacjentów gotowych na wcześniejszy termin
+- [x] **NOWE: Filtrowanie i sortowanie po ASAP** w liście pacjentów
+- [x] **NOWE: 30 testowych pacjentów** wygenerowanych do bazy danych
 - [x] **NOWE: Dodawanie zdjęć w formularzu pacjenta** (zakładka "Zdjęcia" z uploadem)
 
 ## Endpointy API
