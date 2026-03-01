@@ -875,9 +875,11 @@ const Dashboard = () => {
 // ==================== PATIENTS LIST ====================
 const PatientsList = () => {
   const [patients, setPatients] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilters, setStatusFilters] = useState([]);
+  const [locationFilter, setLocationFilter] = useState("");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
@@ -885,23 +887,29 @@ const PatientsList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadPatients();
+    loadData();
   }, [sortBy, sortOrder]);
 
-  const loadPatients = async () => {
+  const loadData = async () => {
     try {
       const params = new URLSearchParams();
       params.append("sort_by", sortBy);
       params.append("sort_order", sortOrder);
       
-      const res = await api.get(`/patients?${params.toString()}`);
-      setPatients(res.data);
+      const [patientsRes, locationsRes] = await Promise.all([
+        api.get(`/patients?${params.toString()}`),
+        api.get("/locations")
+      ]);
+      setPatients(patientsRes.data);
+      setLocations(locationsRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować pacjentów");
     } finally {
       setLoading(false);
     }
   };
+
+  const loadPatients = () => loadData();
 
   const toggleStatusFilter = (status) => {
     if (statusFilters.includes(status)) {
