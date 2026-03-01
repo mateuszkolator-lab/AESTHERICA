@@ -44,7 +44,11 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - [x] Zarządzanie slotami operacyjnymi (oznaczanie jako pełny)
 - [x] **NOWE: Wyraziste kolory w kalendarzu** (zielony=zaplanowany, czerwony=pełny, żółty=wolny)
 - [x] **NOWE: Przenoszenie zaplanowanych pacjentów** (drag-and-drop z kalendarza)
-- [x] **NOWE: Masowe dodawanie terminów operacji** (zakres dat + dni tygodnia)
+- [x] **NOWE: Masowe dodawanie terminów operacji** (kalendarz do zaznaczania dni)
+- [x] **NOWE: Pulpit - nadchodzące operacje jako lista** (zamiast kart)
+- [x] **NOWE: Pulpit - statystyki kompaktowe na dole**
+- [x] **NOWE: Pulpit - nazwiska i typy zabiegów** w kalendarzu (znaczniki RIN, BLE, LIF itp.)
+- [x] **NOWE: Kalendarz - podgląd szczegółów dnia** (modal z pacjentami i zabiegami)
 
 ## Endpointy API
 - POST /api/auth/login - Logowanie
