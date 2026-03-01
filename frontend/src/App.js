@@ -688,7 +688,7 @@ const Dashboard = () => {
             </div>
             
             {/* Legend */}
-            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
+            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded bg-emerald-100 ring-2 ring-emerald-400" />
                 <span>Z pacjentem</span>
@@ -704,6 +704,10 @@ const Dashboard = () => {
               <div className="flex items-center gap-1.5">
                 <span className="px-1 py-0.5 bg-blue-600 text-white rounded text-[9px] font-bold">RIN</span>
                 <span>Typ zabiegu</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="px-1 py-0.5 bg-purple-600 text-white rounded text-[8px] font-bold">PRO</span>
+                <span>Lokalizacja</span>
               </div>
             </div>
           </div>
