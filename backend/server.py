@@ -285,7 +285,7 @@ async def delete_procedure_type(procedure_type_id: str, user: dict = Depends(ver
 
 # ==================== SURGERY SLOTS ROUTES ====================
 
-@api_router.get("/surgery-slots", response_model=List[SurgerySlot])
+@api_router.get("/surgery-slots")
 async def get_surgery_slots(
     include_past: bool = False,
     user: dict = Depends(verify_token)
@@ -296,6 +296,13 @@ async def get_surgery_slots(
         query["date"] = {"$gte": today}
     
     slots = await db.surgery_slots.find(query, {"_id": 0}).sort("date", 1).to_list(200)
+    
+    # Enrich with location names
+    locations = {loc["id"]: loc["name"] async for loc in db.locations.find({}, {"_id": 0})}
+    for slot in slots:
+        if slot.get("location_id") and slot["location_id"] in locations:
+            slot["location_name"] = locations[slot["location_id"]]
+    
     return slots
 
 @api_router.post("/surgery-slots", response_model=SurgerySlot)
