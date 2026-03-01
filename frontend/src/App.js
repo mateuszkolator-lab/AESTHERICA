@@ -420,15 +420,15 @@ const Dashboard = () => {
             {/* Legend */}
             <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <div className="w-3 h-3 rounded-full bg-emerald-600 ring-2 ring-emerald-300" />
                 <span>Zaplanowana operacja</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <div className="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-200" />
                 <span>Wolny termin</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-red-600 ring-2 ring-red-300" />
                 <span>Pełny/Niedostępny</span>
               </div>
             </div>
