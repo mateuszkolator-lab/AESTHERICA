@@ -629,6 +629,7 @@ const Dashboard = () => {
                   <div
                     key={i}
                     onClick={() => day && (hasSlot || hasPatients) && setSelectedDay(day)}
+                    data-testid={day ? `dashboard-day-${day.getDate()}` : undefined}
                     className={`min-h-[70px] p-1 rounded-lg cursor-pointer transition-all relative ${
                       !day 
                         ? "cursor-default" 
