@@ -1688,7 +1688,7 @@ const StatsPage = () => {
   });
 
   return (
-    <div className="p-8" data-testid="stats-page">
+    <div className="p-8" data-testid="statistics-page">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Statistics</h1>
