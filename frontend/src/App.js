@@ -7,7 +7,8 @@ import {
   Users, Calendar, BarChart3, Settings, LogOut, Plus, Search, Filter, 
   ChevronLeft, ChevronRight, Edit, Trash2, Eye, Upload, X, Download,
   Clock, CheckCircle2, AlertCircle, User, Phone, Mail, MapPin, DollarSign,
-  Camera, ArrowLeftRight, Menu, Home, CalendarPlus, UserCheck, Sparkles
+  Camera, ArrowLeftRight, Menu, Home, CalendarPlus, UserCheck, Sparkles,
+  Image as ImageIcon, Edit2
 } from "lucide-react";
 import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
 
