@@ -52,7 +52,7 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - [x] **NOWE: Wyróżnienie lokalizacji w kalendarzu** - kolorowe paski boczne (pomarańczowy=Pro-Familia, fioletowy=Medicus) + kropki
 - [x] **NOWE: Opcja "Jak najszybciej"** - flaga ASAP dla pacjentów gotowych na wcześniejszy termin
 - [x] **NOWE: Filtrowanie i sortowanie po ASAP** w liście pacjentów
-- [x] **NOWE: 30 testowych pacjentów** wygenerowanych do bazy danych
+- [x] **NOWE: Automatyczne dopasowanie z lokalizacją** - pacjenci przypisywani do terminów wg lokalizacji w karcie pacjenta
 - [x] **NOWE: Dodawanie zdjęć w formularzu pacjenta** (zakładka "Zdjęcia" z uploadem)
 
 ## Endpointy API
