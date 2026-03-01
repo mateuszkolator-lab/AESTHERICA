@@ -511,6 +511,28 @@ const Dashboard = () => {
     return colors[status] || colors.consultation;
   };
 
+  // Get location color - each location gets a unique color
+  const getLocationColor = (locationName) => {
+    if (!locationName) return null;
+    const colorMap = {
+      "Pro-Familia": { border: "border-l-orange-500", dot: "bg-orange-500" },
+      "Medicus": { border: "border-l-violet-500", dot: "bg-violet-500" },
+    };
+    // Check if location has predefined color
+    for (const [key, value] of Object.entries(colorMap)) {
+      if (locationName.includes(key)) return value;
+    }
+    // Generate color from hash
+    const colors = [
+      { border: "border-l-cyan-500", dot: "bg-cyan-500" },
+      { border: "border-l-pink-500", dot: "bg-pink-500" },
+      { border: "border-l-lime-500", dot: "bg-lime-500" },
+      { border: "border-l-indigo-500", dot: "bg-indigo-500" },
+    ];
+    const hash = locationName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
+
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
