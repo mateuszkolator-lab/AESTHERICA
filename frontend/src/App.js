@@ -2527,10 +2527,12 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
 const CalendarPage = () => {
   const [calendarData, setCalendarData] = useState(null);
   const [patients, setPatients] = useState([]);
+  const [allPatients, setAllPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [draggedPatient, setDraggedPatient] = useState(null);
   const [showUnassigned, setShowUnassigned] = useState(true);
+  const [selectedDay, setSelectedDay] = useState(null); // For day detail modal
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -2544,6 +2546,7 @@ const CalendarPage = () => {
         api.get("/patients")
       ]);
       setCalendarData(calRes.data);
+      setAllPatients(patientsRes.data);
       setPatients(patientsRes.data.filter(p => p.surgery_date));
     } catch (err) {
       toast.error("Nie udało się załadować kalendarza");
