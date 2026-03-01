@@ -1059,6 +1059,20 @@ const PatientsList = () => {
             ))}
           </select>
 
+          {/* ASAP filter button */}
+          <button
+            onClick={() => setAsapFilter(!asapFilter)}
+            className={`px-4 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              asapFilter 
+                ? "bg-amber-500 text-white" 
+                : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
+            data-testid="asap-filter"
+          >
+            <Sparkles className="w-4 h-4" />
+            Jak najszybciej
+          </button>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -1070,6 +1084,7 @@ const PatientsList = () => {
             <option value="preferred_date_start">Preferowana data</option>
             <option value="last_name">Nazwisko</option>
             <option value="location_id">Lokalizacja</option>
+            <option value="asap">Jak najszybciej</option>
           </select>
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
