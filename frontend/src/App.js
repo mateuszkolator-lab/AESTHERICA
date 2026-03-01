@@ -645,6 +645,15 @@ const Dashboard = () => {
                         }`}>
                           {day.getDate()}
                         </p>
+                        {/* Show location badge if slot has location */}
+                        {hasSlot && slot.location_name && (
+                          <span 
+                            className="absolute top-0.5 right-0.5 px-1 py-0.5 text-[8px] font-bold rounded bg-purple-600 text-white"
+                            title={slot.location_name}
+                          >
+                            {slot.location_name.substring(0, 3).toUpperCase()}
+                          </span>
+                        )}
                         {/* Show patient names and procedure abbreviations */}
                         <div className="mt-0.5 space-y-0.5 overflow-hidden">
                           {surgeries.slice(0, 2).map((patient, idx) => (
