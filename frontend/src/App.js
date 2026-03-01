@@ -2759,9 +2759,10 @@ const CalendarPage = () => {
                       key={i}
                       onDragOver={day ? handleDragOver : undefined}
                       onDrop={day ? (e) => handleDrop(e, day) : undefined}
-                      className={`min-h-[100px] p-2 rounded-lg border-2 transition-colors ${
+                      onClick={() => day && (dayPatients.length > 0 || hasSlot) && setSelectedDay(day)}
+                      className={`min-h-[100px] p-2 rounded-lg border-2 transition-colors cursor-pointer ${
                         !day 
-                          ? "border-transparent" 
+                          ? "border-transparent cursor-default" 
                           : isFull 
                             ? "border-red-400 bg-red-100" 
                             : dayPatients.length > 0
