@@ -1124,9 +1124,21 @@ const PatientsList = () => {
                 </button>
               </span>
             )}
-            {(statusFilters.length > 0 || locationFilter) && (
+            {asapFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                <Sparkles className="w-3 h-3" />
+                Jak najszybciej
+                <button
+                  onClick={() => setAsapFilter(false)}
+                  className="ml-1 hover:opacity-70"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {(statusFilters.length > 0 || locationFilter || asapFilter) && (
               <button
-                onClick={() => { clearStatusFilters(); setLocationFilter(""); }}
+                onClick={() => { clearStatusFilters(); setLocationFilter(""); setAsapFilter(false); }}
                 className="text-xs text-slate-500 hover:text-slate-700"
               >
                 Wyczyść wszystko
