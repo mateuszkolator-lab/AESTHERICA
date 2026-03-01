@@ -2693,15 +2693,31 @@ const PlanningPage = () => {
                       {item.suggested_patients.map((patient) => (
                         <div 
                           key={patient.id}
-                          className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                          className={`flex items-center justify-between p-4 rounded-lg hover:bg-slate-100 transition-colors ${
+                            patient.location_match && patient.date_match 
+                              ? "bg-emerald-50 border border-emerald-200" 
+                              : patient.location_match 
+                                ? "bg-blue-50 border border-blue-200"
+                                : "bg-slate-50"
+                          }`}
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-                              <User className="w-5 h-5 text-teal-600" />
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              patient.location_match ? "bg-emerald-100" : "bg-teal-100"
+                            }`}>
+                              <User className={`w-5 h-5 ${patient.location_match ? "text-emerald-600" : "text-teal-600"}`} />
                             </div>
                             <div>
-                              <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
-                              <div className="flex items-center gap-3 text-sm text-slate-500">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
+                                {patient.asap && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700" title="Jak najszybciej">
+                                    <Sparkles className="w-3 h-3" />
+                                    ASAP
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-sm text-slate-500 flex-wrap mt-1">
                                 <span>{patient.procedure_type || "Zabieg nieokreślony"}</span>
                                 {patient.phone && (
                                   <span className="flex items-center gap-1">
@@ -2709,6 +2725,30 @@ const PlanningPage = () => {
                                     {patient.phone}
                                   </span>
                                 )}
+                                {patient.location_name && (
+                                  <span className="flex items-center gap-1 text-emerald-600 font-medium">
+                                    <MapPin className="w-3 h-3" />
+                                    {patient.location_name}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Match indicators */}
+                              <div className="flex items-center gap-2 mt-1">
+                                {patient.location_match && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-emerald-100 text-emerald-700">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Lokalizacja
+                                  </span>
+                                )}
+                                {patient.date_match && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700">
+                                    <Calendar className="w-3 h-3" />
+                                    Data
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-400">
+                                  Dopasowanie: {patient.match_score}%
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -2716,12 +2756,16 @@ const PlanningPage = () => {
                             <div className="text-right">
                               <p className="text-xs text-slate-500">Preferowany zakres</p>
                               <p className="text-sm font-medium text-slate-700">
-                                {patient.preferred_date_start} - {patient.preferred_date_end}
+                                {patient.preferred_date_start || "?"} - {patient.preferred_date_end || "?"}
                               </p>
                             </div>
                             <button
                               onClick={() => handleAssignPatient(item.slot.id, patient.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg font-medium transition-colors"
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                                patient.location_match 
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white" 
+                                  : "bg-teal-700 hover:bg-teal-800 text-white"
+                              }`}
                               data-testid={`assign-${item.slot.id}-${patient.id}`}
                             >
                               <UserCheck className="w-4 h-4" />
@@ -2736,7 +2780,7 @@ const PlanningPage = () => {
                       <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                       <p className="text-slate-500">Brak pasujących pacjentów dla tego terminu</p>
                       <p className="text-sm text-slate-400 mt-1">
-                        Sprawdź czy pacjenci mają ustawione preferowane daty
+                        Sprawdź czy pacjenci mają ustawione preferowane daty i lokalizacje
                       </p>
                     </div>
                   )}
