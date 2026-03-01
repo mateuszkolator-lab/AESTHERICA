@@ -407,7 +407,7 @@ const Dashboard = () => {
                         </p>
                         {(hasSlot || surgery) && (
                           <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-                            <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                            <div className={`w-2 h-2 rounded-full ${dotColor} shadow-sm`} />
                           </div>
                         )}
                       </>
