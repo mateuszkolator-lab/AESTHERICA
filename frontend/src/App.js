@@ -757,14 +757,17 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Rodzaj zabiegu</label>
-              <input
-                type="text"
+              <select
                 value={formData.procedure_type}
-                onChange={(e) => setFormData({ ...formData, procedure_type: e.target.value })}
-                placeholder="np. Rinoplastyka"
+                onChange={(e) => handleProcedureTypeChange(e.target.value)}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                data-testid="procedure-input"
-              />
+                data-testid="procedure-select"
+              >
+                <option value="">Wybierz zabieg</option>
+                {procedureTypes.map((pt) => (
+                  <option key={pt.id} value={pt.name}>{pt.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 
