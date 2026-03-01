@@ -932,7 +932,8 @@ const PatientsList = () => {
       (p.phone && p.phone.includes(query))
     );
     const matchesStatus = statusFilters.length === 0 || statusFilters.includes(p.status);
-    return matchesSearch && matchesStatus;
+    const matchesLocation = !locationFilter || p.location_id === locationFilter;
+    return matchesSearch && matchesStatus && matchesLocation;
   });
 
   const getStatusColor = (status) => {
