@@ -600,18 +600,32 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
     notes: ""
   });
   const [locations, setLocations] = useState([]);
+  const [procedureTypes, setProcedureTypes] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadLocations();
+    loadData();
   }, []);
 
-  const loadLocations = async () => {
+  const loadData = async () => {
     try {
-      const res = await api.get("/locations");
-      setLocations(res.data);
+      const [locRes, ptRes] = await Promise.all([
+        api.get("/locations"),
+        api.get("/procedure-types")
+      ]);
+      setLocations(locRes.data);
+      setProcedureTypes(ptRes.data);
     } catch (err) {
-      console.error("Nie udało się załadować lokalizacji");
+      console.error("Nie udało się załadować danych");
+    }
+  };
+
+  const handleProcedureTypeChange = (value) => {
+    setFormData({ ...formData, procedure_type: value });
+    // Auto-fill price if procedure type has default price
+    const pt = procedureTypes.find(p => p.name === value);
+    if (pt?.default_price && !formData.price) {
+      setFormData(prev => ({ ...prev, procedure_type: value, price: pt.default_price.toString() }));
     }
   };
 
