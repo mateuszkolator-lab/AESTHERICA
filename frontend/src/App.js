@@ -1044,6 +1044,19 @@ const PatientsList = () => {
             )}
           </div>
 
+          {/* Location filter */}
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            data-testid="location-filter"
+          >
+            <option value="">Wszystkie lokalizacje</option>
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>{loc.name}</option>
+            ))}
+          </select>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
