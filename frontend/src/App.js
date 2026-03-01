@@ -169,6 +169,7 @@ const Sidebar = ({ currentPath }) => {
   const navItems = [
     { path: "/", icon: Home, label: "Pulpit" },
     { path: "/patients", icon: Users, label: "Pacjenci" },
+    { path: "/planning", icon: CalendarPlus, label: "Planowanie" },
     { path: "/calendar", icon: Calendar, label: "Kalendarz" },
     { path: "/stats", icon: BarChart3, label: "Statystyki" },
     { path: "/settings", icon: Settings, label: "Ustawienia" },
