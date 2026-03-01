@@ -1067,6 +1067,7 @@ const PatientsList = () => {
             <option value="surgery_date">Data operacji</option>
             <option value="preferred_date_start">Preferowana data</option>
             <option value="last_name">Nazwisko</option>
+            <option value="location_id">Lokalizacja</option>
           </select>
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
