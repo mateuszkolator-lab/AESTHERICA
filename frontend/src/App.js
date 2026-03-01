@@ -1247,7 +1247,8 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
     surgery_date: "",
     location_id: "",
     price: "",
-    notes: ""
+    notes: "",
+    asap: false
   });
   const [locations, setLocations] = useState([]);
   const [procedureTypes, setProcedureTypes] = useState([]);
