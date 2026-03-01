@@ -2495,21 +2495,26 @@ const CalendarPage = () => {
           </div>
 
           {/* Legend */}
-          <div className="mt-4 flex items-center gap-6 text-sm text-slate-600">
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-600 bg-white p-4 rounded-lg border border-slate-200">
+            <span className="font-medium text-slate-700">Legenda:</span>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-teal-100 border border-teal-200" />
-              <span>Termin operacji</span>
+              <div className="w-4 h-4 rounded border-2 border-amber-400 bg-amber-50" />
+              <span>Wolny termin</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-red-100 border border-red-200" />
+              <div className="w-4 h-4 rounded border-2 border-emerald-400 bg-emerald-50" />
+              <span>Z pacjentem</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded border-2 border-red-400 bg-red-100" />
               <span>Pełny/Niedostępny</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-500" />
+              <div className="w-4 h-4 rounded bg-blue-600" />
               <span>Zaplanowany</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-emerald-500" />
+              <div className="w-4 h-4 rounded bg-emerald-600" />
               <span>Zoperowany</span>
             </div>
           </div>
