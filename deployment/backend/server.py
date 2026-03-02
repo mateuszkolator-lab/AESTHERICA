@@ -9,6 +9,7 @@ from routers.surgery_slots import router as surgery_slots_router
 from routers.settings import router as settings_router
 from routers.stats import router as stats_router
 from routers.utils import router as utils_router
+from routers.calendar import router as calendar_router
 
 # Import database
 from models.database import get_client
@@ -29,6 +30,7 @@ api_router.include_router(surgery_slots_router)
 api_router.include_router(settings_router)
 api_router.include_router(stats_router)
 api_router.include_router(utils_router)
+api_router.include_router(calendar_router)
 
 # Mount API router under /api prefix
 app.mount("/api", api_router)
