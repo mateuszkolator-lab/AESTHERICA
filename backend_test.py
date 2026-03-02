@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 class PatientManagementTester:
     def __init__(self):
         # Use public endpoint from frontend env
-        self.base_url = "https://clinic-planner-3.preview.emergentagent.com/api"
+        self.base_url = "https://aesthetica-pro.preview.emergentagent.com/api"
         self.token = None
         self.tests_run = 0
         self.tests_passed = 0
