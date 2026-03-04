@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { X, Camera, Upload, Trash2, Eye, Edit2 } from "lucide-react";
+import { X, Camera, Trash2, Eye, Edit2, Check } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
 import { PHOTO_ANGLE_LABELS, PHOTO_ANGLE_OPTIONS, VISIT_TYPE_OPTIONS, VISIT_TYPE_LABELS } from "../../utils/constants";
 
-// Add Visit Modal
 export const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -106,20 +105,37 @@ export const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
   );
 };
 
-// Photo Upload Modal
 export const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
-  const [files, setFiles] = useState([]);
-  const [angle, setAngle] = useState("front");
-  const [customAngle, setCustomAngle] = useState("");
+  const [files, setFiles] = useState([]); // [{file, angle, preview}]
   const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (e) => {
-    const newFiles = Array.from(e.target.files);
+    const newFiles = Array.from(e.target.files).map(file => ({
+      file,
+      angle: "front",
+      customAngle: "",
+      preview: URL.createObjectURL(file)
+    }));
     setFiles([...files, ...newFiles]);
   };
 
   const removeFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
+    const newFiles = [...files];
+    URL.revokeObjectURL(newFiles[index].preview);
+    newFiles.splice(index, 1);
+    setFiles(newFiles);
+  };
+
+  const updateFileAngle = (index, angle) => {
+    const newFiles = [...files];
+    newFiles[index].angle = angle;
+    setFiles(newFiles);
+  };
+
+  const updateFileCustomAngle = (index, customAngle) => {
+    const newFiles = [...files];
+    newFiles[index].customAngle = customAngle;
+    setFiles(newFiles);
   };
 
   const handleUpload = async () => {
@@ -135,14 +151,13 @@ export const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => 
       });
     };
 
-    const finalAngle = angle === "other" && customAngle ? customAngle : angle;
-
     try {
-      for (const file of files) {
-        const base64 = await fileToBase64(file);
+      for (const item of files) {
+        const base64 = await fileToBase64(item.file);
+        const finalAngle = item.angle === "other" && item.customAngle ? item.customAngle : item.angle;
         await api.post(`/patients/${patientId}/visits/${visitId}/photos`, {
           data: base64,
-          filename: file.name,
+          filename: item.file.name,
           angle: finalAngle
         });
       }
@@ -157,38 +172,15 @@ export const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="photo-upload-modal">
-      <div className="bg-white rounded-xl max-w-lg w-full">
-        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
           <h2 className="text-xl font-semibold text-slate-900">Prześlij zdjęcia</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Kąt zdjęcia</label>
-            <select
-              value={angle}
-              onChange={(e) => setAngle(e.target.value)}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              data-testid="photo-angle-select"
-            >
-              {PHOTO_ANGLE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            {angle === "other" && (
-              <input
-                type="text"
-                placeholder="Wpisz własny opis kąta..."
-                value={customAngle}
-                onChange={(e) => setCustomAngle(e.target.value)}
-                className="w-full mt-2 px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            )}
-          </div>
-
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center">
             <input
               type="file"
@@ -207,48 +199,171 @@ export const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => 
           </div>
 
           {files.length > 0 && (
-            <div className="grid grid-cols-4 gap-2">
-              {files.map((file, i) => (
-                <div key={i} className="relative">
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-slate-700">Wybrane zdjęcia ({files.length}):</p>
+              {files.map((item, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                   <img
-                    src={URL.createObjectURL(file)}
-                    alt={file.name}
-                    className="w-full h-20 object-cover rounded-lg"
+                    src={item.preview}
+                    alt={item.file.name}
+                    className="w-20 h-20 object-cover rounded-lg shrink-0"
                   />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-600 truncate mb-2">{item.file.name}</p>
+                    <select
+                      value={item.angle}
+                      onChange={(e) => updateFileAngle(i, e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      {PHOTO_ANGLE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    {item.angle === "other" && (
+                      <input
+                        type="text"
+                        placeholder="Własny opis kąta..."
+                        value={item.customAngle}
+                        onChange={(e) => updateFileCustomAngle(i, e.target.value)}
+                        className="w-full mt-2 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    )}
+                  </div>
                   <button
                     onClick={() => removeFile(i)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                    className="p-1.5 hover:bg-red-100 rounded-lg text-red-500"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
             </div>
           )}
+        </div>
 
-          <div className="flex gap-4 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
-              Anuluj
-            </button>
-            <button
-              onClick={handleUpload}
-              disabled={uploading || files.length === 0}
-              className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
-              data-testid="upload-photos-button"
-            >
-              {uploading ? "Przesyłanie..." : `Prześlij ${files.length} zdjęć`}
-            </button>
-          </div>
+        <div className="px-6 py-4 border-t border-slate-200 flex gap-4 shrink-0">
+          <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
+            Anuluj
+          </button>
+          <button
+            onClick={handleUpload}
+            disabled={uploading || files.length === 0}
+            className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
+            data-testid="upload-photos-button"
+          >
+            {uploading ? "Przesyłanie..." : `Prześlij ${files.length} zdjęć`}
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-// Visit Card Component
+// Photo Edit Modal
+export const PhotoEditModal = ({ photo, patientId, visitId, onClose, onSuccess }) => {
+  const [angle, setAngle] = useState(photo.angle || "front");
+  const [customAngle, setCustomAngle] = useState(
+    PHOTO_ANGLE_OPTIONS.find(o => o.value === photo.angle) ? "" : photo.angle || ""
+  );
+  const [caption, setCaption] = useState(photo.caption || "");
+  const [saving, setSaving] = useState(false);
+
+  // Check if current angle is custom
+  const isCustomAngle = !PHOTO_ANGLE_OPTIONS.find(o => o.value === photo.angle) && photo.angle;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const finalAngle = angle === "other" && customAngle ? customAngle : angle;
+      await api.put(`/patients/${patientId}/visits/${visitId}/photos/${photo.id}`, {
+        angle: finalAngle,
+        caption: caption || null
+      });
+      toast.success("Zdjęcie zaktualizowane");
+      onSuccess();
+    } catch (err) {
+      toast.error("Nie udało się zaktualizować zdjęcia");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-slate-900">Edytuj zdjęcie</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div className="flex justify-center">
+            <img src={photo.data} alt="" className="max-h-48 rounded-lg object-contain" />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Kąt zdjęcia</label>
+            <select
+              value={isCustomAngle ? "other" : angle}
+              onChange={(e) => {
+                setAngle(e.target.value);
+                if (e.target.value !== "other") setCustomAngle("");
+              }}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              {PHOTO_ANGLE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            {(angle === "other" || isCustomAngle) && (
+              <input
+                type="text"
+                placeholder="Własny opis kąta..."
+                value={customAngle || (isCustomAngle ? photo.angle : "")}
+                onChange={(e) => {
+                  setCustomAngle(e.target.value);
+                  setAngle("other");
+                }}
+                className="w-full mt-2 px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Opis (opcjonalnie)</label>
+            <input
+              type="text"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Dodaj opis zdjęcia..."
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        </div>
+        
+        <div className="px-6 py-4 border-t border-slate-200 flex gap-4">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium">
+            Anuluj
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {saving ? "Zapisywanie..." : <><Check className="w-4 h-4" /> Zapisz</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const VisitCard = ({ visit, patientId, onUpdate }) => {
   const [showUpload, setShowUpload] = useState(false);
   const [expandedPhoto, setExpandedPhoto] = useState(null);
+  const [editingPhoto, setEditingPhoto] = useState(null);
 
   const handleDeletePhoto = async (photoId) => {
     if (!window.confirm("Usunąć to zdjęcie?")) return;
@@ -287,10 +402,11 @@ export const VisitCard = ({ visit, patientId, onUpdate }) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowUpload(true)}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg transition-colors flex items-center gap-1"
             data-testid={`upload-photo-${visit.id}`}
           >
-            <Upload className="w-4 h-4 text-slate-600" />
+            <Camera className="w-4 h-4" />
+            Dodaj
           </button>
           <button
             onClick={handleDeleteVisit}
@@ -318,12 +434,21 @@ export const VisitCard = ({ visit, patientId, onUpdate }) => {
                   <button
                     onClick={() => setExpandedPhoto(photo)}
                     className="p-2 bg-white rounded-lg"
+                    title="Podgląd"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
+                    onClick={() => setEditingPhoto(photo)}
+                    className="p-2 bg-white rounded-lg"
+                    title="Edytuj"
+                  >
+                    <Edit2 className="w-4 h-4 text-blue-500" />
+                  </button>
+                  <button
                     onClick={() => handleDeletePhoto(photo.id)}
                     className="p-2 bg-white rounded-lg"
+                    title="Usuń"
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
@@ -350,6 +475,16 @@ export const VisitCard = ({ visit, patientId, onUpdate }) => {
         />
       )}
 
+      {editingPhoto && (
+        <PhotoEditModal
+          photo={editingPhoto}
+          patientId={patientId}
+          visitId={visit.id}
+          onClose={() => setEditingPhoto(null)}
+          onSuccess={() => { setEditingPhoto(null); onUpdate(); }}
+        />
+      )}
+
       {expandedPhoto && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4" onClick={() => setExpandedPhoto(null)}>
           <button className="absolute top-4 right-4 text-white" onClick={() => setExpandedPhoto(null)}>
@@ -360,6 +495,12 @@ export const VisitCard = ({ visit, patientId, onUpdate }) => {
             alt={expandedPhoto.caption || "Zdjęcie pacjenta"}
             className="max-w-full max-h-[90vh] object-contain"
           />
+          {expandedPhoto.angle && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 text-white rounded-lg">
+              {PHOTO_ANGLE_LABELS[expandedPhoto.angle] || expandedPhoto.angle}
+              {expandedPhoto.caption && ` - ${expandedPhoto.caption}`}
+            </div>
+          )}
         </div>
       )}
     </div>
