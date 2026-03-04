@@ -55,9 +55,11 @@ const PatientDetail = () => {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
   if (!patient) return null;
 
+  // Zbierz wszystkie zdjęcia z wizyt
   const allPhotos = patient.visits?.flatMap((v) => v.photos.map((p) => ({ ...p, visitDate: v.date, visitType: v.type }))) || [];
-  const beforePhotos = allPhotos.filter(p => p.category === 'before');
-  const afterPhotos = allPhotos.filter(p => p.category === 'after');
+  // Dodaj zdjęcia bezpośrednio przypisane do pacjenta (nie z wizyt)
+  const patientDirectPhotos = patient.photos?.map(p => ({ ...p, visitDate: null, visitType: null })) || [];
+  const combinedPhotos = [...allPhotos, ...patientDirectPhotos];
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen" data-testid="patient-detail-page">
@@ -160,27 +162,21 @@ const PatientDetail = () => {
         )}
 
         {/* Quick Photo Summary */}
-        {allPhotos.length > 0 && (
+        {combinedPhotos.length > 0 && (
           <div className="border-t border-slate-100 mt-6 pt-6">
             <h3 className="text-sm font-semibold text-slate-500 uppercase mb-4">Podsumowanie zdjęć</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-amber-50 rounded-lg text-center">
-                <p className="text-2xl font-bold text-amber-700">{beforePhotos.length}</p>
-                <p className="text-xs text-amber-600">Przed</p>
-              </div>
-              <div className="p-3 bg-emerald-50 rounded-lg text-center">
-                <p className="text-2xl font-bold text-emerald-700">{afterPhotos.length}</p>
-                <p className="text-xs text-emerald-600">Po</p>
-              </div>
+            <div className="p-3 bg-teal-50 rounded-lg text-center">
+              <p className="text-2xl font-bold text-teal-700">{combinedPhotos.length}</p>
+              <p className="text-xs text-teal-600">Łącznie zdjęć</p>
             </div>
-            {beforePhotos.length > 0 && afterPhotos.length > 0 && (
+            {combinedPhotos.length >= 2 && (
               <button
                 onClick={() => setShowCompare(true)}
                 className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-lg font-medium transition-colors"
                 data-testid="quick-compare-button"
               >
                 <ArrowLeftRight className="w-4 h-4" />
-                Porównaj przed i po
+                Porównaj zdjęcia
               </button>
             )}
           </div>
@@ -192,7 +188,7 @@ const PatientDetail = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Wizyty i zdjęcia</h2>
           <div className="flex gap-3">
-            {allPhotos.length >= 2 && (
+            {combinedPhotos.length >= 2 && (
               <button
                 onClick={() => setShowCompare(true)}
                 className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-white font-medium transition-colors"
@@ -256,7 +252,8 @@ const PatientDetail = () => {
 
       {showCompare && (
         <PhotoCompareModal
-          photos={allPhotos}
+          photos={combinedPhotos}
+          visits={patient.visits || []}
           onClose={() => setShowCompare(false)}
         />
       )}

@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { X, Camera, Upload, Trash2, Eye } from "lucide-react";
+import { X, Camera, Upload, Trash2, Eye, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
-import { PHOTO_CATEGORY_LABELS } from "../../utils/constants";
+import { PHOTO_ANGLE_LABELS, PHOTO_ANGLE_OPTIONS, VISIT_TYPE_OPTIONS, VISIT_TYPE_LABELS } from "../../utils/constants";
 
 // Add Visit Modal
 export const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     type: "consultation",
+    customType: "",
     notes: ""
   });
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,12 @@ export const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post(`/patients/${patientId}/visits`, formData);
+      const submitData = {
+        date: formData.date,
+        type: formData.type === "custom" && formData.customType ? formData.customType : formData.type,
+        notes: formData.notes
+      };
+      await api.post(`/patients/${patientId}/visits`, submitData);
       toast.success("Wizyta dodana");
       onSuccess();
     } catch (err) {
@@ -50,17 +56,26 @@ export const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Typ</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Typ wizyty</label>
             <select
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               data-testid="visit-type-select"
             >
-              <option value="consultation">Konsultacja</option>
-              <option value="surgery">Operacja</option>
-              <option value="follow_up">Wizyta kontrolna</option>
+              {VISIT_TYPE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
+            {formData.type === "custom" && (
+              <input
+                type="text"
+                placeholder="Wpisz własny typ wizyty..."
+                value={formData.customType}
+                onChange={(e) => setFormData({ ...formData, customType: e.target.value })}
+                className="w-full mt-2 px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Notatki</label>
@@ -94,7 +109,8 @@ export const AddVisitModal = ({ patientId, onClose, onSuccess }) => {
 // Photo Upload Modal
 export const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => {
   const [files, setFiles] = useState([]);
-  const [category, setCategory] = useState("before");
+  const [angle, setAngle] = useState("front");
+  const [customAngle, setCustomAngle] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (e) => {
@@ -119,13 +135,15 @@ export const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => 
       });
     };
 
+    const finalAngle = angle === "other" && customAngle ? customAngle : angle;
+
     try {
       for (const file of files) {
         const base64 = await fileToBase64(file);
         await api.post(`/patients/${patientId}/visits/${visitId}/photos`, {
           data: base64,
           filename: file.name,
-          category: category
+          angle: finalAngle
         });
       }
       toast.success(`Przesłano ${files.length} zdjęć`);
@@ -149,18 +167,26 @@ export const PhotoUploadModal = ({ patientId, visitId, onClose, onSuccess }) => 
         
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Kategoria</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Kąt zdjęcia</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={angle}
+              onChange={(e) => setAngle(e.target.value)}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              data-testid="photo-category-select"
+              data-testid="photo-angle-select"
             >
-              <option value="before">Przed</option>
-              <option value="after">Po</option>
-              <option value="during">W trakcie zabiegu</option>
-              <option value="other">Inne</option>
+              {PHOTO_ANGLE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
+            {angle === "other" && (
+              <input
+                type="text"
+                placeholder="Wpisz własny opis kąta..."
+                value={customAngle}
+                onChange={(e) => setCustomAngle(e.target.value)}
+                className="w-full mt-2 px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            )}
           </div>
 
           <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center">
@@ -246,12 +272,6 @@ export const VisitCard = ({ visit, patientId, onUpdate }) => {
     }
   };
 
-  const VISIT_TYPE_LABELS = {
-    consultation: "Konsultacja",
-    surgery: "Operacja",
-    follow_up: "Wizyta kontrolna"
-  };
-
   return (
     <div className="bg-white rounded-xl border border-slate-200" data-testid={`visit-${visit.id}`}>
       <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
@@ -308,9 +328,9 @@ export const VisitCard = ({ visit, patientId, onUpdate }) => {
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
                 </div>
-                {photo.category && (
+                {photo.angle && (
                   <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded">
-                    {PHOTO_CATEGORY_LABELS[photo.category] || photo.category}
+                    {PHOTO_ANGLE_LABELS[photo.angle] || photo.angle}
                   </span>
                 )}
               </div>

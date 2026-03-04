@@ -9,8 +9,27 @@ export const STATUS_LABELS = {
 export const VISIT_TYPE_LABELS = {
   consultation: "Konsultacja",
   surgery: "Operacja",
-  follow_up: "Wizyta kontrolna"
+  follow_up: "Wizyta kontrolna",
+  "7_days_after": "7 dni po zabiegu",
+  "1_month_after": "Miesiąc po",
+  "3_months_after": "3 miesiące po",
+  "6_months_after": "6 miesięcy po",
+  "1_year_after": "Rok po",
+  photo_upload: "Zdjęcia",
+  custom: "Inna"
 };
+
+export const VISIT_TYPE_OPTIONS = [
+  { value: "consultation", label: "Konsultacja" },
+  { value: "surgery", label: "Operacja" },
+  { value: "7_days_after", label: "7 dni po zabiegu" },
+  { value: "1_month_after", label: "Miesiąc po" },
+  { value: "3_months_after", label: "3 miesiące po" },
+  { value: "6_months_after", label: "6 miesięcy po" },
+  { value: "1_year_after", label: "Rok po" },
+  { value: "follow_up", label: "Wizyta kontrolna" },
+  { value: "custom", label: "Inna (wpisz własną)" }
+];
 
 export const PHOTO_CATEGORY_LABELS = {
   before: "Przed",
@@ -18,6 +37,28 @@ export const PHOTO_CATEGORY_LABELS = {
   during: "W trakcie",
   other: "Inne"
 };
+
+// Etykiety kątów zdjęć (nowy system)
+export const PHOTO_ANGLE_LABELS = {
+  front: "Przód",
+  left_profile: "Profil lewy",
+  right_profile: "Profil prawy",
+  left_oblique: "Skos lewy",
+  right_oblique: "Skos prawy",
+  base: "Podstawa",
+  other: "Inne"
+};
+
+// Opcje kątów do wyboru w formularzach
+export const PHOTO_ANGLE_OPTIONS = [
+  { value: "front", label: "Przód" },
+  { value: "left_profile", label: "Profil lewy" },
+  { value: "right_profile", label: "Profil prawy" },
+  { value: "left_oblique", label: "Skos lewy (3/4)" },
+  { value: "right_oblique", label: "Skos prawy (3/4)" },
+  { value: "base", label: "Podstawa nosa" },
+  { value: "other", label: "Inny" }
+];
 
 export const STATUS_OPTIONS = [
   { value: "consultation", label: "Konsultacja" },

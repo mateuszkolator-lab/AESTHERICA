@@ -50,7 +50,7 @@ class VisitCreate(VisitBase):
 class PhotoBase(BaseModel):
     data: str
     filename: Optional[str] = None
-    category: Optional[str] = None
+    angle: Optional[str] = None  # Kąt zdjęcia: front, left_profile, right_profile, etc.
     caption: Optional[str] = None
 
 class PhotoCreate(PhotoBase):
