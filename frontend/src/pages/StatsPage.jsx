@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Download, ChevronUp, ChevronDown, Users } from "lucide-react";
 import api, { API_BASE } from "../utils/api";
-import { MONTH_NAMES } from "../utils/constants";
+import { MONTH_NAMES, STATUS_LABELS, getStatusColor } from "../utils/constants";
 
 const StatsPage = () => {
   const [stats, setStats] = useState(null);
+  const [waitingSummary, setWaitingSummary] = useState([]);
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState({ key: 'count', direction: 'desc' });
 
   useEffect(() => {
     loadStats();
@@ -15,13 +17,53 @@ const StatsPage = () => {
 
   const loadStats = async () => {
     try {
-      const res = await api.get(`/stats?year=${year}`);
-      setStats(res.data);
+      const [statsRes, waitingRes] = await Promise.all([
+        api.get(`/stats?year=${year}`),
+        api.get("/stats/waiting-summary")
+      ]);
+      setStats(statsRes.data);
+      setWaitingSummary(waitingRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować statystyk");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  const sortedWaitingSummary = useMemo(() => {
+    const sorted = [...waitingSummary];
+    sorted.sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      
+      if (sortConfig.key === 'status') {
+        const order = { consultation: 1, planned: 2, awaiting: 3 };
+        aVal = order[aVal] || 99;
+        bVal = order[bVal] || 99;
+      }
+      
+      if (typeof aVal === 'string') {
+        return sortConfig.direction === 'asc' 
+          ? aVal.localeCompare(bVal) 
+          : bVal.localeCompare(aVal);
+      }
+      return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+    return sorted;
+  }, [waitingSummary, sortConfig]);
+
+  const SortIcon = ({ columnKey }) => {
+    if (sortConfig.key !== columnKey) return null;
+    return sortConfig.direction === 'desc' 
+      ? <ChevronDown className="w-4 h-4 inline ml-1" /> 
+      : <ChevronUp className="w-4 h-4 inline ml-1" />;
   };
 
   const handleExport = async () => {
@@ -171,6 +213,74 @@ const StatsPage = () => {
           </div>
         ) : (
           <p className="text-slate-500 text-center py-8">Brak danych. Dodaj lokalizacje i wykonaj zabiegi, aby zobaczyć statystyki.</p>
+        )}
+      </div>
+
+      {/* Waiting Summary Table */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 mt-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Users className="w-6 h-6 text-teal-600" />
+          <h3 className="text-lg font-semibold text-slate-900">Podsumowanie oczekujących pacjentów</h3>
+        </div>
+        
+        {sortedWaitingSummary.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full" data-testid="waiting-summary-table">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th 
+                    className="px-4 py-3 text-left text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-100"
+                    onClick={() => handleSort('status')}
+                  >
+                    Status <SortIcon columnKey="status" />
+                  </th>
+                  <th 
+                    className="px-4 py-3 text-left text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-100"
+                    onClick={() => handleSort('procedure_type')}
+                  >
+                    Typ zabiegu <SortIcon columnKey="procedure_type" />
+                  </th>
+                  <th 
+                    className="px-4 py-3 text-right text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-100"
+                    onClick={() => handleSort('count')}
+                  >
+                    Liczba pacjentów <SortIcon columnKey="count" />
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sortedWaitingSummary.map((item, i) => (
+                  <tr key={i} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(item.status)}`}>
+                        {STATUS_LABELS[item.status] || item.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {item.procedure_type}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-semibold text-slate-900">{item.count}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-slate-50 border-t border-slate-200">
+                <tr>
+                  <td colSpan="2" className="px-4 py-3 text-sm font-semibold text-slate-700">
+                    Łącznie oczekujących
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="font-bold text-teal-700 text-lg">
+                      {sortedWaitingSummary.reduce((sum, item) => sum + item.count, 0)}
+                    </span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        ) : (
+          <p className="text-slate-500 text-center py-8">Brak pacjentów oczekujących.</p>
         )}
       </div>
     </div>

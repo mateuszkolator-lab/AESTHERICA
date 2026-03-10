@@ -12,6 +12,26 @@ router = APIRouter(tags=["Settings"])
 def get_auth(authorization: str = Header(None)):
     return verify_token(authorization)
 
+# General settings endpoint
+@router.get("/settings")
+async def get_settings(user: dict = Depends(get_auth)):
+    db = get_db()
+    # Get procedure types from settings
+    procedure_types_docs = await db.procedure_types.find({}, {"_id": 0}).to_list(100)
+    procedure_types_from_settings = [pt.get("name") for pt in procedure_types_docs if pt.get("name")]
+    
+    # Also get unique procedure types from patients
+    unique_from_patients = await db.patients.distinct("procedure_type")
+    unique_from_patients = [pt for pt in unique_from_patients if pt]
+    
+    # Combine and deduplicate
+    all_procedure_types = list(set(procedure_types_from_settings + unique_from_patients))
+    all_procedure_types.sort()
+    
+    return {
+        "procedure_types": all_procedure_types
+    }
+
 # Locations
 @router.get("/locations")
 async def get_locations(user: dict = Depends(get_auth)):

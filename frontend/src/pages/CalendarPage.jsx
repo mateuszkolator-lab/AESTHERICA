@@ -8,7 +8,7 @@ import {
 import api from "../utils/api";
 import { 
   STATUS_LABELS, getStatusColorBg, getLocationColor, 
-  getDaysInMonth, DAY_NAMES 
+  getDaysInMonth, DAY_NAMES, formatDateLocal
 } from "../utils/constants";
 
 const CalendarPage = () => {
@@ -42,13 +42,13 @@ const CalendarPage = () => {
 
   const getPatientsByDate = (date) => {
     if (!date) return [];
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = formatDateLocal(date);
     return patients.filter(p => p.surgery_date === dateStr);
   };
 
   const getSlotByDate = (date) => {
     if (!date || !calendarData?.slots) return null;
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = formatDateLocal(date);
     return calendarData.slots.find(s => s.date === dateStr);
   };
 
@@ -66,7 +66,7 @@ const CalendarPage = () => {
     e.preventDefault();
     if (!draggedPatient || !date) return;
 
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = formatDateLocal(date);
     const targetSlot = calendarData?.slots?.find(s => s.date === dateStr);
 
     if (targetSlot?.is_full) {
@@ -135,9 +135,9 @@ const CalendarPage = () => {
               </span>
             </div>
             <div className="p-3 max-h-[600px] overflow-y-auto">
-              {calendarData?.unassigned_patients?.length > 0 ? (
+              {sortedUnassignedPatients.length > 0 ? (
                 <div className="space-y-2">
-                  {calendarData.unassigned_patients.map((patient) => (
+                  {sortedUnassignedPatients.map((patient) => (
                     <div
                       key={patient.id}
                       draggable
@@ -146,6 +146,9 @@ const CalendarPage = () => {
                       data-testid={`draggable-patient-${patient.id}`}
                     >
                       <div className="flex items-center gap-2">
+                        {patient.asap && (
+                          <Sparkles className="w-4 h-4 text-amber-500" title="Jak najszybciej" />
+                        )}
                         <User className="w-4 h-4 text-slate-400" />
                         <span className="font-medium text-slate-900 text-sm">{patient.first_name} {patient.last_name}</span>
                       </div>

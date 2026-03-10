@@ -177,3 +177,30 @@ async def calendar_status(user: dict = Depends(get_auth)):
         "configured": bool(google_client_id),
         "message": "Google Calendar integration ready" if google_client_id else "Google Calendar not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable."
     }
+
+@router.get("/stats/waiting-summary")
+async def get_waiting_summary(user: dict = Depends(get_auth)):
+    """Get summary of patients waiting by status and procedure type"""
+    db = get_db()
+    
+    # Aggregate patients by status and procedure_type (excluding 'operated')
+    pipeline = [
+        {"$match": {"status": {"$in": ["consultation", "planned", "awaiting"]}}},
+        {"$group": {
+            "_id": {
+                "status": "$status",
+                "procedure_type": {"$ifNull": ["$procedure_type", "Nieokreślony"]}
+            },
+            "count": {"$sum": 1}
+        }},
+        {"$project": {
+            "_id": 0,
+            "status": "$_id.status",
+            "procedure_type": "$_id.procedure_type",
+            "count": 1
+        }},
+        {"$sort": {"count": -1}}
+    ]
+    
+    results = await db.patients.aggregate(pipeline).to_list(1000)
+    return results

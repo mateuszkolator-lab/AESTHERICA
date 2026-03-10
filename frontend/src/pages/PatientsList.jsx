@@ -12,12 +12,15 @@ import AddPatientModal from "../components/modals/AddPatientModal";
 const PatientsList = () => {
   const [patients, setPatients] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [procedureTypes, setProcedureTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilters, setStatusFilters] = useState([]);
+  const [procedureFilters, setProcedureFilters] = useState([]);
   const [locationFilter, setLocationFilter] = useState("");
   const [asapFilter, setAsapFilter] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -33,12 +36,14 @@ const PatientsList = () => {
       params.append("sort_by", sortBy);
       params.append("sort_order", sortOrder);
       
-      const [patientsRes, locationsRes] = await Promise.all([
+      const [patientsRes, locationsRes, settingsRes] = await Promise.all([
         api.get(`/patients?${params.toString()}`),
-        api.get("/locations")
+        api.get("/locations"),
+        api.get("/settings")
       ]);
       setPatients(patientsRes.data);
       setLocations(locationsRes.data);
+      setProcedureTypes(settingsRes.data?.procedure_types || []);
     } catch (err) {
       toast.error("Nie udało się załadować pacjentów");
     } finally {
@@ -54,8 +59,20 @@ const PatientsList = () => {
     }
   };
 
+  const toggleProcedureFilter = (procedure) => {
+    if (procedureFilters.includes(procedure)) {
+      setProcedureFilters(procedureFilters.filter(p => p !== procedure));
+    } else {
+      setProcedureFilters([...procedureFilters, procedure]);
+    }
+  };
+
   const clearStatusFilters = () => {
     setStatusFilters([]);
+  };
+
+  const clearProcedureFilters = () => {
+    setProcedureFilters([]);
   };
 
   const filteredPatients = patients.filter((p) => {
@@ -67,9 +84,10 @@ const PatientsList = () => {
       (p.phone && p.phone.includes(query))
     );
     const matchesStatus = statusFilters.length === 0 || statusFilters.includes(p.status);
+    const matchesProcedure = procedureFilters.length === 0 || procedureFilters.includes(p.procedure_type);
     const matchesLocation = !locationFilter || p.location_id === locationFilter;
     const matchesAsap = !asapFilter || p.asap === true;
-    return matchesSearch && matchesStatus && matchesLocation && matchesAsap;
+    return matchesSearch && matchesStatus && matchesProcedure && matchesLocation && matchesAsap;
   });
 
   const handleDelete = async (id, e) => {
@@ -162,6 +180,56 @@ const PatientsList = () => {
             )}
           </div>
 
+          {/* Procedure Type Filter */}
+          <div className="relative">
+            <button
+              onClick={() => { setShowProcedureDropdown(!showProcedureDropdown); setShowStatusDropdown(false); }}
+              className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white flex items-center gap-2 min-w-[180px]"
+              data-testid="procedure-filter-button"
+            >
+              <Filter className="w-4 h-4 text-blue-500" />
+              <span className="text-slate-700">
+                {procedureFilters.length === 0 ? "Wszystkie zabiegi" : `Zabiegi: ${procedureFilters.length}`}
+              </span>
+              <ChevronRight className={`w-4 h-4 text-slate-400 ml-auto transition-transform ${showProcedureDropdown ? 'rotate-90' : ''}`} />
+            </button>
+            
+            {showProcedureDropdown && (
+              <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg z-20" data-testid="procedure-dropdown">
+                <div className="p-2 border-b border-slate-100">
+                  <button
+                    onClick={clearProcedureFilters}
+                    className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                  >
+                    Wyczyść filtry
+                  </button>
+                </div>
+                <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
+                  {procedureTypes.map((procedure) => (
+                    <label
+                      key={procedure}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={procedureFilters.includes(procedure)}
+                        onChange={() => toggleProcedureFilter(procedure)}
+                        className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                        data-testid={`procedure-checkbox-${procedure}`}
+                      />
+                      <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {procedure}
+                      </span>
+                    </label>
+                  ))}
+                  {procedureTypes.length === 0 && (
+                    <p className="text-sm text-slate-400 px-3 py-2">Brak zdefiniowanych zabiegów</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <select
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
@@ -222,6 +290,17 @@ const PatientsList = () => {
                 </button>
               </span>
             ))}
+            {procedureFilters.map((procedure) => (
+              <span
+                key={procedure}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+              >
+                {procedure}
+                <button onClick={() => toggleProcedureFilter(procedure)} className="ml-1 hover:opacity-70">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
             {locationFilter && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
                 <MapPin className="w-3 h-3" />
@@ -240,9 +319,9 @@ const PatientsList = () => {
                 </button>
               </span>
             )}
-            {(statusFilters.length > 0 || locationFilter || asapFilter) && (
+            {(statusFilters.length > 0 || procedureFilters.length > 0 || locationFilter || asapFilter) && (
               <button
-                onClick={() => { clearStatusFilters(); setLocationFilter(""); setAsapFilter(false); }}
+                onClick={() => { clearStatusFilters(); clearProcedureFilters(); setLocationFilter(""); setAsapFilter(false); }}
                 className="text-xs text-slate-500 hover:text-slate-700"
               >
                 Wyczyść wszystko
@@ -255,8 +334,8 @@ const PatientsList = () => {
         </div>
       </div>
 
-      {showStatusDropdown && (
-        <div className="fixed inset-0 z-10" onClick={() => setShowStatusDropdown(false)} />
+      {(showStatusDropdown || showProcedureDropdown) && (
+        <div className="fixed inset-0 z-10" onClick={() => { setShowStatusDropdown(false); setShowProcedureDropdown(false); }} />
       )}
 
       {/* Patients Table */}

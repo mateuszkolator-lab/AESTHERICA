@@ -42,18 +42,23 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - [x] Planowanie operacji z automatycznym dopasowaniem pacjentów
 - [x] Drag-and-drop kalendarz do przypisywania pacjentów
 - [x] Zarządzanie slotami operacyjnymi (oznaczanie jako pełny)
-- [x] **NOWE: Wyraziste kolory w kalendarzu** (zielony=zaplanowany, czerwony=pełny, żółty=wolny)
-- [x] **NOWE: Przenoszenie zaplanowanych pacjentów** (drag-and-drop z kalendarza)
-- [x] **NOWE: Masowe dodawanie terminów operacji** (kalendarz do zaznaczania dni)
-- [x] **NOWE: Pulpit - nadchodzące operacje jako lista** (zamiast kart)
-- [x] **NOWE: Pulpit - statystyki kompaktowe na dole**
-- [x] **NOWE: Pulpit - nazwiska i typy zabiegów** w kalendarzu (znaczniki RIN, BLE, LIF itp.)
-- [x] **NOWE: Kalendarz - podgląd szczegółów dnia** (modal z pacjentami i zabiegami)
-- [x] **NOWE: Wyróżnienie lokalizacji w kalendarzu** - kolorowe paski boczne (pomarańczowy=Pro-Familia, fioletowy=Medicus) + kropki
-- [x] **NOWE: Opcja "Jak najszybciej"** - flaga ASAP dla pacjentów gotowych na wcześniejszy termin
-- [x] **NOWE: Filtrowanie i sortowanie po ASAP** w liście pacjentów
-- [x] **NOWE: Automatyczne dopasowanie z lokalizacją** - pacjenci przypisywani do terminów wg lokalizacji w karcie pacjenta
-- [x] **NOWE: Dodawanie zdjęć w formularzu pacjenta** (zakładka "Zdjęcia" z uploadem)
+- [x] Wyraziste kolory w kalendarzu (zielony=zaplanowany, czerwony=pełny, żółty=wolny)
+- [x] Przenoszenie zaplanowanych pacjentów (drag-and-drop z kalendarza)
+- [x] Masowe dodawanie terminów operacji (kalendarz do zaznaczania dni)
+- [x] Pulpit - nadchodzące operacje jako lista (zamiast kart)
+- [x] Pulpit - statystyki kompaktowe na dole
+- [x] Pulpit - nazwiska i typy zabiegów w kalendarzu
+- [x] Kalendarz - podgląd szczegółów dnia (modal z pacjentami i zabiegami)
+- [x] Wyróżnienie lokalizacji w kalendarzu - kolorowe paski boczne
+- [x] Opcja "Jak najszybciej" - flaga ASAP dla pacjentów gotowych na wcześniejszy termin
+- [x] Filtrowanie i sortowanie po ASAP w liście pacjentów
+- [x] Automatyczne dopasowanie z lokalizacją
+- [x] Dodawanie zdjęć w formularzu pacjenta (zakładka "Zdjęcia" z uploadem)
+- [x] Refaktoryzacja zdjęć - osobna kolekcja `photos` w MongoDB (rozwiązuje limit 16MB)
+- [x] Naprawiony komparator zdjęć - porównywanie dowolnych dwóch zdjęć
+- [x] **NOWE (10.03.2026): Sortowanie "Pacjenci bez terminu"** - ASAP najpierw, potem wg najbliższej preferowanej daty
+- [x] **NOWE (10.03.2026): Filtr wg typu zabiegu** - multi-select dropdown w liście pacjentów
+- [x] **NOWE (10.03.2026): Podsumowanie oczekujących pacjentów** - sortowalną tabelę w statystykach
 
 ## Endpointy API
 - POST /api/auth/login - Logowanie
@@ -62,7 +67,9 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - CRUD /api/patients/{id}/visits - Zarządzanie wizytami
 - CRUD /api/patients/{id}/visits/{vid}/photos - Zarządzanie zdjęciami
 - CRUD /api/locations - Zarządzanie lokalizacjami
+- GET /api/settings - Ogólne ustawienia (typy zabiegów)
 - GET /api/stats - Dane statystyk
+- GET /api/stats/waiting-summary - Podsumowanie oczekujących pacjentów
 - GET /api/export/patients - Eksport Excel
 - GET /api/calendar/status - Status Kalendarza Google
 
@@ -83,6 +90,18 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - Funkcja backup/przywracanie
 
 ## Następne Zadania
-1. Dodać integrację z Kalendarzem Google gdy użytkownik poda dane API
-2. Rozważyć dodanie szablonów zabiegów dla typowych operacji
-3. Implementacja śledzenia formularzy zgody pacjenta
+1. **Wgranie na serwer** - pliki do zaktualizowania na serwerze produkcyjnym
+2. Dodać integrację z Kalendarzem Google gdy użytkownik poda dane API
+3. Dodanie SSL/HTTPS do domeny `aestheticamd.ovh`
+4. Rozważyć dodanie szablonów zabiegów dla typowych operacji
+5. Implementacja śledzenia formularzy zgody pacjenta
+
+## Zmiany do wgrania na serwer (10.03.2026)
+Pliki zmienione:
+- `backend/server.py` - dodano dotenv
+- `backend/routers/stats.py` - endpoint `/stats/waiting-summary`
+- `backend/routers/settings.py` - endpoint `/settings`
+- `frontend/src/utils/constants.js` - funkcja `formatDateLocal`
+- `frontend/src/pages/CalendarPage.jsx` - sortowanie pacjentów bez terminu
+- `frontend/src/pages/PatientsList.jsx` - filtr wg typu zabiegu
+- `frontend/src/pages/StatsPage.jsx` - tabela podsumowania oczekujących
