@@ -1,0 +1,132 @@
+<analysis>**original_problem_statement:**
+The user, a facial plastic surgeon, requested a web and mobile accessible patient management application with features for patient management, scheduling with Google Calendar integration, clinical records including photo management, and statistical analytics. The entire application UI and all communication must be in Polish.
+
+**PRODUCT REQUIREMENTS:**
+-   **Patient Management:** Add, edit, sort patients. Add a flag for patients who want a slot as soon as possible ().
+-   **Scheduling & Sorting:**
+    -   Sort patients by preferred date range and surgery date.
+    -   **[New]** In the Patients without a date view, sort patients first by the  flag, then by the closest preferred date.
+    -   Integrate with Google Calendar to sync surgeries.
+    -   Allow drag-and-drop rescheduling.
+-   **Patient Filtering:**
+    -   **[New]** On the main patient list, allow filtering by one or more procedure types.
+-   **Clinical Records:**
+    -   Add photos and notes for procedures. Photos are now managed in a separate collection to avoid database document size limits.
+    -   A before and after photo comparison tool that allows comparing any two photos.
+    -   Photos are tagged with specific angles (e.g., Front, Profile, Helikopter).
+    -   Allow editing and deleting individual photos.
+    -   Manage patient status (e.g., Consultation, Planned, Awaiting, Operated).
+    -   Specific visit types (Konsultacja, 7 dni po zabiegu, etc.) are configurable.
+-   **Analytics:**
+    -   Generate statistics on procedures done per month/year.
+    -   **[New]** Add a summary of how many patients with each status are waiting for which procedures, with sorting capabilities.
+    -   Export statistics to Excel.
+-   **Configuration:**
+    -   Password-protected access.
+    -   Ability to add and edit clinic locations and procedure types.
+
+**User's preferred language**: Polish. The next agent **MUST** continue all communication with the user and all UI development in Polish.
+
+**what currently exists?**
+A full-stack Patient Management application (React frontend, FastAPI backend, MongoDB) is deployed and running on the user's OVH VPS via Docker. Key features like Google Calendar integration are complete.
+
+A major recent achievement was refactoring the photo storage system. Photos are now stored in a dedicated  collection in MongoDB, fixing a critical bug that prevented adding many photos to a single patient due to the 16MB document size limit. The photo comparator tool, which was previously broken, has been rewritten to allow comparing any two photos from any visit. The UI for uploading and managing photos has also been improved to allow assigning an angle to each photo individually.
+
+**Last working item**:
+-   **Last item agent was working**: Implementing three new feature requests from the user: (1) advanced sorting for patients without a date, (2) filtering patients by procedure type, and (3) adding a new statistics summary. The agent had just started work on the first item: the sorting logic.
+-   **Status**: IN PROGRESS
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: Backend testing agent to verify the new API logic for sorting, filtering, and stats. Frontend testing agent to verify the UI changes on the Calendar, Patients List, and Statistics pages.
+-   **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+-   None. All previously reported issues have been resolved.
+
+**In progress Task List**:
+-   **Task 1**: (P0) Implement new user-requested features.
+    -   **Task 1a**: (IN PROGRESS) Implement sorting for Pacjenci bez terminu on the Calendar page.
+    -   **Task 1b**: (NOT STARTED) Implement procedure type filtering on the Patients List page.
+    -   **Task 1c**: (NOT STARTED) Implement a new statistics summary on the Stats page.
+
+**Task Detail**:
+-   **Task 1: Implement new user-requested features**
+    -   **Where to resume**:
+        -   **Task 1a (Sorting)**: Modify the backend endpoint in  that serves the Pacjenci bez terminu list. The new logic must sort first by  (true first), and then by the  field (ascending). Update the frontend in  to reflect this new order.
+        -   **Task 1b (Filtering)**: Add a multi-select dropdown to  to filter patients. Fetch procedure types from settings. Update the  endpoint in  to accept and process an array of  filters.
+        -   **Task 1c (Statistics)**: Create a new backend aggregation endpoint in  to group patients by  and . Update  to display this data in a sortable table.
+    -   **What will be achieved with this?**: The application will have improved sorting, filtering, and reporting capabilities as requested by the user.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: Both.
+    -   **Blocked on something**: None.
+
+**Upcoming and Future Tasks**
+-   **Upcoming Tasks**:
+    -   (P1) Add SSL/HTTPS to the Domain: Secure the  domain using Let's Encrypt and Certbot.
+-   **Future Tasks**:
+    -   (P2) Implement full Statistics Export to Excel functionality.
+
+**Completed work in this session**
+-   **Photo Storage Refactor**: Migrated photo storage from being embedded in patient documents to a separate  collection, solving a critical 16MB MongoDB document size limit error.
+-   **Photo Comparator Fix**: Completely rewrote the  to allow comparing any two photos from any visit, fixing a major regression.
+-   **Photo Upload UX Improvement**: Updated the UI in  to allow assigning an angle to each individual photo during a multi-file upload.
+-   **Feature Addition**: Added new visit types and a new helikopter photo angle as per user request in .
+-   **Complex Deployment Debugging**: Successfully diagnosed and fixed multiple critical deployment issues on the user's live server, related to incorrect file paths, Docker build caching, and broken container states.
+
+**Earlier issues found/mentioned but not fixed**
+-   The frontend build process still generates  warnings related to . While non-blocking, these should be addressed to improve code quality.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+-   **Frontend**: React, Tailwind CSS
+-   **Backend**: Python, FastAPI
+-   **Database**: MongoDB (schema now includes a  collection).
+-   **Deployment**: Docker, Docker Compose, Nginx on a user-managed OVH VPS.
+
+**key DB schema**
+-   :  (The  array has been removed from this schema).
+-   : .
+
+**changes in tech stack**
+-   No change in technologies, but a critical architectural change was made to the database schema by introducing a separate  collection.
+
+**All files of reference**
+-   : Needs modification for new sorting and filtering logic.
+-   : Needs modification for new statistics logic.
+-   : To be updated for the new patient sorting.
+-   : To be updated with filtering UI.
+-   : To be updated with the new statistics summary.
+
+**Critical Info for New Agent**
+-   All communication and UI text must be in **Polish**.
+-   The deployment process is manual and involves providing the user with shell commands (, ) to execute on their live server. The correct directory for frontend code is .
+-   Docker caching can be aggressive. Use  and be prepared to fully stop and remove containers () to resolve  errors during deployment.
+-   Photo logic is now based entirely on the new, separate  collection. Do not attempt to access photos from within the patient document.
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User**: Requested three new features: sorting patients without a date, filtering patients by procedure, and a new stats summary.
+2.  **Agent**: Asked clarifying questions about the feature requests.
+3.  **User**: Confirmed that procedure types are from settings and the  flag is the primary sorting criteria.
+4.  **Agent**: Presented a plan for implementation.
+5.  **User**: Flag in the first place. (Prioritizing the  flag).
+6.  **Agent**: Acknowledged the priority and began implementation.
+7.  **User**: remind me the commands in the terminal to log in to the server.
+8.  **Agent**: Provided the SSH login command.
+9.  **User**: remind me ip.
+10. **Agent**: Provided the server IP address.
+
+**Project Health Check:**
+-   **Broken**: None. The application is stable.
+-   **Mocked**: None.
+
+**3rd Party Integrations**
+-   **Google Calendar**: Integrated for scheduling. Requires a User API Key.
+
+**Testing status**
+-   **Testing agent used after significant changes**: No.
+-   **Test files created**: None.
+-   **Known regressions**: None.
+
+**Credentials to test flow:**
+-   **App Password**: </analysis>

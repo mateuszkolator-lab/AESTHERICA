@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Calendar, ChevronLeft, ChevronRight, User, MapPin, 
-  Phone, X
+  Phone, X, Sparkles
 } from "lucide-react";
 import api from "../utils/api";
 import { 
@@ -101,6 +101,21 @@ const CalendarPage = () => {
     }
     setDraggedPatient(null);
   };
+
+  // Sortuj pacjentów bez terminu: ASAP najpierw, potem wg preferowanej daty
+  const sortedUnassignedPatients = useMemo(() => {
+    const patients = calendarData?.unassigned_patients || [];
+    return [...patients].sort((a, b) => {
+      // ASAP na górze
+      if (a.asap && !b.asap) return -1;
+      if (!a.asap && b.asap) return 1;
+      
+      // Potem wg preferowanej daty (najbliższa pierwsza)
+      const dateA = a.preferred_date_start || "9999-99-99";
+      const dateB = b.preferred_date_start || "9999-99-99";
+      return dateA.localeCompare(dateB);
+    });
+  }, [calendarData?.unassigned_patients]);
 
   const days = getDaysInMonth(currentMonth);
   const monthName = currentMonth.toLocaleString("pl-PL", { month: "long", year: "numeric" });
