@@ -151,14 +151,14 @@ async def calendar_callback(code: str = None, state: str = None, error: str = No
     app_url = os.environ.get('APP_URL', 'http://localhost:3000')
     
     if error:
-        return RedirectResponse(url=f"{app_url}/ustawienia?calendar_error={error}")
+        return RedirectResponse(url=f"{app_url}/settings?calendar_error={error}")
     
     if not code:
-        return RedirectResponse(url=f"{app_url}/ustawienia?calendar_error=no_code")
+        return RedirectResponse(url=f"{app_url}/settings?calendar_error=no_code")
     
     config = get_google_client_config()
     if not config:
-        return RedirectResponse(url=f"{app_url}/ustawienia?calendar_error=not_configured")
+        return RedirectResponse(url=f"{app_url}/settings?calendar_error=not_configured")
     
     redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', 'http://localhost/api/calendar/callback')
     
@@ -179,11 +179,11 @@ async def calendar_callback(code: str = None, state: str = None, error: str = No
             'expiry': creds.expiry.isoformat() if creds.expiry else None
         })
         
-        return RedirectResponse(url=f"{app_url}/ustawienia?calendar_connected=true")
+        return RedirectResponse(url=f"{app_url}/settings?calendar_connected=true")
         
     except Exception as e:
         print(f"OAuth callback error: {e}")
-        return RedirectResponse(url=f"{app_url}/ustawienia?calendar_error=auth_failed")
+        return RedirectResponse(url=f"{app_url}/settings?calendar_error=auth_failed")
 
 
 @router.post("/disconnect")
