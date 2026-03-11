@@ -170,14 +170,6 @@ async def export_patients(
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-@router.get("/calendar/status")
-async def calendar_status(user: dict = Depends(get_auth)):
-    google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
-    return {
-        "configured": bool(google_client_id),
-        "message": "Google Calendar integration ready" if google_client_id else "Google Calendar not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable."
-    }
-
 @router.get("/stats/waiting-summary")
 async def get_waiting_summary(user: dict = Depends(get_auth)):
     """Get summary of patients waiting by status and procedure type"""
