@@ -91,8 +91,25 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 
 ## Następne Zadania
 1. ~~Wgranie na serwer~~ ✅ Zrobione (10.03.2026)
-2. ~~Integracja z Kalendarzem Google~~ ✅ Już zintegrowane
+2. ~~Integracja z Kalendarzem Google~~ ✅ Naprawiona (11.03.2026)
 3. ~~SSL/HTTPS~~ ✅ Zrobione - Let's Encrypt (10.03.2026)
+4. ~~Auto-odnowienie SSL~~ ✅ Cron job (11.03.2026)
+5. ~~Backup bazy danych~~ ✅ Automatyczny codzienny backup (11.03.2026)
+6. ~~Globalne wyszukiwanie~~ ✅ Ctrl+K (11.03.2026)
+
+## W trakcie implementacji
+- **Planer Rinoplastyki** - narzędzie do planowania operacji nosa na schematach
+  - Schematy SVG (frontalny, profil, baza, przegroda) - UTWORZONE
+  - Komponent RhinoPlanner z Fabric.js - UTWORZONE (do dokończenia)
+  - Integracja z kartą pacjenta - TODO
+  - Eksport PDF - TODO
+  - Testowanie na tablecie - TODO
+
+## Przyszłe zadania
+- Dokończenie Planera Rinoplastyki
+- Powiadomienia email/SMS przed operacją  
+- Eksport PDF karty pacjenta
+- Panel pacjenta
 4. Rozważyć dodanie szablonów zabiegów dla typowych operacji
 5. Implementacja śledzenia formularzy zgody pacjenta
 
