@@ -90,9 +90,9 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 - Funkcja backup/przywracanie
 
 ## Następne Zadania
-1. **Wgranie na serwer** - pliki do zaktualizowania na serwerze produkcyjnym
-2. Dodać integrację z Kalendarzem Google gdy użytkownik poda dane API
-3. Dodanie SSL/HTTPS do domeny `aestheticamd.ovh`
+1. ~~Wgranie na serwer~~ ✅ Zrobione (10.03.2026)
+2. ~~Integracja z Kalendarzem Google~~ ✅ Już zintegrowane
+3. ~~SSL/HTTPS~~ ✅ Zrobione - Let's Encrypt (10.03.2026)
 4. Rozważyć dodanie szablonów zabiegów dla typowych operacji
 5. Implementacja śledzenia formularzy zgody pacjenta
 
