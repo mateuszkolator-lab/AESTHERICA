@@ -134,11 +134,15 @@ async def authorize_calendar(user: dict = Depends(get_auth)):
         prompt='consent'
     )
     
-    # Store state in database for verification
+    # Store state and code_verifier in database for callback
     db = get_db()
     await db.settings.update_one(
         {"key": "google_oauth_state"},
-        {"$set": {"state": state, "created_at": datetime.now(timezone.utc).isoformat()}},
+        {"$set": {
+            "state": state, 
+            "code_verifier": flow.code_verifier,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }},
         upsert=True
     )
     
@@ -162,8 +166,18 @@ async def calendar_callback(code: str = None, state: str = None, error: str = No
     
     redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', 'http://localhost/api/calendar/callback')
     
+    # Retrieve stored code_verifier
+    db = get_db()
+    oauth_state = await db.settings.find_one({"key": "google_oauth_state"})
+    code_verifier = oauth_state.get("code_verifier") if oauth_state else None
+    
     try:
         flow = Flow.from_client_config(config, scopes=SCOPES, redirect_uri=redirect_uri)
+        
+        # Set code_verifier if we have it
+        if code_verifier:
+            flow.code_verifier = code_verifier
+        
         flow.fetch_token(code=code)
         
         creds = flow.credentials
@@ -178,6 +192,9 @@ async def calendar_callback(code: str = None, state: str = None, error: str = No
             'scopes': list(creds.scopes) if creds.scopes else SCOPES,
             'expiry': creds.expiry.isoformat() if creds.expiry else None
         })
+        
+        # Clean up oauth state
+        await db.settings.delete_one({"key": "google_oauth_state"})
         
         return RedirectResponse(url=f"{app_url}/settings?calendar_connected=true")
         
