@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
+import GlobalSearch from "./components/GlobalSearch";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
@@ -20,6 +21,7 @@ const AppLayout = ({ children }) => {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar currentPath={location.pathname} />
       <main className="flex-1 overflow-auto">
+        <GlobalSearch />
         {children}
       </main>
     </div>
