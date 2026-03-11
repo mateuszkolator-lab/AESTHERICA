@@ -96,8 +96,8 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 4. Rozważyć dodanie szablonów zabiegów dla typowych operacji
 5. Implementacja śledzenia formularzy zgody pacjenta
 
-## Zmiany do wgrania na serwer (10.03.2026)
-Pliki zmienione:
+## Wdrożone na serwer produkcyjny (10.03.2026) ✅
+Pliki zaktualizowane przez GitHub (repo: mateuszkolator-lab/AESTHERICA):
 - `backend/server.py` - dodano dotenv
 - `backend/routers/stats.py` - endpoint `/stats/waiting-summary`
 - `backend/routers/settings.py` - endpoint `/settings`
