@@ -220,7 +220,7 @@ const RhinoPlannerPage = () => {
     
     fabricRef.current = canvas;
     
-    // Add simple label text
+    // Add simple label text (will be removed when background is set)
     const label = new IText(
       diagramType === "frontal" ? "WIDOK FRONTALNY" : 
       diagramType === "profile" ? "WIDOK PROFILOWY" : "WIDOK PODSTAWY", 
@@ -233,10 +233,10 @@ const RhinoPlannerPage = () => {
         originX: "center"
       }
     );
-    label.set({ selectable: false, evented: false });
+    label.set({ selectable: false, evented: false, isLabel: true });
     canvas.add(label);
     
-    // Add helper text
+    // Add helper text (will be removed when background is set)
     const helper = new IText("Rysuj tutaj", {
       left: 200,
       top: 240,
@@ -245,7 +245,7 @@ const RhinoPlannerPage = () => {
       fill: "#94a3b8",
       originX: "center"
     });
-    helper.set({ selectable: false, evented: false });
+    helper.set({ selectable: false, evented: false, isLabel: true });
     canvas.add(helper);
     
     canvas.requestRenderAll();
@@ -319,12 +319,13 @@ const RhinoPlannerPage = () => {
         opacity: 0.5
       });
       
-      // Usuń stare tło jeśli istnieje
+      // Usuń stare tło i etykiety
       const objects = canvas.getObjects();
-      const bgObject = objects.find(obj => obj.isBackground);
-      if (bgObject) {
-        canvas.remove(bgObject);
-      }
+      objects.forEach(obj => {
+        if (obj.isBackground || obj.isLabel) {
+          canvas.remove(obj);
+        }
+      });
       
       fabricImg.isBackground = true;
       canvas.add(fabricImg);
