@@ -55,7 +55,7 @@ const PROCEDURE_CATEGORIES = [
     items: ["Strut graft", "Plumping graft", "Korekcja retrakcji"]
   },
   {
-    name: "Ogólny kształt nosa",
+    name: "Planowany kształt nosa",
     items: [
       "Płaski", 
       "Lekko zadarty", 
