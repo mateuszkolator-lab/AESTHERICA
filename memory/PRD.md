@@ -98,15 +98,24 @@ Budowa aplikacji do zarządzania pacjentami dla chirurga plastycznego twarzy z f
 6. ~~Globalne wyszukiwanie~~ ✅ Ctrl+K (11.03.2026)
 
 ## W trakcie implementacji
-- **Planer Rinoplastyki** - narzędzie do planowania operacji nosa na schematach
-  - Schematy SVG (frontalny, profil, baza, przegroda) - UTWORZONE
-  - Komponent RhinoPlanner z Fabric.js - UTWORZONE (do dokończenia)
-  - Integracja z kartą pacjenta - TODO
-  - Eksport PDF - TODO
-  - Testowanie na tablecie - TODO
+- **Planer Rinoplastyki (RhinoPlanner)** - narzędzie do planowania operacji nosa ✅ ZAIMPLEMENTOWANE (12.03.2026)
+  - Canvas Fabric.js z trzema widokami (frontalny, profilowy, podstawy) - GOTOWE
+  - Narzędzia rysowania (pędzel, gumka, kształty, tekst, kolory, rozmiary) - GOTOWE
+  - Formularz procedur (5 kategorii chirurgicznych) - GOTOWE
+  - Backend API do zapisywania/odczytywania planów (kolekcja `rhinoplans`) - GOTOWE
+  - Integracja z kartą pacjenta (przycisk "RhinoPlanner") - GOTOWE
+  - Eksport PDF - GOTOWE (jsPDF)
+  - ⚠️ UWAGA: Diagramy anatomiczne tła nie są jeszcze zaimplementowane (problem z renderowaniem Fabric.js v7)
+
+## Endpointy API - RhinoPlanner
+- PUT /api/rhinoplanner/patient/{patient_id} - Zapisz/aktualizuj plan rinoplastyki
+- GET /api/rhinoplanner/patient/{patient_id} - Pobierz plan pacjenta
+- DELETE /api/rhinoplanner/patient/{patient_id} - Usuń plan
+- GET /api/rhinoplanner/all - Lista wszystkich planów (admin)
 
 ## Przyszłe zadania
-- Dokończenie Planera Rinoplastyki
+- Dodanie diagramów anatomicznych nosa (SVG) jako tło canvas w RhinoPlanner
+- Testowanie RhinoPlannera na tablecie z rysikiem
 - Powiadomienia email/SMS przed operacją  
 - Eksport PDF karty pacjenta
 - Panel pacjenta

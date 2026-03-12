@@ -121,58 +121,87 @@ const RhinoPlannerPage = () => {
     }
   };
 
-  // Inicjalizacja canvasów Fabric.js
+  // Initialize single canvas
+  const initCanvas = useCallback((canvasEl, fabricRef, diagramType) => {
+    if (!canvasEl || fabricRef.current) return;
+    
+    const canvas = new Canvas(canvasEl, {
+      width: 400,
+      height: 500,
+      backgroundColor: "#fafafa",
+      isDrawingMode: true,
+      selection: true
+    });
+    
+    canvas.freeDrawingBrush = new PencilBrush(canvas);
+    canvas.freeDrawingBrush.color = activeColor;
+    canvas.freeDrawingBrush.width = brushSize;
+    
+    fabricRef.current = canvas;
+    
+    // Add simple label text
+    const label = new IText(
+      diagramType === "frontal" ? "WIDOK FRONTALNY" : 
+      diagramType === "profile" ? "WIDOK PROFILOWY" : "WIDOK PODSTAWY", 
+      {
+        left: 200,
+        top: 20,
+        fontSize: 14,
+        fontFamily: "Arial",
+        fill: "#64748b",
+        originX: "center"
+      }
+    );
+    label.set({ selectable: false, evented: false });
+    canvas.add(label);
+    
+    // Add helper text
+    const helper = new IText("Rysuj tutaj", {
+      left: 200,
+      top: 240,
+      fontSize: 12,
+      fontFamily: "Arial",
+      fill: "#94a3b8",
+      originX: "center"
+    });
+    helper.set({ selectable: false, evented: false });
+    canvas.add(helper);
+    
+    canvas.requestRenderAll();
+    return canvas;
+  }, [activeColor, brushSize]);
+
+  // Initialize canvas when view becomes active
   useEffect(() => {
     if (loading) return;
-
-    const initCanvas = async (canvasEl, fabricRef, svgDataUrl) => {
-      if (!canvasEl || fabricRef.current) return;
-      
-      const canvas = new Canvas(canvasEl, {
-        width: 400,
-        height: 500,
-        backgroundColor: "#fafafa",
-        isDrawingMode: true,
-        selection: true
-      });
-      
-      canvas.freeDrawingBrush = new PencilBrush(canvas);
-      canvas.freeDrawingBrush.color = activeColor;
-      canvas.freeDrawingBrush.width = brushSize;
-      
-      fabricRef.current = canvas;
-      
-      // Load background image using FabricImage
-      try {
-        const img = await FabricImage.fromURL(svgDataUrl, {
-          crossOrigin: 'anonymous'
-        });
-        img.set({
-          selectable: false,
-          evented: false,
-          scaleX: canvas.width / img.width,
-          scaleY: canvas.height / img.height
-        });
-        canvas.backgroundImage = img;
-        canvas.renderAll();
-      } catch (err) {
-        console.error("Failed to load background image:", err);
+    
+    const timer = setTimeout(() => {
+      if (activeView === "frontal" && canvasFrontalRef.current && !fabricFrontalRef.current) {
+        initCanvas(canvasFrontalRef.current, fabricFrontalRef, "frontal");
+      } else if (activeView === "profile" && canvasProfileRef.current && !fabricProfileRef.current) {
+        initCanvas(canvasProfileRef.current, fabricProfileRef, "profile");
+      } else if (activeView === "base" && canvasBaseRef.current && !fabricBaseRef.current) {
+        initCanvas(canvasBaseRef.current, fabricBaseRef, "base");
       }
       
-      return canvas;
-    };
+      // Re-render active canvas
+      const canvas = getActiveCanvas();
+      if (canvas) {
+        canvas.requestRenderAll();
+      }
+    }, 100);
 
-    // Inicjalizuj wszystkie canvasy
-    initCanvas(canvasFrontalRef.current, fabricFrontalRef, createNoseDiagramFrontal());
-    initCanvas(canvasProfileRef.current, fabricProfileRef, createNoseDiagramProfile());
-    initCanvas(canvasBaseRef.current, fabricBaseRef, createNoseDiagramBase());
-
+    return () => clearTimeout(timer);
+  }, [loading, activeView, initCanvas]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
       fabricFrontalRef.current?.dispose();
       fabricProfileRef.current?.dispose();
       fabricBaseRef.current?.dispose();
     };
-  }, [loading]);
+  }, []);
 
   // Aktualizuj narzędzie rysowania
   useEffect(() => {
@@ -582,14 +611,14 @@ const RhinoPlannerPage = () => {
 
           {/* Canvasy */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-            <div className={activeView === "frontal" ? "block" : "hidden"}>
-              <canvas ref={canvasFrontalRef} data-testid="canvas-frontal" />
+            <div style={{ display: activeView === "frontal" ? "block" : "none", minHeight: "500px" }}>
+              <canvas ref={canvasFrontalRef} data-testid="canvas-frontal" width="400" height="500" />
             </div>
-            <div className={activeView === "profile" ? "block" : "hidden"}>
-              <canvas ref={canvasProfileRef} data-testid="canvas-profile" />
+            <div style={{ display: activeView === "profile" ? "block" : "none", minHeight: "500px" }}>
+              <canvas ref={canvasProfileRef} data-testid="canvas-profile" width="400" height="500" />
             </div>
-            <div className={activeView === "base" ? "block" : "hidden"}>
-              <canvas ref={canvasBaseRef} data-testid="canvas-base" />
+            <div style={{ display: activeView === "base" ? "block" : "none", minHeight: "500px" }}>
+              <canvas ref={canvasBaseRef} data-testid="canvas-base" width="400" height="500" />
             </div>
           </div>
 
@@ -671,100 +700,5 @@ const ToolButton = ({ icon, active, onClick, title }) => (
     {icon}
   </button>
 );
-
-// Funkcje generujące diagramy SVG jako data URL
-function encodeToBase64(str) {
-  // Handle UTF-8 characters properly
-  return btoa(unescape(encodeURIComponent(str)));
-}
-
-function createNoseDiagramFrontal() {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
-      <rect fill="#fafafa" width="400" height="500"/>
-      <!-- Face outline -->
-      <ellipse cx="200" cy="220" rx="120" ry="160" fill="none" stroke="#e2e8f0" stroke-width="1"/>
-      <!-- Nose - frontal view -->
-      <path d="M200 100 L200 280" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4"/>
-      <!-- Nose bridge -->
-      <path d="M185 120 Q200 115 215 120 L218 200 Q200 210 182 200 Z" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Nose tip -->
-      <ellipse cx="200" cy="240" rx="35" ry="25" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Ala nasi -->
-      <path d="M165 250 Q150 260 155 280 Q165 290 180 280" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <path d="M235 250 Q250 260 245 280 Q235 290 220 280" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Nostrils -->
-      <ellipse cx="180" cy="265" rx="12" ry="8" fill="none" stroke="#64748b" stroke-width="1"/>
-      <ellipse cx="220" cy="265" rx="12" ry="8" fill="none" stroke="#64748b" stroke-width="1"/>
-      <!-- Eyes (reference) -->
-      <ellipse cx="150" cy="150" rx="25" ry="12" fill="none" stroke="#cbd5e1" stroke-width="1"/>
-      <ellipse cx="250" cy="150" rx="25" ry="12" fill="none" stroke="#cbd5e1" stroke-width="1"/>
-      <!-- Label -->
-      <text x="200" y="30" text-anchor="middle" fill="#64748b" font-size="14" font-family="Arial">WIDOK FRONTALNY</text>
-    </svg>
-  `;
-  return "data:image/svg+xml;base64," + encodeToBase64(svg);
-}
-
-function createNoseDiagramProfile() {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
-      <rect fill="#fafafa" width="400" height="500"/>
-      <!-- Head profile outline -->
-      <path d="M280 100 Q320 150 310 220 Q300 300 260 350 Q220 380 180 370" fill="none" stroke="#e2e8f0" stroke-width="1"/>
-      <!-- Forehead -->
-      <path d="M200 80 Q230 85 240 120" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
-      <!-- Nasion -->
-      <circle cx="235" cy="140" r="3" fill="#94a3b8"/>
-      <!-- Nose bridge -->
-      <path d="M235 140 L260 200 Q270 230 265 250" fill="none" stroke="#64748b" stroke-width="2"/>
-      <!-- Nose tip -->
-      <circle cx="270" cy="255" r="20" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Columella -->
-      <path d="M265 275 L255 310 Q250 320 240 315" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Upper lip -->
-      <path d="M240 315 Q230 320 220 315" fill="none" stroke="#cbd5e1" stroke-width="1"/>
-      <!-- Ala -->
-      <path d="M280 250 Q295 260 290 280 Q280 290 265 275" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Eye (reference) -->
-      <ellipse cx="200" cy="150" rx="20" ry="10" fill="none" stroke="#cbd5e1" stroke-width="1"/>
-      <!-- Guide lines -->
-      <line x1="100" y1="255" x2="300" y2="255" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
-      <text x="105" y="250" fill="#94a3b8" font-size="10" font-family="Arial">Tip defining point</text>
-      <!-- Label -->
-      <text x="200" y="30" text-anchor="middle" fill="#64748b" font-size="14" font-family="Arial">WIDOK PROFILOWY</text>
-    </svg>
-  `;
-  return "data:image/svg+xml;base64," + encodeToBase64(svg);
-}
-
-function createNoseDiagramBase() {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
-      <rect fill="#fafafa" width="400" height="500"/>
-      <!-- Nose - base view (from below) -->
-      <!-- Outer outline -->
-      <path d="M200 100 Q280 150 280 220 Q280 300 200 350 Q120 300 120 220 Q120 150 200 100" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Tip (triangle) -->
-      <path d="M200 120 L240 200 L160 200 Z" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Columella -->
-      <rect x="190" y="200" width="20" height="80" fill="none" stroke="#64748b" stroke-width="1.5" rx="5"/>
-      <!-- Nostrils -->
-      <ellipse cx="155" cy="260" rx="30" ry="45" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <ellipse cx="245" cy="260" rx="30" ry="45" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Outer ala -->
-      <path d="M125 240 Q100 260 110 300 Q125 320 140 310" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <path d="M275 240 Q300 260 290 300 Q275 320 260 310" fill="none" stroke="#64748b" stroke-width="1.5"/>
-      <!-- Soft triangle -->
-      <path d="M170 200 L200 180 L230 200" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3"/>
-      <!-- Center line -->
-      <line x1="200" y1="100" x2="200" y2="350" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
-      <!-- Labels -->
-      <text x="200" y="30" text-anchor="middle" fill="#64748b" font-size="14" font-family="Arial">WIDOK PODSTAWY</text>
-      <text x="200" y="400" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="Arial">Widok od dolu (basal view)</text>
-    </svg>
-  `;
-  return "data:image/svg+xml;base64," + encodeToBase64(svg);
-}
 
 export default RhinoPlannerPage;
