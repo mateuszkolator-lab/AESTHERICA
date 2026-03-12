@@ -18,37 +18,45 @@ const PROCEDURE_CATEGORIES = [
       "Redukcja grzbietu", 
       "Augmentacja grzbietu", 
       "Spreaders", 
-      "Elongated spreaders",
-      "Radix - redukcja",
-      "Radix - augmentacja"
+      "Elongated spreaders"
+    ],
+    grouped: [
+      { label: "Radix", options: ["redukcja", "augmentacja"] }
     ]
   },
   {
     name: "Przegroda nosowa",
     items: [
-      "Skrzywiona w prawo", 
-      "Skrzywiona w lewo", 
-      "Kolec do przyszycia - TAK",
-      "Kolec do przyszycia - NIE",
       "Pobranie chrząstki",
       "Septal extension graft"
+    ],
+    grouped: [
+      { label: "Skrzywienie", options: ["w prawo", "w lewo"] },
+      { label: "Kolec do przyszycia", options: ["TAK", "NIE"] }
     ]
   },
   {
     name: "Czubek nosa",
     items: [
-      "Projekcja ↑ większa", 
-      "Projekcja ↓ mniejsza", 
-      "Rotacja ↑ większa",
-      "Rotacja ↓ mniejsza",
       "Shield graft", 
       "Cap graft",
       "Szwy definiujące"
+    ],
+    grouped: [
+      { label: "Projekcja", options: ["↑ większa", "↓ mniejsza"] },
+      { label: "Rotacja", options: ["↑ większa", "↓ mniejsza"] }
     ]
   },
   {
     name: "Skrzydełka nosa",
-    items: ["Zwężenie skrzydełek", "Alar base reduction", "Alar rim graft", "Wzmocnienie skrzydełek"]
+    items: [
+      "Zwężenie skrzydełek", 
+      "Alar base reduction", 
+      "Alar rim graft", 
+      "Wzmocnienie skrzydełek",
+      "Lateral crural strut graft",
+      "Batten graft"
+    ]
   },
   {
     name: "Kolumella",
@@ -165,8 +173,8 @@ const RhinoPlannerPage = () => {
     });
     
     canvas.freeDrawingBrush = new PencilBrush(canvas);
-    canvas.freeDrawingBrush.color = activeColor;
-    canvas.freeDrawingBrush.width = brushSize;
+    canvas.freeDrawingBrush.color = "#ef4444"; // Default red
+    canvas.freeDrawingBrush.width = 4; // Default size
     
     fabricRef.current = canvas;
     
@@ -200,7 +208,7 @@ const RhinoPlannerPage = () => {
     
     canvas.requestRenderAll();
     return canvas;
-  }, [activeColor, brushSize]);
+  }, []); // No dependencies - stable function
 
   // Initialize canvas when view becomes active
   useEffect(() => {
@@ -227,10 +235,13 @@ const RhinoPlannerPage = () => {
   
   // Cleanup on unmount
   useEffect(() => {
+    const frontal = fabricFrontalRef.current;
+    const profile = fabricProfileRef.current;
+    const base = fabricBaseRef.current;
     return () => {
-      fabricFrontalRef.current?.dispose();
-      fabricProfileRef.current?.dispose();
-      fabricBaseRef.current?.dispose();
+      frontal?.dispose();
+      profile?.dispose();
+      base?.dispose();
     };
   }, []);
 
@@ -664,7 +675,27 @@ const RhinoPlannerPage = () => {
                 <div key={category.name} className="space-y-2">
                   <h3 className="font-medium text-slate-700">{category.name}</h3>
                   <div className="space-y-1">
-                    {category.items.map(item => (
+                    {/* Grouped options (label + choices) */}
+                    {category.grouped && category.grouped.map(group => (
+                      <div key={group.label} className="flex items-center gap-2 p-1.5">
+                        <span className="text-sm text-slate-700 font-medium min-w-[80px]">{group.label}:</span>
+                        <div className="flex gap-3">
+                          {group.options.map(option => (
+                            <label key={option} className="flex items-center gap-1 cursor-pointer hover:bg-slate-50 px-2 py-1 rounded">
+                              <input
+                                type="checkbox"
+                                checked={(selectedProcedures[category.name] || []).includes(`${group.label} - ${option}`)}
+                                onChange={() => toggleProcedure(category.name, `${group.label} - ${option}`)}
+                                className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                              />
+                              <span className="text-sm text-slate-600">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {/* Regular items */}
+                    {category.items && category.items.map(item => (
                       <label 
                         key={item} 
                         className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1.5 rounded"
