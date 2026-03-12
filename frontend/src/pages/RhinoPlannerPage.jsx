@@ -13,16 +13,16 @@ import api from "../utils/api";
 // Dostępne diagramy tła
 const BACKGROUND_DIAGRAMS = {
   frontal: [
-    { id: "frontal1", name: "Frontalny", src: "/diagram-frontal.png" },
-    { id: "tip", name: "Czubek", src: "/diagram-tip.png" },
+    { id: "frontal1", name: "Frontalny 1", src: "/diagram-frontal.png" },
+    { id: "frontal2", name: "Frontalny 2", src: "/diagram-frontal2.png" },
   ],
   profile: [
     { id: "profile1", name: "Profil 1", src: "/diagram-profile.png" },
     { id: "profile2", name: "Profil 2", src: "/diagram-profile2.png" },
   ],
   base: [
-    { id: "base1", name: "Podstawa 1", src: "/diagram-base1.png" },
-    { id: "base2", name: "Podstawa 2", src: "/diagram-base2.png" },
+    { id: "base1", name: "Podstawa", src: "/diagram-base1.png" },
+    { id: "base2", name: "Czubek (szczegóły)", src: "/diagram-base2.png" },
   ]
 };
 
