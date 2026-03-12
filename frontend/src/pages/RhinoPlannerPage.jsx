@@ -666,77 +666,97 @@ const RhinoPlannerPage = () => {
 
           {/* Formularz procedur */}
           <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <h2 className="text-xl font-semibold text-slate-900 mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
               Planowane procedury
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {PROCEDURE_CATEGORIES.map(category => (
-                <div key={category.name} className="space-y-2">
-                  <h3 className="font-medium text-slate-700">{category.name}</h3>
-                  <div className="space-y-1">
+                <div 
+                  key={category.name} 
+                  className="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow"
+                >
+                  <h3 className="font-semibold text-slate-800 text-base mb-4 pb-2 border-b border-slate-200">
+                    {category.name}
+                  </h3>
+                  <div className="space-y-3">
                     {/* Grouped options (label + choices) */}
                     {category.grouped && category.grouped.map(group => (
-                      <div key={group.label} className="flex items-center gap-2 p-1.5">
-                        <span className="text-sm text-slate-700 font-medium min-w-[80px]">{group.label}:</span>
-                        <div className="flex gap-3">
+                      <div key={group.label} className="bg-white rounded-lg p-3 border border-slate-100">
+                        <span className="text-sm text-slate-700 font-medium block mb-2">{group.label}</span>
+                        <div className="flex flex-wrap gap-2">
                           {group.options.map(option => (
-                            <label key={option} className="flex items-center gap-1 cursor-pointer hover:bg-slate-50 px-2 py-1 rounded">
+                            <label 
+                              key={option} 
+                              className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-full border transition-all text-sm ${
+                                (selectedProcedures[category.name] || []).includes(`${group.label} - ${option}`)
+                                  ? 'bg-teal-50 border-teal-300 text-teal-700'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:border-teal-200 hover:bg-teal-50/50'
+                              }`}
+                            >
                               <input
                                 type="checkbox"
                                 checked={(selectedProcedures[category.name] || []).includes(`${group.label} - ${option}`)}
                                 onChange={() => toggleProcedure(category.name, `${group.label} - ${option}`)}
-                                className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                                className="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
                               />
-                              <span className="text-sm text-slate-600">{option}</span>
+                              <span>{option}</span>
                             </label>
                           ))}
                         </div>
                       </div>
                     ))}
                     {/* Regular items */}
-                    {category.items && category.items.map(item => (
-                      <label 
-                        key={item} 
-                        className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1.5 rounded"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={(selectedProcedures[category.name] || []).includes(item)}
-                          onChange={() => toggleProcedure(category.name, item)}
-                          className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
-                        />
-                        <span className="text-sm text-slate-600">{item}</span>
-                      </label>
-                    ))}
+                    {category.items && category.items.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        {category.items.map(item => (
+                          <label 
+                            key={item} 
+                            className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border transition-all ${
+                              (selectedProcedures[category.name] || []).includes(item)
+                                ? 'bg-teal-50 border-teal-200'
+                                : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={(selectedProcedures[category.name] || []).includes(item)}
+                              onChange={() => toggleProcedure(category.name, item)}
+                              className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                            />
+                            <span className="text-sm text-slate-700">{item}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Notatki */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-5">
+                <label className="block text-sm font-semibold text-slate-800 mb-3">
                   Notatki ogólne
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Dodatkowe informacje o planie..."
-                  className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                  className="w-full h-32 px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none text-sm"
                   data-testid="notes-textarea"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+              <div className="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-5">
+                <label className="block text-sm font-semibold text-slate-800 mb-3">
                   Notatki chirurga
                 </label>
                 <textarea
                   value={surgeonNotes}
                   onChange={(e) => setSurgeonNotes(e.target.value)}
                   placeholder="Techniczne notatki chirurgiczne..."
-                  className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                  className="w-full h-32 px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none text-sm"
                   data-testid="surgeon-notes-textarea"
                 />
               </div>
