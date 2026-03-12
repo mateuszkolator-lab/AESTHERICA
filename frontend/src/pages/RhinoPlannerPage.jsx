@@ -28,7 +28,8 @@ const PROCEDURE_CATEGORIES = [
     name: "Przegroda nosowa",
     items: [
       "Pobranie chrząstki",
-      "Septal extension graft"
+      "Septal extension graft",
+      "Kolec nosowy - zredukować"
     ],
     grouped: [
       { label: "Skrzywienie", options: ["w prawo", "w lewo"] },
@@ -60,7 +61,26 @@ const PROCEDURE_CATEGORIES = [
   },
   {
     name: "Kolumella",
-    items: ["Strut graft", "Plumping graft", "Korekcja retrakcji"]
+    items: [
+      "Strut graft", 
+      "Plumping graft", 
+      "Korekcja retrakcji"
+    ],
+    grouped: [
+      { label: "Columellar show", options: ["zwiększyć", "zmniejszyć"] }
+    ]
+  },
+  {
+    name: "Materiał do augmentacji",
+    items: [
+      "Chrząstka przegrody",
+      "Chrząstka ucha",
+      "Chrząstka żebra",
+      "Powięź"
+    ],
+    grouped: [
+      { label: "Ryzyko potrzeby żebra", options: ["małe", "średnie", "duże"] }
+    ]
   },
   {
     name: "Planowany kształt nosa",
