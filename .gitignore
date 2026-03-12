@@ -111,3 +111,4 @@ android-sdk/ -e
 *.env.*
 frontend/node_modules/.cache/default-development/3.pack
 frontend/node_modules/.cache/default-development/5.pack
+frontend/node_modules/.cache/default-development/6.pack

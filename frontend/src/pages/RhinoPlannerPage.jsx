@@ -30,16 +30,17 @@ const PROCEDURE_CATEGORIES = [
       "Skrzywiona w lewo", 
       "Kolec do przyszycia - TAK",
       "Kolec do przyszycia - NIE",
-      "Pobranie chrząstki"
+      "Pobranie chrząstki",
+      "Septal extension graft"
     ]
   },
   {
     name: "Czubek nosa",
     items: [
-      "Zwiększenie projekcji", 
-      "Zmniejszenie projekcji", 
-      "Zwiększenie rotacji",
-      "Zmniejszenie rotacji",
+      "Projekcja ↑ większa", 
+      "Projekcja ↓ mniejsza", 
+      "Rotacja ↑ większa",
+      "Rotacja ↓ mniejsza",
       "Shield graft", 
       "Cap graft",
       "Szwy definiujące"
