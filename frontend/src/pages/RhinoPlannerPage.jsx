@@ -308,25 +308,15 @@ const RhinoPlannerPage = () => {
         imgEl.src = diagramSrc;
       });
       
-      // Oblicz skalę zachowując proporcje
-      const scaleX = canvas.width / imgEl.width;
-      const scaleY = canvas.height / imgEl.height;
-      const scale = Math.min(scaleX, scaleY) * 0.9; // 90% żeby mieć margines
-      
-      // Wycentruj obraz
-      const scaledWidth = imgEl.width * scale;
-      const scaledHeight = imgEl.height * scale;
-      const left = (canvas.width - scaledWidth) / 2;
-      const top = (canvas.height - scaledHeight) / 2;
-      
+      // Dopasuj obraz do całego canvasu
       const fabricImg = new FabricImage(imgEl, {
-        left: left,
-        top: top,
+        left: 0,
+        top: 0,
         selectable: false,
         evented: false,
-        scaleX: scale,
-        scaleY: scale,
-        opacity: 0.5 // Zwiększona przezroczystość dla lepszej widoczności
+        scaleX: canvas.width / imgEl.width,
+        scaleY: canvas.height / imgEl.height,
+        opacity: 0.5
       });
       
       // Usuń stare tło jeśli istnieje
