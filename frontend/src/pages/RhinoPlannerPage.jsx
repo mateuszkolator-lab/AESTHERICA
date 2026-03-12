@@ -256,8 +256,13 @@ const RhinoPlannerPage = () => {
   useEffect(() => {
     if (loading) return;
     
+    // Longer delay to ensure DOM is ready
     const timer = setTimeout(() => {
+      console.log("Initializing canvas, activeView:", activeView);
+      console.log("Refs:", canvasFrontalRef.current, fabricFrontalRef.current);
+      
       if (activeView === "frontal" && canvasFrontalRef.current && !fabricFrontalRef.current) {
+        console.log("Creating frontal canvas");
         initCanvas(canvasFrontalRef.current, fabricFrontalRef, "frontal");
       } else if (activeView === "profile" && canvasProfileRef.current && !fabricProfileRef.current) {
         initCanvas(canvasProfileRef.current, fabricProfileRef, "profile");
@@ -268,9 +273,10 @@ const RhinoPlannerPage = () => {
       // Re-render active canvas
       const canvas = getActiveCanvas();
       if (canvas) {
+        console.log("Re-rendering canvas, objects:", canvas.getObjects().length);
         canvas.requestRenderAll();
       }
-    }, 100);
+    }, 500); // Increased delay
 
     return () => clearTimeout(timer);
   }, [loading, activeView, initCanvas]);
