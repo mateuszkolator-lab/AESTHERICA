@@ -4,11 +4,27 @@ import { toast } from "sonner";
 import { 
   ChevronLeft, Save, Download, Trash2, Undo, Redo,
   Pencil, Eraser, Circle, Square, Type, Palette,
-  RotateCcw, ZoomIn, ZoomOut, Move
+  RotateCcw, ZoomIn, ZoomOut, Move, Image as ImageIcon
 } from "lucide-react";
 import { Canvas, PencilBrush, Circle as FabricCircle, Rect, IText, Line, FabricImage } from "fabric";
 import { jsPDF } from "jspdf";
 import api from "../utils/api";
+
+// Dostępne diagramy tła
+const BACKGROUND_DIAGRAMS = {
+  frontal: [
+    { id: "frontal1", name: "Frontalny", src: "/diagram-frontal.png" },
+    { id: "tip", name: "Czubek", src: "/diagram-tip.png" },
+  ],
+  profile: [
+    { id: "profile1", name: "Profil 1", src: "/diagram-profile.png" },
+    { id: "profile2", name: "Profil 2", src: "/diagram-profile2.png" },
+  ],
+  base: [
+    { id: "base1", name: "Podstawa 1", src: "/diagram-base1.png" },
+    { id: "base2", name: "Podstawa 2", src: "/diagram-base2.png" },
+  ]
+};
 
 // Predefiniowane procedury rinoplastyki
 const PROCEDURE_CATEGORIES = [
@@ -117,6 +133,12 @@ const RhinoPlannerPage = () => {
   const [activeTool, setActiveTool] = useState("pencil");
   const [activeColor, setActiveColor] = useState("#ef4444");
   const [brushSize, setBrushSize] = useState(4);
+  const [showDiagramPicker, setShowDiagramPicker] = useState(false);
+  const [selectedDiagrams, setSelectedDiagrams] = useState({
+    frontal: null,
+    profile: null,
+    base: null
+  });
   
   // Stan formularza procedur
   const [selectedProcedures, setSelectedProcedures] = useState({});
@@ -264,6 +286,57 @@ const RhinoPlannerPage = () => {
       base?.dispose();
     };
   }, []);
+
+  // Funkcja do ustawienia tła diagramu
+  const setCanvasBackground = async (diagramSrc) => {
+    const canvas = getActiveCanvas();
+    if (!canvas) return;
+    
+    try {
+      const imgEl = new Image();
+      imgEl.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        imgEl.onload = resolve;
+        imgEl.onerror = reject;
+        imgEl.src = diagramSrc;
+      });
+      
+      const fabricImg = new FabricImage(imgEl, {
+        left: 0,
+        top: 0,
+        selectable: false,
+        evented: false,
+        scaleX: canvas.width / imgEl.width,
+        scaleY: canvas.height / imgEl.height,
+        opacity: 0.4 // Przezroczystość żeby rysunki były widoczne
+      });
+      
+      // Usuń stare tło jeśli istnieje
+      const objects = canvas.getObjects();
+      const bgObject = objects.find(obj => obj.isBackground);
+      if (bgObject) {
+        canvas.remove(bgObject);
+      }
+      
+      fabricImg.isBackground = true;
+      canvas.add(fabricImg);
+      canvas.sendObjectToBack(fabricImg);
+      canvas.requestRenderAll();
+      
+      // Zapisz wybrany diagram
+      setSelectedDiagrams(prev => ({
+        ...prev,
+        [activeView]: diagramSrc
+      }));
+      
+      setShowDiagramPicker(false);
+      toast.success("Tło ustawione!");
+    } catch (err) {
+      console.error("Failed to load diagram:", err);
+      toast.error("Nie udało się załadować diagramu");
+    }
+  };
 
   // Aktualizuj narzędzie rysowania
   useEffect(() => {
@@ -736,6 +809,12 @@ const RhinoPlannerPage = () => {
               onClick={clearCanvas}
               title="Wyczyść"
             />
+            <ToolButton 
+              icon={<ImageIcon className="w-5 h-5" />} 
+              onClick={() => setShowDiagramPicker(true)}
+              title="Wybierz tło"
+              active={showDiagramPicker}
+            />
           </div>
           
           <div className="w-px h-6 lg:w-6 lg:h-px bg-slate-200" />
@@ -802,7 +881,16 @@ const RhinoPlannerPage = () => {
           </div>
 
           {/* Canvasy */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 relative">
+            {/* Przycisk wyboru tła */}
+            <button
+              onClick={() => setShowDiagramPicker(true)}
+              className="absolute top-2 right-2 z-10 flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm text-slate-600 transition-colors"
+            >
+              <ImageIcon className="w-4 h-4" />
+              Wybierz schemat
+            </button>
+            
             <div style={{ display: activeView === "frontal" ? "block" : "none", minHeight: "500px" }}>
               <canvas ref={canvasFrontalRef} data-testid="canvas-frontal" width="400" height="500" />
             </div>
@@ -813,6 +901,43 @@ const RhinoPlannerPage = () => {
               <canvas ref={canvasBaseRef} data-testid="canvas-base" width="400" height="500" />
             </div>
           </div>
+
+          {/* Modal wyboru diagramu */}
+          {showDiagramPicker && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDiagramPicker(false)}>
+              <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                  Wybierz schemat dla: {activeView === "frontal" ? "Widok frontalny" : activeView === "profile" ? "Widok profilowy" : "Widok podstawy"}
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {BACKGROUND_DIAGRAMS[activeView]?.map(diagram => (
+                    <button
+                      key={diagram.id}
+                      onClick={() => setCanvasBackground(diagram.src)}
+                      className="border-2 border-slate-200 rounded-lg p-2 hover:border-teal-500 hover:bg-teal-50 transition-all"
+                    >
+                      <img 
+                        src={diagram.src} 
+                        alt={diagram.name}
+                        className="w-full h-40 object-contain bg-white rounded"
+                      />
+                      <p className="text-sm font-medium text-slate-700 mt-2">{diagram.name}</p>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowDiagramPicker(false)}
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Anuluj
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Formularz procedur */}
           <div className="bg-white rounded-xl border border-slate-200 p-6">
