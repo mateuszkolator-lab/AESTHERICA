@@ -392,41 +392,72 @@ const RhinoPlannerPage = () => {
       
       // === STRONA 1: Nagłówek i diagramy ===
       
-      // Nagłówek z logo/nazwa kliniki
-      pdf.setFillColor(13, 148, 136); // teal-600
-      pdf.rect(0, 0, pageWidth, 35, "F");
+      // Nagłówek z logo
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, pageWidth, 40, "F");
       
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(24);
+      // Dodaj logo (konwertowane z SVG)
+      try {
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          logoImg.onload = resolve;
+          logoImg.onerror = reject;
+          logoImg.src = '/logo-rhinoplasty.svg';
+        });
+        
+        // Konwersja SVG do canvas, potem do PNG
+        const canvas = document.createElement('canvas');
+        canvas.width = 525;
+        canvas.height = 107;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(logoImg, 0, 0, 525, 107);
+        const logoDataUrl = canvas.toDataURL('image/png');
+        
+        // Dodaj logo do PDF (wycentrowane)
+        const logoWidth = 70;
+        const logoHeight = 14;
+        pdf.addImage(logoDataUrl, 'PNG', (pageWidth - logoWidth) / 2, 8, logoWidth, logoHeight);
+      } catch (e) {
+        // Fallback - tekst jeśli logo się nie załaduje
+        pdf.setFontSize(16);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(29, 29, 27);
+        pdf.text("KOLATOR RHINOPLASTY", pageWidth / 2, 18, { align: "center" });
+      }
+      
+      // Linia pod logo
+      pdf.setDrawColor(220, 220, 220);
+      pdf.line(20, 28, pageWidth - 20, 28);
+      
+      // Tytuł dokumentu
+      pdf.setFontSize(18);
       pdf.setFont("helvetica", "bold");
-      pdf.text("PLAN RINOPLASTYKI", pageWidth / 2, 18, { align: "center" });
-      
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
-      pdf.text("AestheticaMD - Chirurgia Plastyczna", pageWidth / 2, 28, { align: "center" });
+      pdf.setTextColor(13, 148, 136); // teal-600
+      pdf.text("PLAN OPERACJI RINOPLASTYKI", pageWidth / 2, 38, { align: "center" });
       
       // Reset text color
       pdf.setTextColor(0, 0, 0);
       
       // Dane pacjenta - box
       pdf.setFillColor(248, 250, 252); // slate-50
-      pdf.roundedRect(15, 42, pageWidth - 30, 25, 3, 3, "F");
+      pdf.roundedRect(15, 45, pageWidth - 30, 22, 3, 3, "F");
       
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Pacjent:", 20, 52);
+      pdf.text("Pacjent:", 20, 54);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`${patient?.first_name} ${patient?.last_name}`, 45, 52);
+      pdf.text(`${patient?.first_name} ${patient?.last_name}`, 45, 54);
       
       pdf.setFont("helvetica", "bold");
-      pdf.text("Data:", 120, 52);
+      pdf.text("Data planowania:", 110, 54);
       pdf.setFont("helvetica", "normal");
-      pdf.text(new Date().toLocaleDateString("pl-PL"), 135, 52);
+      pdf.text(new Date().toLocaleDateString("pl-PL"), 150, 54);
       
       pdf.setFont("helvetica", "bold");
-      pdf.text("ID:", 20, 60);
+      pdf.text("Nr pacjenta:", 20, 62);
       pdf.setFont("helvetica", "normal");
-      pdf.text(patientId.substring(0, 8) + "...", 30, 60);
+      pdf.text(patientId.substring(0, 8).toUpperCase(), 50, 62);
       
       // Diagramy - 3 w rzędzie
       let yPos = 75;
@@ -453,18 +484,20 @@ const RhinoPlannerPage = () => {
         pdf.setFont("helvetica", "bold");
         pdf.text(name, xPos + imgWidth/2, yPos, { align: "center" });
         
+        // Border
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setFillColor(250, 250, 250);
+        pdf.roundedRect(xPos, yPos + 3, imgWidth, imgHeight, 2, 2, "FD");
+        
         // Image or placeholder
         if (ref.current && ref.current.getObjects().length > 0) {
           const dataUrl = ref.current.toDataURL({ format: "png", quality: 0.8 });
-          pdf.addImage(dataUrl, "PNG", xPos, yPos + 3, imgWidth, imgHeight);
+          pdf.addImage(dataUrl, "PNG", xPos + 1, yPos + 4, imgWidth - 2, imgHeight - 2);
         } else {
-          pdf.setDrawColor(200, 200, 200);
-          pdf.setFillColor(250, 250, 250);
-          pdf.roundedRect(xPos, yPos + 3, imgWidth, imgHeight, 2, 2, "FD");
           pdf.setFontSize(8);
           pdf.setFont("helvetica", "normal");
           pdf.setTextColor(150, 150, 150);
-          pdf.text("Brak rysunku", xPos + imgWidth/2, yPos + imgHeight/2, { align: "center" });
+          pdf.text("Brak rysunku", xPos + imgWidth/2, yPos + imgHeight/2 + 3, { align: "center" });
           pdf.setTextColor(0, 0, 0);
         }
         
@@ -473,7 +506,7 @@ const RhinoPlannerPage = () => {
       
       yPos += imgHeight + 15;
       
-      // === Procedury na tej samej stronie jeśli zmieszczą się ===
+      // === Procedury na tej samej stronie ===
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(71, 85, 105);
@@ -518,49 +551,47 @@ const RhinoPlannerPage = () => {
       
       yPos = maxColY + 5;
       
-      // === STRONA 2: Notatki (jeśli potrzeba) ===
-      if (yPos > pageHeight - 60 || notes || surgeonNotes) {
-        if (yPos > pageHeight - 60) {
-          pdf.addPage();
-          yPos = 20;
-        }
+      // === Notatki ===
+      if (yPos > pageHeight - 80 && (notes || surgeonNotes)) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      
+      // Notatki ogólne
+      if (notes) {
+        pdf.setFillColor(248, 250, 252);
+        const notesLines = pdf.splitTextToSize(notes, pageWidth - 50);
+        const notesHeight = Math.max(notesLines.length * 4 + 12, 20);
+        pdf.roundedRect(15, yPos, pageWidth - 30, notesHeight, 3, 3, "F");
         
-        // Notatki ogólne
-        if (notes) {
-          pdf.setFillColor(248, 250, 252);
-          const notesLines = pdf.splitTextToSize(notes, pageWidth - 50);
-          const notesHeight = notesLines.length * 5 + 15;
-          pdf.roundedRect(15, yPos, pageWidth - 30, notesHeight, 3, 3, "F");
-          
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(71, 85, 105);
-          pdf.text("Notatki ogólne", 20, yPos + 8);
-          pdf.setTextColor(0, 0, 0);
-          
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "normal");
-          pdf.text(notesLines, 20, yPos + 15);
-          yPos += notesHeight + 8;
-        }
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(71, 85, 105);
+        pdf.text("Notatki", 20, yPos + 7);
+        pdf.setTextColor(0, 0, 0);
         
-        // Notatki chirurga
-        if (surgeonNotes) {
-          pdf.setFillColor(254, 249, 195); // yellow-100
-          const surgeonLines = pdf.splitTextToSize(surgeonNotes, pageWidth - 50);
-          const surgeonHeight = surgeonLines.length * 5 + 15;
-          pdf.roundedRect(15, yPos, pageWidth - 30, surgeonHeight, 3, 3, "F");
-          
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(161, 98, 7); // yellow-700
-          pdf.text("Notatki chirurga", 20, yPos + 8);
-          pdf.setTextColor(0, 0, 0);
-          
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "normal");
-          pdf.text(surgeonLines, 20, yPos + 15);
-        }
+        pdf.setFontSize(9);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(notesLines, 20, yPos + 13);
+        yPos += notesHeight + 5;
+      }
+      
+      // Notatki chirurga
+      if (surgeonNotes) {
+        pdf.setFillColor(254, 252, 232); // yellow-50
+        const surgeonLines = pdf.splitTextToSize(surgeonNotes, pageWidth - 50);
+        const surgeonHeight = Math.max(surgeonLines.length * 4 + 12, 20);
+        pdf.roundedRect(15, yPos, pageWidth - 30, surgeonHeight, 3, 3, "F");
+        
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(161, 98, 7); // yellow-700
+        pdf.text("Notatki chirurgiczne", 20, yPos + 7);
+        pdf.setTextColor(0, 0, 0);
+        
+        pdf.setFontSize(9);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(surgeonLines, 20, yPos + 13);
       }
       
       // Stopka na każdej stronie
@@ -569,6 +600,7 @@ const RhinoPlannerPage = () => {
         pdf.setPage(i);
         pdf.setFontSize(8);
         pdf.setTextColor(150, 150, 150);
+        pdf.line(20, pageHeight - 15, pageWidth - 20, pageHeight - 15);
         pdf.text(
           `Wygenerowano: ${new Date().toLocaleString("pl-PL")} | Strona ${i} z ${totalPages}`,
           pageWidth / 2,
