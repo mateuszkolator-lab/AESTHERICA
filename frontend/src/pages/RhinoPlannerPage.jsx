@@ -14,23 +14,53 @@ import api from "../utils/api";
 const PROCEDURE_CATEGORIES = [
   {
     name: "Grzbiet nosa",
-    items: ["Redukcja garbka", "Augmentacja grzbietu", "Osteotomia lateralna", "Osteotomia medialna", "Spreader grafts"]
+    items: [
+      "Redukcja grzbietu", 
+      "Augmentacja grzbietu", 
+      "Spreaders", 
+      "Elongated spreaders",
+      "Radix - redukcja",
+      "Radix - augmentacja"
+    ]
+  },
+  {
+    name: "Przegroda nosowa",
+    items: [
+      "Skrzywiona w prawo", 
+      "Skrzywiona w lewo", 
+      "Kolec do przyszycia - TAK",
+      "Kolec do przyszycia - NIE",
+      "Pobranie chrząstki"
+    ]
   },
   {
     name: "Czubek nosa",
-    items: ["Zmniejszenie czubka", "Projekcja czubka", "Rotacja czubka", "Szwy definiujące", "Cephalic trim", "Shield graft", "Cap graft"]
+    items: [
+      "Zwiększenie projekcji", 
+      "Zmniejszenie projekcji", 
+      "Zwiększenie rotacji",
+      "Zmniejszenie rotacji",
+      "Shield graft", 
+      "Cap graft",
+      "Szwy definiujące"
+    ]
   },
   {
     name: "Skrzydełka nosa",
     items: ["Zwężenie skrzydełek", "Alar base reduction", "Alar rim graft", "Wzmocnienie skrzydełek"]
   },
   {
-    name: "Przegroda nosowa",
-    items: ["Korekcja przegrody", "Pobranie chrząstki", "Extracorporeal septoplasty"]
-  },
-  {
     name: "Kolumella",
     items: ["Strut graft", "Plumping graft", "Korekcja retrakcji"]
+  },
+  {
+    name: "Ogólny kształt nosa",
+    items: [
+      "Płaski", 
+      "Lekko zadarty", 
+      "Bardzo zadarty",
+      "Zdaje się na chirurga"
+    ]
   }
 ];
 
