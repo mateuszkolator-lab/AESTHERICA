@@ -24,7 +24,7 @@ export async function checkForErrors(page: Page): Promise<string[]> {
   });
 }
 
-export async function login(page: Page, password: string = 'doctor2024') {
+export async function login(page: Page, password: string = 'Matikolati123!') {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('password-input')).toBeVisible();
   await page.getByTestId('password-input').fill(password);

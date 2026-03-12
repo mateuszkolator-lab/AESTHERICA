@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 class PatientManagementTester:
     def __init__(self):
         # Use public endpoint from frontend env
-        self.base_url = "https://surgery-scheduler-4.preview.emergentagent.com/api"
+        self.base_url = "https://rhino-planner.preview.emergentagent.com/api"
         self.token = None
         self.tests_run = 0
         self.tests_passed = 0

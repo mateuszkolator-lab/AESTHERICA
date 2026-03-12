@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   ChevronLeft, User, Mail, Phone, MapPin, DollarSign, 
-  Edit, Plus, ArrowLeftRight, Camera, Sparkles
+  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool
 } from "lucide-react";
 import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor } from "../utils/constants";
@@ -98,11 +98,20 @@ const PatientDetail = () => {
 
         <button
           onClick={() => setShowEditModal(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors mb-6"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors mb-3"
           data-testid="edit-patient-button"
         >
           <Edit className="w-4 h-4" />
           Edytuj pacjenta
+        </button>
+
+        <button
+          onClick={() => navigate(`/rhinoplanner/${patient.id}`)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors mb-6"
+          data-testid="rhinoplanner-button"
+        >
+          <PenTool className="w-4 h-4" />
+          RhinoPlanner
         </button>
 
         <div className="space-y-4">
