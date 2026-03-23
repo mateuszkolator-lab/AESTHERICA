@@ -63,8 +63,8 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej, z
 - /public/diagram-base2.png - Widok podstawy 2 (500x500)
 
 ## Do zrobienia (następna sesja)
-1. Przetestować na tablecie z rysikiem
-2. Eksport PDF z wszystkimi widokami
+1. Przetestować RhinoPlanner na tablecie z rysikiem
+2. Dodać możliwość rysowania na schematach (testy rysowania)
 
 ## Przyszłe zadania
 - (P1) Eksport statystyk do Excela
