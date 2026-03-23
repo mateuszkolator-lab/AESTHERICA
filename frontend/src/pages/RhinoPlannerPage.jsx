@@ -309,7 +309,7 @@ const RhinoPlannerPage = () => {
       });
       
       // Usuń stare tło i etykiety NAJPIERW
-      const objects = canvas.getObjects().slice(); // kopia tablicy
+      const objects = canvas.getObjects().slice();
       objects.forEach(obj => {
         if (obj.isBackground || obj.isLabel) {
           canvas.remove(obj);
@@ -320,25 +320,16 @@ const RhinoPlannerPage = () => {
       const canvasWidth = 500;
       const canvasHeight = 500;
       
-      // Debug - sprawdź wymiary
-      console.log("Image dimensions:", imgEl.width, "x", imgEl.height);
-      console.log("Canvas dimensions:", canvasWidth, "x", canvasHeight);
-      
       // Skaluj obraz proporcjonalnie aby CAŁY był widoczny (contain)
       const scaleX = canvasWidth / imgEl.width;
       const scaleY = canvasHeight / imgEl.height;
-      const scale = Math.min(scaleX, scaleY); // contain - cały obraz widoczny
-      
-      console.log("Scale:", scale, "scaleX:", scaleX, "scaleY:", scaleY);
+      const scale = Math.min(scaleX, scaleY);
       
       // Wyśrodkuj obraz
       const scaledWidth = imgEl.width * scale;
       const scaledHeight = imgEl.height * scale;
       const left = (canvasWidth - scaledWidth) / 2;
       const top = (canvasHeight - scaledHeight) / 2;
-      
-      console.log("Position - left:", left, "top:", top);
-      console.log("Scaled size:", scaledWidth, "x", scaledHeight);
       
       // Ustaw obraz wyśrodkowany - CAŁY obraz musi być widoczny
       const fabricImg = new FabricImage(imgEl, {

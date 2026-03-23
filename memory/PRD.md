@@ -42,9 +42,10 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej, z
 - Zapis planów do bazy MongoDB (kolekcja `rhinoplans`)
 
 ## Naprawione błędy (23.03.2026)
-- ✅ Schemat anatomiczny był obcięty - naprawiono wymiary obrazu frontalnego (400x500 → 500x500)
+- ✅ Schemat anatomiczny był obcięty - naprawiono funkcję `setCanvasBackground` (prawidłowe skalowanie i centrowanie)
 - ✅ Czerwone linie na canvas - usunięto, canvas działa poprawnie
 - ✅ Canvas zmieniony z 500x600 na 500x500 aby dopasować do schematów
+- ✅ Wszystkie 3 widoki (frontalny, profilowy, podstawy) wyświetlają schematy prawidłowo
 
 ## Endpointy API
 
