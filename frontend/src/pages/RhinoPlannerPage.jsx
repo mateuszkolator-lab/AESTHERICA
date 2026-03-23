@@ -207,9 +207,9 @@ const RhinoPlannerPage = () => {
     if (!canvasEl || fabricRef.current) return;
     
     const canvas = new Canvas(canvasEl, {
-      width: 400,
+      width: 500,
       height: 500,
-      backgroundColor: "#fafafa",
+      backgroundColor: "#ffffff",
       isDrawingMode: true,
       selection: true
     });
@@ -225,7 +225,7 @@ const RhinoPlannerPage = () => {
       diagramType === "frontal" ? "WIDOK FRONTALNY" : 
       diagramType === "profile" ? "WIDOK PROFILOWY" : "WIDOK PODSTAWY", 
       {
-        left: 200,
+        left: 250,
         top: 20,
         fontSize: 14,
         fontFamily: "Arial",
@@ -237,9 +237,9 @@ const RhinoPlannerPage = () => {
     canvas.add(label);
     
     // Add helper text (will be removed when background is set)
-    const helper = new IText("Rysuj tutaj", {
-      left: 200,
-      top: 240,
+    const helper = new IText("Kliknij 'Wybierz schemat' aby ustawić tło", {
+      left: 250,
+      top: 250,
       fontSize: 12,
       fontFamily: "Arial",
       fill: "#94a3b8",
@@ -308,23 +308,38 @@ const RhinoPlannerPage = () => {
         imgEl.src = diagramSrc;
       });
       
-      // Dopasuj obraz do całego canvasu
-      const fabricImg = new FabricImage(imgEl, {
-        left: 0,
-        top: 0,
-        selectable: false,
-        evented: false,
-        scaleX: canvas.width / imgEl.width,
-        scaleY: canvas.height / imgEl.height,
-        opacity: 0.5
-      });
-      
-      // Usuń stare tło i etykiety
-      const objects = canvas.getObjects();
+      // Usuń stare tło i etykiety NAJPIERW
+      const objects = canvas.getObjects().slice(); // kopia tablicy
       objects.forEach(obj => {
         if (obj.isBackground || obj.isLabel) {
           canvas.remove(obj);
         }
+      });
+      
+      // Oblicz skalę aby obraz wypełnił cały canvas zachowując proporcje
+      const canvasWidth = 500;
+      const canvasHeight = 500;
+      
+      // Użyj większej skali aby wypełnić canvas (cover)
+      const scaleX = canvasWidth / imgEl.width;
+      const scaleY = canvasHeight / imgEl.height;
+      const scale = Math.max(scaleX, scaleY);
+      
+      // Wycentruj obraz
+      const scaledWidth = imgEl.width * scale;
+      const scaledHeight = imgEl.height * scale;
+      const left = (canvasWidth - scaledWidth) / 2;
+      const top = (canvasHeight - scaledHeight) / 2;
+      
+      // Dopasuj obraz do całego canvasu (cover, wycentrowany)
+      const fabricImg = new FabricImage(imgEl, {
+        left: left,
+        top: top,
+        selectable: false,
+        evented: false,
+        scaleX: scale,
+        scaleY: scale,
+        opacity: 0.6
       });
       
       fabricImg.isBackground = true;
@@ -900,13 +915,13 @@ const RhinoPlannerPage = () => {
             </button>
             
             <div style={{ display: activeView === "frontal" ? "block" : "none", minHeight: "500px" }}>
-              <canvas ref={canvasFrontalRef} data-testid="canvas-frontal" width="400" height="500" />
+              <canvas ref={canvasFrontalRef} data-testid="canvas-frontal" width="500" height="500" style={{ border: "1px solid #e2e8f0", borderRadius: "8px" }} />
             </div>
             <div style={{ display: activeView === "profile" ? "block" : "none", minHeight: "500px" }}>
-              <canvas ref={canvasProfileRef} data-testid="canvas-profile" width="400" height="500" />
+              <canvas ref={canvasProfileRef} data-testid="canvas-profile" width="500" height="500" style={{ border: "1px solid #e2e8f0", borderRadius: "8px" }} />
             </div>
             <div style={{ display: activeView === "base" ? "block" : "none", minHeight: "500px" }}>
-              <canvas ref={canvasBaseRef} data-testid="canvas-base" width="400" height="500" />
+              <canvas ref={canvasBaseRef} data-testid="canvas-base" width="500" height="500" style={{ border: "1px solid #e2e8f0", borderRadius: "8px" }} />
             </div>
           </div>
 

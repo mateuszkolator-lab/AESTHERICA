@@ -41,6 +41,11 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej, z
 - Eksport do PDF z logo "KOLATOR RHINOPLASTY"
 - Zapis planów do bazy MongoDB (kolekcja `rhinoplans`)
 
+## Naprawione błędy (23.03.2026)
+- ✅ Schemat anatomiczny był obcięty - naprawiono wymiary obrazu frontalnego (400x500 → 500x500)
+- ✅ Czerwone linie na canvas - usunięto, canvas działa poprawnie
+- ✅ Canvas zmieniony z 500x600 na 500x500 aby dopasować do schematów
+
 ## Endpointy API
 
 ### RhinoPlanner
@@ -49,17 +54,16 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej, z
 - DELETE /api/rhinoplanner/patient/{patient_id} - Usuń plan
 
 ## Pliki schematów anatomicznych
-- /public/diagram-frontal.png - Widok frontalny (gotowy)
-- /public/diagram-frontal2.png - Widok frontalny 2
-- /public/diagram-profile.png - Widok profilowy (do dodania)
-- /public/diagram-profile2.png - Widok profilowy 2 (do dodania)
-- /public/diagram-base1.png - Widok podstawy (do dodania)
-- /public/diagram-base2.png - Widok podstawy 2 (do dodania)
+- /public/diagram-frontal.png - Widok frontalny (500x500, gotowy)
+- /public/diagram-frontal2.png - Widok frontalny 2 (500x500)
+- /public/diagram-profile.png - Widok profilowy (500x500)
+- /public/diagram-profile2.png - Widok profilowy 2 (500x500)
+- /public/diagram-base1.png - Widok podstawy (500x500)
+- /public/diagram-base2.png - Widok podstawy 2 (500x500)
 
 ## Do zrobienia (następna sesja)
-1. Dodać schematy profilu i podstawy (użytkownik dostarczy obrazki)
-2. Przetestować eksport PDF z wszystkimi widokami
-3. Testowanie na tablecie z rysikiem
+1. Przetestować na tablecie z rysikiem
+2. Eksport PDF z wszystkimi widokami
 
 ## Przyszłe zadania
 - (P1) Eksport statystyk do Excela

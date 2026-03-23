@@ -11,7 +11,7 @@ export default defineConfig({
     ['json', { outputFile: '/root/.emergent/automation_output/20260312_112215/results.json' }],
   ],
   use: {
-    baseURL: 'https://rhino-planner.preview.emergentagent.com',
+    baseURL: 'https://rhino-planner-1.preview.emergentagent.com',
     screenshot: 'only-on-failure',
     trace: 'off',
     headless: true,
