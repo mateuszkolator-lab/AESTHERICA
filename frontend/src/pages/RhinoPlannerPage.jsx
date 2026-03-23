@@ -316,13 +316,20 @@ const RhinoPlannerPage = () => {
         }
       });
       
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
+      // Użyj stałych wymiarów canvas (500x500)
+      const canvasWidth = 500;
+      const canvasHeight = 500;
       
-      // Skaluj obraz proporcjonalnie aby wypełnił cały canvas (contain)
+      // Debug - sprawdź wymiary
+      console.log("Image dimensions:", imgEl.width, "x", imgEl.height);
+      console.log("Canvas dimensions:", canvasWidth, "x", canvasHeight);
+      
+      // Skaluj obraz proporcjonalnie aby CAŁY był widoczny (contain)
       const scaleX = canvasWidth / imgEl.width;
       const scaleY = canvasHeight / imgEl.height;
       const scale = Math.min(scaleX, scaleY); // contain - cały obraz widoczny
+      
+      console.log("Scale:", scale, "scaleX:", scaleX, "scaleY:", scaleY);
       
       // Wyśrodkuj obraz
       const scaledWidth = imgEl.width * scale;
@@ -330,10 +337,15 @@ const RhinoPlannerPage = () => {
       const left = (canvasWidth - scaledWidth) / 2;
       const top = (canvasHeight - scaledHeight) / 2;
       
-      // Ustaw obraz wyśrodkowany
+      console.log("Position - left:", left, "top:", top);
+      console.log("Scaled size:", scaledWidth, "x", scaledHeight);
+      
+      // Ustaw obraz wyśrodkowany - CAŁY obraz musi być widoczny
       const fabricImg = new FabricImage(imgEl, {
         left: left,
         top: top,
+        originX: 'left',
+        originY: 'top',
         selectable: false,
         evented: false,
         scaleX: scale,
