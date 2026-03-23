@@ -316,16 +316,24 @@ const RhinoPlannerPage = () => {
         }
       });
       
-      const canvasWidth = 500;
-      const canvasHeight = 500;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
       
-      // Skaluj obraz aby wypełnił cały canvas (1:1 dla 500x500)
-      const scale = canvasWidth / imgEl.width;
+      // Skaluj obraz proporcjonalnie aby wypełnił cały canvas (contain)
+      const scaleX = canvasWidth / imgEl.width;
+      const scaleY = canvasHeight / imgEl.height;
+      const scale = Math.min(scaleX, scaleY); // contain - cały obraz widoczny
       
-      // Ustaw obraz na pozycji 0,0 i skaluj do pełnej wielkości canvas
+      // Wyśrodkuj obraz
+      const scaledWidth = imgEl.width * scale;
+      const scaledHeight = imgEl.height * scale;
+      const left = (canvasWidth - scaledWidth) / 2;
+      const top = (canvasHeight - scaledHeight) / 2;
+      
+      // Ustaw obraz wyśrodkowany
       const fabricImg = new FabricImage(imgEl, {
-        left: 0,
-        top: 0,
+        left: left,
+        top: top,
         selectable: false,
         evented: false,
         scaleX: scale,
