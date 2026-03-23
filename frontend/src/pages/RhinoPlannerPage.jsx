@@ -316,30 +316,21 @@ const RhinoPlannerPage = () => {
         }
       });
       
-      // Oblicz skalę aby obraz wypełnił cały canvas zachowując proporcje
       const canvasWidth = 500;
       const canvasHeight = 500;
       
-      // Użyj większej skali aby wypełnić canvas (cover)
-      const scaleX = canvasWidth / imgEl.width;
-      const scaleY = canvasHeight / imgEl.height;
-      const scale = Math.max(scaleX, scaleY);
+      // Skaluj obraz aby wypełnił cały canvas (1:1 dla 500x500)
+      const scale = canvasWidth / imgEl.width;
       
-      // Wycentruj obraz
-      const scaledWidth = imgEl.width * scale;
-      const scaledHeight = imgEl.height * scale;
-      const left = (canvasWidth - scaledWidth) / 2;
-      const top = (canvasHeight - scaledHeight) / 2;
-      
-      // Dopasuj obraz do całego canvasu (cover, wycentrowany)
+      // Ustaw obraz na pozycji 0,0 i skaluj do pełnej wielkości canvas
       const fabricImg = new FabricImage(imgEl, {
-        left: left,
-        top: top,
+        left: 0,
+        top: 0,
         selectable: false,
         evented: false,
         scaleX: scale,
         scaleY: scale,
-        opacity: 0.6
+        opacity: 0.7
       });
       
       fabricImg.isBackground = true;
