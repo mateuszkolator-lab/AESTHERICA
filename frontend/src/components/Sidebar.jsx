@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { 
   Users, Calendar, BarChart3, Settings, LogOut, 
-  Menu, Home, CalendarPlus, Shield, User
+  Menu, Home, CalendarPlus, Shield, User, ClipboardCheck
 } from "lucide-react";
 
 const Sidebar = ({ currentPath }) => {
@@ -16,6 +16,7 @@ const Sidebar = ({ currentPath }) => {
     { path: "/patients", icon: Users, label: "Pacjenci" },
     { path: "/planning", icon: CalendarPlus, label: "Planowanie" },
     { path: "/calendar", icon: Calendar, label: "Kalendarz" },
+    { path: "/controls", icon: ClipboardCheck, label: "Kontrole" },
     { path: "/stats", icon: BarChart3, label: "Statystyki" },
     { path: "/settings", icon: Settings, label: "Ustawienia" },
   ];

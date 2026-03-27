@@ -15,6 +15,7 @@ import StatsPage from "./pages/StatsPage";
 import SettingsPage from "./pages/SettingsPage";
 import RhinoPlannerPage from "./pages/RhinoPlannerPage";
 import UsersPage from "./pages/UsersPage";
+import ControlsPage from "./pages/ControlsPage";
 
 // Layout component with sidebar
 const AppLayout = ({ children }) => {
@@ -53,6 +54,7 @@ function App() {
           <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+          <Route path="/controls" element={<ProtectedRoute><ControlsPage /></ProtectedRoute>} />
           <Route path="/rhinoplanner/:patientId" element={<ProtectedRoute><RhinoPlannerPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>

@@ -5,6 +5,14 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej, z
 
 ## Zaimplementowane funkcje
 
+### Kontrole pooperacyjne (NOWE - 27.03.2026)
+- Lista pacjentów po operacji z harmonogramem kontroli
+- 5 terminów kontroli: 1 tydzień, 1 miesiąc, 3 miesiące, 6 miesięcy, 1 rok
+- Oznaczanie kontroli jako wykonanych
+- Sortowanie chronologiczne wg najbliższej kontroli
+- Filtry: wszyscy, zaległe, do wykonania
+- Statystyki: pacjenci po operacji, zaległe kontrole, w tym tygodniu
+
 ### System użytkowników (NOWE - 27.03.2026)
 - Logowanie z email + hasło (zamiast wspólnego hasła)
 - Dwie role: Administrator i Lekarz

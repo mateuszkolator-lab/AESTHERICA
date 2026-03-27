@@ -18,6 +18,7 @@ from routers.calendar import router as calendar_router
 from routers.rhinoplanner import router as rhinoplanner_router
 from routers.users import router as users_router
 from routers.audit import router as audit_router
+from routers.controls import router as controls_router
 
 # Import database
 from models.database import get_client
@@ -51,6 +52,7 @@ api_router.include_router(utils_router)
 api_router.include_router(calendar_router)
 api_router.include_router(rhinoplanner_router)
 api_router.include_router(audit_router)
+api_router.include_router(controls_router)
 
 # Mount API router under /api prefix
 app.mount("/api", api_router)
