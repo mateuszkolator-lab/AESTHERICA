@@ -1,20 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Header
+from pydantic import BaseModel, EmailStr
 import jwt
 from datetime import datetime, timezone, timedelta
 import os
+import hashlib
+
+from models.database import get_db
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 SECRET_KEY = os.environ.get("JWT_SECRET", "aesthetica-md-secret-2024-secure-key")
 ALGORITHM = "HS256"
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "doctor2024")
+
+# Password hashing (same as in users.py)
+def hash_password(password: str) -> str:
+    salt = os.environ.get("PASSWORD_SALT", "aesthetica-md-salt-2024")
+    return hashlib.sha256(f"{password}{salt}".encode()).hexdigest()
 
 class LoginRequest(BaseModel):
+    email: EmailStr
     password: str
 
 class TokenResponse(BaseModel):
     token: str
+    user: dict
 
 def create_token(data: dict):
     to_encode = data.copy()
@@ -24,7 +33,6 @@ def create_token(data: dict):
 
 def verify_token(authorization: str = None):
     if not authorization:
-        from fastapi import Header
         raise HTTPException(status_code=401, detail="Token required")
     
     try:
@@ -36,14 +44,88 @@ def verify_token(authorization: str = None):
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+def get_current_user(authorization: str = Header(None)):
+    return verify_token(authorization)
+
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest):
-    if request.password != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Invalid password")
+    db = get_db()
     
-    token = create_token({"sub": "admin", "role": "admin"})
-    return {"token": token}
+    # Find user by email (async with motor)
+    user = await db.users.find_one({"email": request.email.lower()})
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check password
+    if user.get("password_hash") != hash_password(request.password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check if active
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=401, detail="Account is disabled")
+    
+    # Update last login
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Create token
+    token = create_token({
+        "sub": user["email"],
+        "user_id": user["id"],
+        "role": user["role"]
+    })
+    
+    # Return user info (without password)
+    user_info = {
+        "id": user["id"],
+        "email": user["email"],
+        "first_name": user["first_name"],
+        "last_name": user["last_name"],
+        "role": user["role"]
+    }
+    
+    return {"token": token, "user": user_info}
 
 @router.get("/verify")
-async def verify(user: dict = Depends(verify_token)):
+async def verify(authorization: str = Header(None)):
+    payload = verify_token(authorization)
+    
+    # Get fresh user data
+    db = get_db()
+    user = await db.users.find_one({"id": payload.get("user_id")}, {"_id": 0, "password_hash": 0})
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=401, detail="Account is disabled")
+    
     return {"status": "valid", "user": user}
+
+# Initialize default admin - this will be called from server.py
+async def init_default_admin():
+    db = get_db()
+    
+    # Check if any users exist (motor is async)
+    user_count = await db.users.count_documents({})
+    if user_count > 0:
+        return
+    
+    # Create default admin
+    default_admin = {
+        "id": "admin-001",
+        "email": "mateusz.kolator@gmail.com",
+        "password_hash": hash_password("Matikolati123!"),
+        "first_name": "Mateusz",
+        "last_name": "Kolator",
+        "role": "admin",
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "last_login": None
+    }
+    
+    await db.users.insert_one(default_admin)
+    print("✅ Default admin created: mateusz.kolator@gmail.com")

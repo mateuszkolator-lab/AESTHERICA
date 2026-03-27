@@ -5,6 +5,17 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej, z
 
 ## Zaimplementowane funkcje
 
+### System użytkowników (NOWE - 27.03.2026)
+- Logowanie z email + hasło (zamiast wspólnego hasła)
+- Dwie role: Administrator i Lekarz
+- Panel zarządzania użytkownikami (tylko dla admina):
+  - Dodawanie nowych użytkowników
+  - Edycja danych użytkowników
+  - Resetowanie haseł
+  - Dezaktywacja kont
+  - Usuwanie użytkowników
+- Pierwszy admin: mateusz.kolator@gmail.com
+
 ### Zarządzanie pacjentami
 - Dodawanie, edycja, usuwanie pacjentów
 - Sortowanie i filtrowanie listy

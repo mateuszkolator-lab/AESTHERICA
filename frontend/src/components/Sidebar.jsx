@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { 
   Users, Calendar, BarChart3, Settings, LogOut, 
-  Menu, Home, CalendarPlus
+  Menu, Home, CalendarPlus, Shield, User
 } from "lucide-react";
 
 const Sidebar = ({ currentPath }) => {
-  const { logout } = useAuth();
+  const { logout, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -19,6 +19,11 @@ const Sidebar = ({ currentPath }) => {
     { path: "/stats", icon: BarChart3, label: "Statystyki" },
     { path: "/settings", icon: Settings, label: "Ustawienia" },
   ];
+
+  // Add Users management for admins
+  if (isAdmin()) {
+    navItems.push({ path: "/users", icon: Shield, label: "Użytkownicy", adminOnly: true });
+  }
 
   return (
     <aside className={`bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'}`}>
@@ -45,7 +50,7 @@ const Sidebar = ({ currentPath }) => {
                 onClick={() => navigate(item.path)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   currentPath === item.path 
-                    ? 'bg-teal-50 text-teal-700' 
+                    ? item.adminOnly ? 'bg-purple-50 text-purple-700' : 'bg-teal-50 text-teal-700'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 data-testid={`nav-${item.label.toLowerCase()}`}
@@ -57,6 +62,27 @@ const Sidebar = ({ currentPath }) => {
           ))}
         </ul>
       </nav>
+      
+      {/* User info */}
+      {user && !collapsed && (
+        <div className="px-4 py-3 border-t border-slate-100">
+          <div className="flex items-center gap-3 px-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              user.role === "admin" ? "bg-purple-100 text-purple-600" : "bg-teal-100 text-teal-600"
+            }`}>
+              {user.role === "admin" ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">
+                {user.first_name} {user.last_name}
+              </p>
+              <p className="text-xs text-slate-500 truncate">
+                {user.role === "admin" ? "Administrator" : "Lekarz"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="p-4 border-t border-slate-100">
         <button

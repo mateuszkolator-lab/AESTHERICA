@@ -14,6 +14,7 @@ import CalendarPage from "./pages/CalendarPage";
 import StatsPage from "./pages/StatsPage";
 import SettingsPage from "./pages/SettingsPage";
 import RhinoPlannerPage from "./pages/RhinoPlannerPage";
+import UsersPage from "./pages/UsersPage";
 
 // Layout component with sidebar
 const AppLayout = ({ children }) => {
@@ -51,6 +52,7 @@ function App() {
           <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
           <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
           <Route path="/rhinoplanner/:patientId" element={<ProtectedRoute><RhinoPlannerPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>

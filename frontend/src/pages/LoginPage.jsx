@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { API_BASE } from "../utils/api";
 
 const LoginPage = () => {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -15,12 +16,13 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${API_BASE}/auth/login`, { password });
-      login(res.data.token);
-      toast.success("Witaj ponownie!");
+      const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
+      login(res.data.token, res.data.user);
+      toast.success(`Witaj, ${res.data.user.first_name}!`);
       navigate("/");
     } catch (err) {
-      toast.error("Nieprawidłowe hasło");
+      const message = err.response?.data?.detail || "Nieprawidłowy email lub hasło";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -57,9 +59,21 @@ const LoginPage = () => {
             <h2 className="text-2xl font-semibold text-slate-900 mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
               Witaj ponownie
             </h2>
-            <p className="text-slate-500 mb-8">Wprowadź hasło, aby kontynuować</p>
+            <p className="text-slate-500 mb-8">Zaloguj się do swojego konta</p>
             
             <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                  placeholder="jan.kowalski@klinika.pl"
+                  data-testid="email-input"
+                  required
+                />
+              </div>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 mb-2">Hasło</label>
                 <input
@@ -82,10 +96,6 @@ const LoginPage = () => {
               </button>
             </form>
           </div>
-          
-          <p className="text-center text-sm text-slate-400 mt-6">
-            Domyślne hasło: doctor2024
-          </p>
         </div>
       </div>
     </div>
