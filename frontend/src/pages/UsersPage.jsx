@@ -196,7 +196,7 @@ const UsersPage = () => {
                       : "bg-teal-100 text-teal-700"
                   }`}>
                     {user.role === "admin" ? <Shield className="w-3 h-3" /> : <UserIcon className="w-3 h-3" />}
-                    {user.role === "admin" ? "Administrator" : "Lekarz"}
+                    {user.role === "admin" ? "Administrator" : "Użytkownik"}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -313,7 +313,7 @@ const UsersPage = () => {
                     onChange={(e) => setFormData({...formData, role: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
-                    <option value="doctor">Lekarz</option>
+                    <option value="doctor">Użytkownik</option>
                     <option value="admin">Administrator</option>
                   </select>
                 </div>
@@ -374,7 +374,7 @@ const UsersPage = () => {
                     onChange={(e) => setFormData({...formData, role: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
-                    <option value="doctor">Lekarz</option>
+                    <option value="doctor">Użytkownik</option>
                     <option value="admin">Administrator</option>
                   </select>
                 </div>

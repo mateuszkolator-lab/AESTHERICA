@@ -77,7 +77,7 @@ const Sidebar = ({ currentPath }) => {
                 {user.first_name} {user.last_name}
               </p>
               <p className="text-xs text-slate-500 truncate">
-                {user.role === "admin" ? "Administrator" : "Lekarz"}
+                {user.role === "admin" ? "Administrator" : "Użytkownik"}
               </p>
             </div>
           </div>
