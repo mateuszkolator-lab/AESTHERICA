@@ -10,6 +10,7 @@ import { STATUS_LABELS, getStatusColor } from "../utils/constants";
 import AddPatientModal from "../components/modals/AddPatientModal";
 import { AddVisitModal, VisitCard } from "../components/patients/VisitComponents";
 import PhotoCompareModal from "../components/modals/PhotoCompareModal";
+import PatientAuditLog from "../components/PatientAuditLog";
 
 const PatientDetail = () => {
   const { id } = useParams();
@@ -241,6 +242,11 @@ const PatientDetail = () => {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Historia zmian */}
+      <div className="mt-8">
+        <PatientAuditLog patientId={id} />
       </div>
 
       {showEditModal && (

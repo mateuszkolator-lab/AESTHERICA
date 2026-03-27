@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from models.database import get_db
 from models.schemas import PatientCreate, PatientUpdate, VisitCreate
 from routers.auth import verify_token
+from routers.audit import log_patient_change
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
@@ -66,6 +67,14 @@ async def create_patient(patient: PatientCreate, user: dict = Depends(get_auth))
     
     await db.patients.insert_one(patient_dict)
     
+    # Log creation
+    await log_patient_change(
+        patient_id=patient_dict["id"],
+        action="create",
+        user=user,
+        details=f"Utworzono pacjenta: {patient_dict.get('first_name', '')} {patient_dict.get('last_name', '')}"
+    )
+    
     return {"id": patient_dict["id"], "message": "Patient created successfully"}
 
 @router.get("/{patient_id}")
@@ -95,27 +104,80 @@ async def get_patient(patient_id: str, user: dict = Depends(get_auth)):
 @router.put("/{patient_id}")
 async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = Depends(get_auth)):
     db = get_db()
+    
+    # Get old data for comparison
+    old_patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+    if not old_patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
     update_data = {k: v for k, v in patient.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
     
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
+    # Track changes
+    changes = {}
+    field_labels = {
+        "first_name": "Imię",
+        "last_name": "Nazwisko",
+        "phone": "Telefon",
+        "email": "Email",
+        "surgery_date": "Data zabiegu",
+        "procedure_type": "Typ zabiegu",
+        "status": "Status",
+        "location_id": "Lokalizacja",
+        "deposit": "Zaliczka",
+        "notes": "Notatki",
+        "asap": "ASAP"
+    }
+    
+    for key, new_value in update_data.items():
+        if key in ["updated_at"]:
+            continue
+        old_value = old_patient.get(key)
+        if old_value != new_value:
+            label = field_labels.get(key, key)
+            changes[label] = {"old": old_value, "new": new_value}
+    
     result = await db.patients.update_one({"id": patient_id}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Patient not found")
+    
+    # Log changes if any
+    if changes:
+        await log_patient_change(
+            patient_id=patient_id,
+            action="update",
+            user=user,
+            changes=changes
+        )
     
     return {"message": "Patient updated successfully"}
 
 @router.delete("/{patient_id}")
 async def delete_patient(patient_id: str, user: dict = Depends(get_auth)):
     db = get_db()
+    
+    # Get patient name for log
+    patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+    patient_name = f"{patient.get('first_name', '')} {patient.get('last_name', '')}" if patient else "Nieznany"
+    
     # Delete patient's photos first
     await db.photos.delete_many({"patient_id": patient_id})
     # Delete patient
     result = await db.patients.delete_one({"id": patient_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Patient not found")
+    
+    # Log deletion
+    await log_patient_change(
+        patient_id=patient_id,
+        action="delete",
+        user=user,
+        details=f"Usunięto pacjenta: {patient_name}"
+    )
+    
     return {"message": "Patient deleted successfully"}
 
 # Visits
@@ -133,6 +195,14 @@ async def add_visit(patient_id: str, visit: VisitCreate, user: dict = Depends(ge
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Patient not found")
     
+    # Log visit addition
+    await log_patient_change(
+        patient_id=patient_id,
+        action="add_visit",
+        user=user,
+        details=f"Dodano wizytę: {visit_dict.get('date', 'brak daty')}"
+    )
+    
     return {"id": visit_dict["id"], "message": "Visit added successfully"}
 
 @router.delete("/{patient_id}/visits/{visit_id}")
@@ -147,6 +217,14 @@ async def delete_visit(patient_id: str, visit_id: str, user: dict = Depends(get_
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Patient not found")
+    
+    # Log visit deletion
+    await log_patient_change(
+        patient_id=patient_id,
+        action="delete_visit",
+        user=user,
+        details="Usunięto wizytę"
+    )
     
     return {"message": "Visit deleted successfully"}
 
