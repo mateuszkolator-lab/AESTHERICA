@@ -139,15 +139,16 @@ const ControlsPage = () => {
   };
 
   const filteredPatients = patients.filter(p => {
-    if (filter === "all") return true;
+    if (filter === "all") return !p.no_contact;
     if (filter === "pending") return p.next_control !== null && !p.no_contact;
-    if (filter === "overdue") return p.next_control && getDaysUntil(p.next_control.due_date) < 0;
+    if (filter === "overdue") return p.next_control && getDaysUntil(p.next_control.due_date) < 0 && !p.no_contact;
     if (filter === "no_contact") return p.no_contact;
     return true;
   });
 
-  const overdueCount = patients.filter(p => p.next_control && getDaysUntil(p.next_control.due_date) < 0).length;
-  const upcomingCount = patients.filter(p => p.next_control && getDaysUntil(p.next_control.due_date) >= 0 && getDaysUntil(p.next_control.due_date) <= 7).length;
+  const activePatients = patients.filter(p => !p.no_contact);
+  const overdueCount = patients.filter(p => p.next_control && getDaysUntil(p.next_control.due_date) < 0 && !p.no_contact).length;
+  const upcomingCount = patients.filter(p => p.next_control && getDaysUntil(p.next_control.due_date) >= 0 && getDaysUntil(p.next_control.due_date) <= 7 && !p.no_contact).length;
   const noContactCount = patients.filter(p => p.no_contact).length;
 
   if (loading) {
@@ -225,7 +226,7 @@ const ControlsPage = () => {
           }`}
           data-testid="filter-all"
         >
-          Wszyscy ({patients.length})
+          Wszyscy ({activePatients.length})
         </button>
         <button
           onClick={() => setFilter("overdue")}
