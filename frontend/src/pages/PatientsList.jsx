@@ -24,6 +24,7 @@ const PatientsList = () => {
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [statusChangeId, setStatusChangeId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,6 +100,18 @@ const PatientsList = () => {
       loadData();
     } catch (err) {
       toast.error("Nie udało się usunąć pacjenta");
+    }
+  };
+
+  const handleStatusChange = async (patientId, newStatus, e) => {
+    e.stopPropagation();
+    setStatusChangeId(null);
+    try {
+      await api.put(`/patients/${patientId}`, { status: newStatus });
+      setPatients(prev => prev.map(p => p.id === patientId ? { ...p, status: newStatus } : p));
+      toast.success(`Status zmieniony na: ${STATUS_LABELS[newStatus]}`);
+    } catch (err) {
+      toast.error("Nie udało się zmienić statusu");
     }
   };
 
@@ -334,8 +347,8 @@ const PatientsList = () => {
         </div>
       </div>
 
-      {(showStatusDropdown || showProcedureDropdown) && (
-        <div className="fixed inset-0 z-10" onClick={() => { setShowStatusDropdown(false); setShowProcedureDropdown(false); }} />
+      {(showStatusDropdown || showProcedureDropdown || statusChangeId) && (
+        <div className="fixed inset-0 z-10" onClick={() => { setShowStatusDropdown(false); setShowProcedureDropdown(false); setStatusChangeId(null); }} />
       )}
 
       {/* Patients Table */}
@@ -382,14 +395,51 @@ const PatientsList = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
+                      <div className="relative flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setStatusChangeId(statusChangeId === patient.id ? null : patient.id);
+                          }}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full cursor-pointer transition-all hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 ${getStatusColor(patient.status)}`}
+                          data-testid={`status-badge-${patient.id}`}
+                          title="Kliknij aby zmienić status"
+                        >
                           {STATUS_LABELS[patient.status] || patient.status}
-                        </span>
+                          <ChevronRight className={`w-3 h-3 transition-transform ${statusChangeId === patient.id ? 'rotate-90' : ''}`} />
+                        </button>
                         {patient.asap && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700" title="Jak najszybciej">
                             <Sparkles className="w-3 h-3" />
                           </span>
+                        )}
+                        {statusChangeId === patient.id && (
+                          <div
+                            className="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-30 py-1"
+                            data-testid={`status-dropdown-${patient.id}`}
+                          >
+                            {STATUS_OPTIONS.map((option) => (
+                              <button
+                                key={option.value}
+                                onClick={(e) => handleStatusChange(patient.id, option.value, e)}
+                                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                                  patient.status === option.value
+                                    ? "bg-slate-100 font-semibold"
+                                    : "hover:bg-slate-50"
+                                }`}
+                                data-testid={`status-option-${patient.id}-${option.value}`}
+                              >
+                                <span className={`w-2 h-2 rounded-full ${
+                                  option.value === 'consultation' ? 'bg-slate-500' :
+                                  option.value === 'planned' ? 'bg-blue-500' :
+                                  option.value === 'awaiting' ? 'bg-amber-500' :
+                                  option.value === 'operated' ? 'bg-emerald-500' :
+                                  'bg-red-500'
+                                }`} />
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </td>

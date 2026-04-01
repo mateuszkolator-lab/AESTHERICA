@@ -26,6 +26,7 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 ### Zarządzanie pacjentami - DONE
 - CRUD pacjentów, sortowanie, filtrowanie
 - Flaga ASAP, status Rezygnacja
+- Zmiana statusu bezpośrednio z listy pacjentów (dropdown)
 - Globalne wyszukiwanie (Ctrl+K)
 
 ### Zdjęcia pacjentów - DONE
