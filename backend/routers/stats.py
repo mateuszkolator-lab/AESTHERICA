@@ -16,7 +16,7 @@ def get_auth(authorization: str = Header(None)):
     return verify_token(authorization)
 
 @router.get("/stats")
-async def get_stats(year: Optional[int] = None, user: dict = Depends(get_auth)):
+async def get_stats(year: Optional[int] = None, location_id: Optional[str] = None, user: dict = Depends(get_auth)):
     db = get_db()
     
     if not year:
@@ -24,20 +24,23 @@ async def get_stats(year: Optional[int] = None, user: dict = Depends(get_auth)):
     
     year_str = str(year)
     
+    # Base query filter
+    base_filter = {}
+    if location_id:
+        base_filter["location_id"] = location_id
+    
     # Total patients
-    total = await db.patients.count_documents({})
+    total = await db.patients.count_documents(base_filter)
     
     # By status
-    by_status = {
-        "consultation": await db.patients.count_documents({"status": "consultation"}),
-        "planned": await db.patients.count_documents({"status": "planned"}),
-        "awaiting": await db.patients.count_documents({"status": "awaiting"}),
-        "operated": await db.patients.count_documents({"status": "operated"})
-    }
+    by_status = {}
+    for status in ["consultation", "planned", "awaiting", "operated"]:
+        by_status[status] = await db.patients.count_documents({**base_filter, "status": status})
     
     # Procedures by month (operated patients with surgery_date in given year)
+    proc_match = {**base_filter, "surgery_date": {"$regex": f"^{year_str}"}, "status": "operated"}
     procedures_pipeline = [
-        {"$match": {"surgery_date": {"$regex": f"^{year_str}"}, "status": "operated"}},
+        {"$match": proc_match},
         {"$group": {
             "_id": {"$substr": ["$surgery_date", 5, 2]},
             "count": {"$sum": 1}
@@ -46,23 +49,41 @@ async def get_stats(year: Optional[int] = None, user: dict = Depends(get_auth)):
     ]
     procedures_by_month = await db.patients.aggregate(procedures_pipeline).to_list(12)
     
-    # Revenue by month
-    revenue_pipeline = [
-        {"$match": {"surgery_date": {"$regex": f"^{year_str}"}, "status": "operated", "price": {"$gt": 0}}},
+    # Revenue by month - OPERATED
+    rev_operated_match = {**base_filter, "surgery_date": {"$regex": f"^{year_str}"}, "status": "operated", "price": {"$gt": 0}}
+    revenue_operated_pipeline = [
+        {"$match": rev_operated_match},
         {"$group": {
             "_id": {"$substr": ["$surgery_date", 5, 2]},
-            "revenue": {"$sum": "$price"}
+            "revenue": {"$sum": "$price"},
+            "count": {"$sum": 1}
         }},
-        {"$project": {"_id": 0, "month": "$_id", "revenue": 1}}
+        {"$project": {"_id": 0, "month": "$_id", "revenue": 1, "count": 1}}
     ]
-    revenue_by_month = await db.patients.aggregate(revenue_pipeline).to_list(12)
+    revenue_by_month_operated = await db.patients.aggregate(revenue_operated_pipeline).to_list(12)
+    
+    # Revenue by month - PLANNED
+    rev_planned_match = {**base_filter, "surgery_date": {"$regex": f"^{year_str}"}, "status": "planned", "price": {"$gt": 0}}
+    revenue_planned_pipeline = [
+        {"$match": rev_planned_match},
+        {"$group": {
+            "_id": {"$substr": ["$surgery_date", 5, 2]},
+            "revenue": {"$sum": "$price"},
+            "count": {"$sum": 1}
+        }},
+        {"$project": {"_id": 0, "month": "$_id", "revenue": 1, "count": 1}}
+    ]
+    revenue_by_month_planned = await db.patients.aggregate(revenue_planned_pipeline).to_list(12)
+    
+    # Combined revenue (for backward compat)
+    revenue_by_month = revenue_by_month_operated
     
     # Procedures by location
     locations = await db.locations.find({}, {"_id": 0}).to_list(100)
     location_map = {loc["id"]: loc["name"] for loc in locations}
     
     location_pipeline = [
-        {"$match": {"status": "operated", "location_id": {"$ne": None}}},
+        {"$match": {**base_filter, "status": "operated", "location_id": {"$ne": None}}},
         {"$group": {"_id": "$location_id", "count": {"$sum": 1}}},
         {"$project": {"_id": 0, "location_id": "$_id", "count": 1}}
     ]
@@ -72,12 +93,32 @@ async def get_stats(year: Optional[int] = None, user: dict = Depends(get_auth)):
         for item in location_data
     ]
     
+    # Revenue by location
+    rev_loc_pipeline = [
+        {"$match": {"surgery_date": {"$regex": f"^{year_str}"}, "status": {"$in": ["planned", "operated"]}, "location_id": {"$ne": None}, "price": {"$gt": 0}}},
+        {"$group": {
+            "_id": {"location_id": "$location_id", "status": "$status"},
+            "revenue": {"$sum": "$price"},
+            "count": {"$sum": 1}
+        }},
+        {"$project": {"_id": 0, "location_id": "$_id.location_id", "status": "$_id.status", "revenue": 1, "count": 1}}
+    ]
+    rev_loc_data = await db.patients.aggregate(rev_loc_pipeline).to_list(100)
+    revenue_by_location = [
+        {**item, "location": location_map.get(item["location_id"], "Nieznana")}
+        for item in rev_loc_data
+    ]
+    
     return {
         "total_patients": total,
         "by_status": by_status,
         "procedures_by_month": procedures_by_month,
         "revenue_by_month": revenue_by_month,
-        "procedures_by_location": procedures_by_location
+        "revenue_by_month_operated": revenue_by_month_operated,
+        "revenue_by_month_planned": revenue_by_month_planned,
+        "procedures_by_location": procedures_by_location,
+        "revenue_by_location": revenue_by_location,
+        "locations": [{"id": loc["id"], "name": loc["name"]} for loc in locations]
     }
 
 @router.get("/dashboard")
