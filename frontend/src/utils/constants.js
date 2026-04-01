@@ -3,7 +3,8 @@ export const STATUS_LABELS = {
   consultation: "Konsultacja",
   planned: "Zaplanowany",
   awaiting: "Oczekujący",
-  operated: "Zoperowany"
+  operated: "Zoperowany",
+  cancelled: "Rezygnacja"
 };
 
 export const VISIT_TYPE_LABELS = {
@@ -64,7 +65,8 @@ export const STATUS_OPTIONS = [
   { value: "consultation", label: "Konsultacja" },
   { value: "planned", label: "Zaplanowany" },
   { value: "awaiting", label: "Oczekujący" },
-  { value: "operated", label: "Zoperowany" }
+  { value: "operated", label: "Zoperowany" },
+  { value: "cancelled", label: "Rezygnacja" }
 ];
 
 export const getStatusColor = (status) => {
@@ -72,7 +74,8 @@ export const getStatusColor = (status) => {
     consultation: "bg-slate-100 text-slate-800",
     planned: "bg-blue-100 text-blue-800",
     awaiting: "bg-amber-100 text-amber-800",
-    operated: "bg-emerald-100 text-emerald-800"
+    operated: "bg-emerald-100 text-emerald-800",
+    cancelled: "bg-red-100 text-red-800"
   };
   return colors[status] || colors.consultation;
 };
@@ -81,7 +84,8 @@ export const getStatusColorBg = (status) => {
   const colors = {
     planned: "bg-blue-600",
     awaiting: "bg-amber-500",
-    operated: "bg-emerald-600"
+    operated: "bg-emerald-600",
+    cancelled: "bg-red-600"
   };
   return colors[status] || "bg-slate-500";
 };
