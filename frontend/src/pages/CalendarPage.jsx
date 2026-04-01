@@ -264,20 +264,13 @@ const CalendarPage = () => {
                   const isWeekend = day && (day.getDay() === 0 || day.getDay() === 6);
                   const hasPatients = dayPatients.length > 0;
                   
-                  // Border for operating days: green = free, red = full
-                  let borderStyle = {};
-                  if (day && hasSlot && !isPast) {
-                    borderStyle = isFull
-                      ? { boxShadow: 'inset 0 0 0 3px #f87171' }
-                      : { boxShadow: 'inset 0 0 0 3px #34d399' };
-                  }
+                  const isOperatingDay = day && hasSlot && !isPast;
                   
                   return (
                     <div
                       key={i}
                       onDragOver={day && !isPast ? handleDragOver : undefined}
                       onDrop={day && !isPast ? (e) => handleDrop(e, day) : undefined}
-                      style={borderStyle}
                       className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative ${
                         !day 
                           ? "bg-slate-100" 
@@ -286,9 +279,9 @@ const CalendarPage = () => {
                             : isWeekend && !hasSlot && !hasPatients
                               ? "bg-slate-50"
                               : hasSlot && isFull
-                                ? "bg-red-50/40"
+                                ? "bg-red-50/50"
                                 : hasSlot
-                                  ? "bg-emerald-50/30"
+                                  ? "bg-emerald-50/40"
                                   : "bg-white"
                       } ${
                         draggedPatient && day && !isPast && !isFull 
@@ -298,6 +291,9 @@ const CalendarPage = () => {
                         day && !isPast ? "hover:bg-slate-50" : ""
                       }`}
                     >
+                      {isOperatingDay && (
+                        <div className={`absolute left-0 top-0 bottom-0 w-[5px] ${isFull ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                      )}
                       {day && (
                         <>
                           {/* Day Header */}
@@ -403,11 +399,11 @@ const CalendarPage = () => {
               <span>Zoperowany</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ boxShadow: 'inset 0 0 0 2.5px #34d399' }} />
+              <div className="w-[5px] h-4 rounded-sm bg-emerald-500" />
               <span>Wolny dzień op.</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ boxShadow: 'inset 0 0 0 2.5px #f87171' }} />
+              <div className="w-[5px] h-4 rounded-sm bg-red-500" />
               <span>Pełny dzień op.</span>
             </div>
           </div>

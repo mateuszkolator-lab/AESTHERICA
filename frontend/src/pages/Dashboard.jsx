@@ -123,20 +123,13 @@ const Dashboard = () => {
                 const isWeekend = day && (day.getDay() === 0 || day.getDay() === 6);
                 const hasAsap = surgeries.some(p => p.asap);
                 
-                // Border for operating days: green = free, red = full
-                let borderStyle = {};
-                if (day && hasSlot && !isPast) {
-                  borderStyle = isFull
-                    ? { boxShadow: 'inset 0 0 0 2.5px #f87171' }
-                    : { boxShadow: 'inset 0 0 0 2.5px #34d399' };
-                }
+                const isOperatingDay = day && hasSlot && !isPast;
                 
                 return (
                   <div
                     key={i}
                     onClick={() => day && (hasSlot || hasPatients) && setSelectedDay(day)}
                     data-testid={day ? `dashboard-day-${day.getDate()}` : undefined}
-                    style={borderStyle}
                     className={`min-h-[90px] p-1.5 transition-all relative ${
                       !day 
                         ? "bg-slate-50" 
@@ -145,12 +138,15 @@ const Dashboard = () => {
                           : isWeekend && !hasSlot
                             ? "bg-slate-50 hover:bg-slate-100 cursor-pointer"
                             : hasSlot && isFull
-                              ? "bg-red-50/40 hover:bg-red-50 cursor-pointer"
+                              ? "bg-red-50/50 hover:bg-red-50 cursor-pointer"
                               : hasSlot
-                                ? "bg-emerald-50/30 hover:bg-emerald-50 cursor-pointer"
+                                ? "bg-emerald-50/40 hover:bg-emerald-50 cursor-pointer"
                                 : "bg-white hover:bg-slate-50 cursor-pointer"
                     }`}
                   >
+                    {isOperatingDay && (
+                      <div className={`absolute left-0 top-0 bottom-0 w-[5px] ${isFull ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                    )}
                     {day && (
                       <>
                         {/* Day number */}
@@ -220,11 +216,11 @@ const Dashboard = () => {
                 <span>ASAP</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm" style={{ boxShadow: 'inset 0 0 0 2px #34d399' }} />
+                <div className="w-[5px] h-3.5 rounded-sm bg-emerald-500" />
                 <span>Wolny dzień op.</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm" style={{ boxShadow: 'inset 0 0 0 2px #f87171' }} />
+                <div className="w-[5px] h-3.5 rounded-sm bg-red-500" />
                 <span>Pełny dzień op.</span>
               </div>
             </div>
