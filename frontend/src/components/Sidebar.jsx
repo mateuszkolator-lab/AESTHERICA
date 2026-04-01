@@ -17,7 +17,7 @@ const Sidebar = ({ currentPath }) => {
     { path: "/planning", icon: CalendarPlus, label: "Planowanie" },
     { path: "/calendar", icon: Calendar, label: "Kalendarz" },
     { path: "/controls", icon: ClipboardCheck, label: "Kontrole" },
-    { path: "/stats", icon: BarChart3, label: "Statystyki" },
+    { path: "/stats", icon: BarChart3, label: "Statystyki", adminOnly: true },
     { path: "/settings", icon: Settings, label: "Ustawienia" },
   ];
 
@@ -45,7 +45,7 @@ const Sidebar = ({ currentPath }) => {
       
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
-          {navItems.map((item) => (
+          {navItems.filter(item => !item.adminOnly || isAdmin()).map((item) => (
             <li key={item.path}>
               <button
                 onClick={() => navigate(item.path)}

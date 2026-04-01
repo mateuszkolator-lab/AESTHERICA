@@ -38,7 +38,13 @@ const ProtectedRoute = ({ children }) => {
   return <AppLayout>{children}</AppLayout>;
 };
 
-// Main App component
+// Admin-only route wrapper
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, isAdmin } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (!isAdmin()) return <Navigate to="/" />;
+  return <AppLayout>{children}</AppLayout>;
+};
 function App() {
   return (
     <AuthProvider>
@@ -51,7 +57,7 @@ function App() {
           <Route path="/patients/:id" element={<ProtectedRoute><PatientDetail /></ProtectedRoute>} />
           <Route path="/planning" element={<ProtectedRoute><PlanningPage /></ProtectedRoute>} />
           <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-          <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
+          <Route path="/stats" element={<AdminRoute><StatsPage /></AdminRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
           <Route path="/controls" element={<ProtectedRoute><ControlsPage /></ProtectedRoute>} />
