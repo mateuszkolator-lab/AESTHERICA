@@ -138,14 +138,14 @@ const Dashboard = () => {
                           : isWeekend && !hasSlot
                             ? "bg-slate-50 hover:bg-slate-100 cursor-pointer"
                             : hasSlot && isFull
-                              ? "bg-red-50/50 hover:bg-red-50 cursor-pointer"
+                              ? "bg-orange-50/50 hover:bg-orange-50 cursor-pointer"
                               : hasSlot
-                                ? "bg-emerald-50/40 hover:bg-emerald-50 cursor-pointer"
+                                ? "bg-blue-50/40 hover:bg-blue-50 cursor-pointer"
                                 : "bg-white hover:bg-slate-50 cursor-pointer"
                     }`}
                   >
                     {isOperatingDay && (
-                      <div className={`absolute left-0 top-0 bottom-0 w-[5px] ${isFull ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                      <div className={`absolute left-0 top-0 bottom-0 w-[5px] ${isFull ? 'bg-orange-500' : 'bg-blue-500'}`} />
                     )}
                     {day && (
                       <>
@@ -188,12 +188,12 @@ const Dashboard = () => {
                             <p className="text-[10px] text-slate-500 pl-1">+{surgeries.length - 2} więcej</p>
                           )}
                           {!hasPatients && hasSlot && !isFull && (
-                            <div className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-medium">
+                            <div className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-medium">
                               Wolny termin
                             </div>
                           )}
                           {isFull && (
-                            <div className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-medium">
+                            <div className="px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded text-[10px] font-medium">
                               Niedostępny
                             </div>
                           )}
@@ -216,11 +216,11 @@ const Dashboard = () => {
                 <span>ASAP</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-[5px] h-3.5 rounded-sm bg-emerald-500" />
+                <div className="w-[5px] h-3.5 rounded-sm bg-blue-500" />
                 <span>Wolny dzień op.</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-[5px] h-3.5 rounded-sm bg-red-500" />
+                <div className="w-[5px] h-3.5 rounded-sm bg-orange-500" />
                 <span>Pełny dzień op.</span>
               </div>
             </div>

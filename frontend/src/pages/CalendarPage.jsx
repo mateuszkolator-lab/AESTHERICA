@@ -279,9 +279,9 @@ const CalendarPage = () => {
                             : isWeekend && !hasSlot && !hasPatients
                               ? "bg-slate-50"
                               : hasSlot && isFull
-                                ? "bg-red-50/50"
+                                ? "bg-orange-50/50"
                                 : hasSlot
-                                  ? "bg-emerald-50/40"
+                                  ? "bg-blue-50/40"
                                   : "bg-white"
                       } ${
                         draggedPatient && day && !isPast && !isFull 
@@ -292,7 +292,7 @@ const CalendarPage = () => {
                       }`}
                     >
                       {isOperatingDay && (
-                        <div className={`absolute left-0 top-0 bottom-0 w-[5px] ${isFull ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                        <div className={`absolute left-0 top-0 bottom-0 w-[5px] ${isFull ? 'bg-orange-500' : 'bg-blue-500'}`} />
                       )}
                       {day && (
                         <>
@@ -315,7 +315,7 @@ const CalendarPage = () => {
                                 />
                               )}
                               {isFull && (
-                                <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded">
+                                <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-[9px] font-bold rounded">
                                   Pełny
                                 </span>
                               )}
@@ -361,7 +361,7 @@ const CalendarPage = () => {
                               </button>
                             )}
                             {!dayPatients.length && hasSlot && !isFull && (
-                              <div className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-medium">
+                              <div className="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-medium">
                                 Wolny termin
                               </div>
                             )}
@@ -399,11 +399,11 @@ const CalendarPage = () => {
               <span>Zoperowany</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-[5px] h-4 rounded-sm bg-emerald-500" />
+              <div className="w-[5px] h-4 rounded-sm bg-blue-500" />
               <span>Wolny dzień op.</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-[5px] h-4 rounded-sm bg-red-500" />
+              <div className="w-[5px] h-4 rounded-sm bg-orange-500" />
               <span>Pełny dzień op.</span>
             </div>
           </div>
