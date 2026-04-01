@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import api from "../utils/api";
 import { 
-  STATUS_LABELS, getStatusColor, getLocationColor, 
+  STATUS_LABELS, getStatusColor, getStatusColorBg, getLocationColor, 
   getProcedureAbbrev, getDaysInMonth, DAY_NAMES 
 } from "../utils/constants";
 import DashboardDayModal from "../components/modals/DashboardDayModal";
@@ -111,7 +111,7 @@ const Dashboard = () => {
             </div>
             
             {/* Calendar grid */}
-            <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-xl overflow-hidden">
               {days.map((day, i) => {
                 const slot = getSlotForDate(day);
                 const surgeries = getSurgeriesForDate(day);
@@ -121,7 +121,6 @@ const Dashboard = () => {
                 const hasPatients = surgeries.length > 0;
                 const isPast = day && day < today;
                 const isWeekend = day && (day.getDay() === 0 || day.getDay() === 6);
-                const hasAsap = surgeries.some(p => p.asap);
                 
                 const isOperatingDay = day && hasSlot && !isPast;
                 
@@ -130,28 +129,28 @@ const Dashboard = () => {
                     key={i}
                     onClick={() => day && (hasSlot || hasPatients) && setSelectedDay(day)}
                     data-testid={day ? `dashboard-day-${day.getDate()}` : undefined}
-                    className={`min-h-[90px] p-1.5 transition-all relative ${
+                    className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative ${
                       !day 
-                        ? "bg-slate-50" 
+                        ? "bg-slate-100" 
                         : isPast 
-                          ? "bg-slate-50/80 cursor-default"
+                          ? "bg-slate-50 opacity-60"
                           : isWeekend && !hasSlot
-                            ? "bg-slate-50 hover:bg-slate-100 cursor-pointer"
+                            ? "bg-slate-50"
                             : hasSlot && isFull
-                              ? "bg-orange-50/50 hover:bg-orange-50 cursor-pointer"
+                              ? "bg-red-50/60"
                               : hasSlot
-                                ? "bg-blue-50/40 hover:bg-blue-50 cursor-pointer"
-                                : "bg-white hover:bg-slate-50 cursor-pointer"
-                    }`}
+                                ? "bg-emerald-50/50"
+                                : "bg-white"
+                    } ${day && !isPast ? "hover:bg-slate-50 cursor-pointer" : ""}`}
                   >
                     {isOperatingDay && (
-                      <div className={`absolute left-0 top-0 bottom-0 w-[5px] ${isFull ? 'bg-orange-500' : 'bg-blue-500'}`} />
+                      <div className={`absolute left-0 top-0 bottom-0 w-[6px] ${isFull ? 'bg-red-600' : 'bg-emerald-600'}`} />
                     )}
                     {day && (
                       <>
-                        {/* Day number */}
+                        {/* Day Header */}
                         <div className="flex items-center justify-between mb-1">
-                          <div className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium ${
+                          <div className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors ${
                             isToday 
                               ? "bg-teal-600 text-white" 
                               : isPast 
@@ -160,41 +159,49 @@ const Dashboard = () => {
                           }`}>
                             {day.getDate()}
                           </div>
-                          {hasSlot && slot.location_name && (
-                            <div 
-                              className={`w-2 h-2 rounded-full ${getLocationColor(slot.location_name)?.dot}`}
-                              title={slot.location_name}
-                            />
-                          )}
+                          <div className="flex items-center gap-1">
+                            {hasSlot && slot.location_name && (
+                              <div 
+                                className={`w-2.5 h-2.5 rounded-full ${getLocationColor(slot.location_name)?.dot}`}
+                                title={slot.location_name}
+                              />
+                            )}
+                            {isFull && (
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded">
+                                Pełny
+                              </span>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Events */}
-                        <div className="space-y-0.5">
-                          {surgeries.slice(0, 2).map((patient, idx) => (
+                        <div className="space-y-1">
+                          {surgeries.slice(0, 3).map((patient, idx) => (
                             <div 
                               key={idx}
-                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight truncate ${
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/patients/${patient.id}`);
+                              }}
+                              className={`px-2 py-1 rounded-lg text-xs font-medium truncate transition-all cursor-pointer hover:shadow-md ${
                                 patient.asap 
-                                  ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300"
-                                  : "bg-blue-100 text-blue-800"
+                                  ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-sm"
+                                  : `${getStatusColorBg(patient.status)} text-white shadow-sm`
                               }`}
                               title={`${patient.first_name} ${patient.last_name} - ${patient.procedure_type || 'Zabieg'}${patient.asap ? ' (ASAP)' : ''}`}
                             >
-                              {patient.asap && <Zap className="w-2.5 h-2.5 shrink-0" />}
-                              <span className="truncate font-medium">{patient.last_name}</span>
+                              <div className="flex items-center gap-1">
+                                {patient.asap && <Zap className="w-3 h-3 shrink-0" />}
+                                <span className="truncate">{patient.first_name} {patient.last_name[0]}.</span>
+                              </div>
                             </div>
                           ))}
-                          {surgeries.length > 2 && (
-                            <p className="text-[10px] text-slate-500 pl-1">+{surgeries.length - 2} więcej</p>
+                          {surgeries.length > 3 && (
+                            <p className="text-[10px] text-teal-600 font-medium pl-1">+{surgeries.length - 3} więcej</p>
                           )}
                           {!hasPatients && hasSlot && !isFull && (
-                            <div className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-medium">
+                            <div className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-medium">
                               Wolny termin
-                            </div>
-                          )}
-                          {isFull && (
-                            <div className="px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded text-[10px] font-medium">
-                              Niedostępny
                             </div>
                           )}
                         </div>
@@ -206,21 +213,25 @@ const Dashboard = () => {
             </div>
             
             {/* Legend */}
-            <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200" />
-                <span>Zabieg</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-amber-100 border border-amber-300" />
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-4 lg:gap-6 text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-lg bg-gradient-to-r from-amber-400 to-orange-400" />
                 <span>ASAP</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-[5px] h-3.5 rounded-sm bg-blue-500" />
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-lg bg-blue-600" />
+                <span>Zaplanowany</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-lg bg-emerald-600" />
+                <span>Zoperowany</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-[6px] h-4 rounded-sm bg-emerald-600" />
                 <span>Wolny dzień op.</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-[5px] h-3.5 rounded-sm bg-orange-500" />
+              <div className="flex items-center gap-2">
+                <div className="w-[6px] h-4 rounded-sm bg-red-600" />
                 <span>Pełny dzień op.</span>
               </div>
             </div>
