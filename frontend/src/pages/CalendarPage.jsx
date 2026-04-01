@@ -264,16 +264,12 @@ const CalendarPage = () => {
                   const isWeekend = day && (day.getDay() === 0 || day.getDay() === 6);
                   const hasPatients = dayPatients.length > 0;
                   
-                  // Determine border color
-                  let borderClass = "border-2 border-transparent";
-                  if (day && !isPast) {
-                    if (isFull) {
-                      borderClass = "border-2 border-red-400 bg-red-50";
-                    } else if (hasPatients) {
-                      borderClass = "border-2 border-emerald-400 bg-emerald-50/50";
-                    } else if (hasSlot) {
-                      borderClass = "border-2 border-emerald-400 bg-emerald-50/30";
-                    }
+                  // Border for operating days: green = free, red = full
+                  let borderStyle = {};
+                  if (day && hasSlot && !isPast) {
+                    borderStyle = isFull
+                      ? { boxShadow: 'inset 0 0 0 3px #f87171' }
+                      : { boxShadow: 'inset 0 0 0 3px #34d399' };
                   }
                   
                   return (
@@ -281,15 +277,20 @@ const CalendarPage = () => {
                       key={i}
                       onDragOver={day && !isPast ? handleDragOver : undefined}
                       onDrop={day && !isPast ? (e) => handleDrop(e, day) : undefined}
+                      style={borderStyle}
                       className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative ${
                         !day 
                           ? "bg-slate-100" 
                           : isPast 
-                            ? "bg-slate-50 opacity-60 border-2 border-transparent"
+                            ? "bg-slate-50 opacity-60"
                             : isWeekend && !hasSlot && !hasPatients
-                              ? "bg-slate-50 border-2 border-transparent"
-                              : "bg-white"
-                      } ${borderClass} ${
+                              ? "bg-slate-50"
+                              : hasSlot && isFull
+                                ? "bg-red-50/40"
+                                : hasSlot
+                                  ? "bg-emerald-50/30"
+                                  : "bg-white"
+                      } ${
                         draggedPatient && day && !isPast && !isFull 
                           ? "ring-2 ring-inset ring-teal-400 bg-teal-50/50" 
                           : ""
@@ -402,12 +403,12 @@ const CalendarPage = () => {
               <span>Zoperowany</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-lg bg-emerald-100 border border-emerald-200" />
-              <span>Wolny termin</span>
+              <div className="w-4 h-4 rounded" style={{ boxShadow: 'inset 0 0 0 2.5px #34d399' }} />
+              <span>Wolny dzień op.</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-lg bg-red-100 border border-red-200" />
-              <span>Pełny</span>
+              <div className="w-4 h-4 rounded" style={{ boxShadow: 'inset 0 0 0 2.5px #f87171' }} />
+              <span>Pełny dzień op.</span>
             </div>
           </div>
         </div>
