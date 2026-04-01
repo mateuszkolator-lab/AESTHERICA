@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Users, Calendar, ChevronLeft, ChevronRight, User, 
-  CheckCircle2, Clock
+  CheckCircle2, Clock, Zap
 } from "lucide-react";
 import api from "../utils/api";
 import { 
@@ -56,6 +56,8 @@ const Dashboard = () => {
 
   const days = getDaysInMonth(currentMonth);
   const monthName = currentMonth.toLocaleString("pl-PL", { month: "long", year: "numeric" });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
@@ -67,36 +69,49 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar Preview */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Kalendarz operacji</h2>
-            <div className="flex items-center gap-2">
+        {/* Calendar Preview - Google/Apple style */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+            <div className="flex items-center gap-4">
               <button
-                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                className="p-1.5 hover:bg-slate-100 rounded-lg"
+                onClick={() => setCurrentMonth(new Date())}
+                className="px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
+                Dziś
               </button>
-              <span className="text-sm font-medium text-slate-700 capitalize min-w-[120px] text-center">{monthName}</span>
-              <button
-                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                className="p-1.5 hover:bg-slate-100 rounded-lg"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-slate-600" />
+                </button>
+                <button
+                  onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5 text-slate-600" />
+                </button>
+              </div>
             </div>
+            <h2 className="text-xl font-semibold text-slate-900 capitalize" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              {monthName}
+            </h2>
+            <div className="w-24" /> {/* Spacer for balance */}
           </div>
+          
           <div className="p-4">
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {DAY_NAMES.map((day) => (
-                <div key={day} className="text-center text-xs font-semibold text-slate-500 py-1">
+            {/* Day headers */}
+            <div className="grid grid-cols-7 mb-2">
+              {["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Ndz"].map((day, i) => (
+                <div key={day} className={`text-center text-xs font-semibold py-2 ${i >= 5 ? 'text-slate-400' : 'text-slate-500'}`}>
                   {day}
                 </div>
               ))}
             </div>
             
-            <div className="grid grid-cols-7 gap-1">
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-lg overflow-hidden">
               {days.map((day, i) => {
                 const slot = getSlotForDate(day);
                 const surgeries = getSurgeriesForDate(day);
@@ -104,44 +119,38 @@ const Dashboard = () => {
                 const hasSlot = !!slot;
                 const isFull = slot?.is_full;
                 const hasPatients = surgeries.length > 0;
-                
-                let bgColor = "";
-                let borderColor = "";
-                
-                if (day) {
-                  if (isFull) {
-                    bgColor = "bg-red-100";
-                    borderColor = "ring-2 ring-red-400";
-                  } else if (hasPatients) {
-                    bgColor = "bg-emerald-100";
-                    borderColor = "ring-2 ring-emerald-400";
-                  } else if (hasSlot) {
-                    bgColor = "bg-amber-100";
-                    borderColor = "ring-2 ring-amber-300";
-                  }
-                }
+                const isPast = day && day < today;
+                const isWeekend = day && (day.getDay() === 0 || day.getDay() === 6);
+                const hasAsap = surgeries.some(p => p.asap);
                 
                 return (
                   <div
                     key={i}
                     onClick={() => day && (hasSlot || hasPatients) && setSelectedDay(day)}
                     data-testid={day ? `dashboard-day-${day.getDate()}` : undefined}
-                    className={`min-h-[70px] p-1 rounded-lg cursor-pointer transition-all relative overflow-hidden ${
+                    className={`min-h-[90px] p-1.5 transition-all relative ${
                       !day 
-                        ? "cursor-default" 
-                        : isToday 
-                          ? "ring-2 ring-teal-500 ring-offset-1" 
-                          : borderColor || "hover:bg-slate-50"
-                    } ${bgColor} ${hasSlot && slot.location_name ? `border-l-4 ${getLocationColor(slot.location_name)?.border}` : ""}`}
+                        ? "bg-slate-50" 
+                        : isPast 
+                          ? "bg-slate-50/80 cursor-default"
+                          : isWeekend
+                            ? "bg-slate-50 hover:bg-slate-100 cursor-pointer"
+                            : "bg-white hover:bg-slate-50 cursor-pointer"
+                    }`}
                   >
                     {day && (
                       <>
-                        <div className="flex items-center justify-between">
-                          <p className={`text-xs font-medium ${
-                            isToday ? "text-teal-700" : hasSlot || hasPatients ? "text-slate-900" : "text-slate-600"
+                        {/* Day number */}
+                        <div className="flex items-center justify-between mb-1">
+                          <div className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium ${
+                            isToday 
+                              ? "bg-teal-600 text-white" 
+                              : isPast 
+                                ? "text-slate-400"
+                                : "text-slate-700"
                           }`}>
                             {day.getDate()}
-                          </p>
+                          </div>
                           {hasSlot && slot.location_name && (
                             <div 
                               className={`w-2 h-2 rounded-full ${getLocationColor(slot.location_name)?.dot}`}
@@ -149,29 +158,35 @@ const Dashboard = () => {
                             />
                           )}
                         </div>
-                        <div className="mt-0.5 space-y-0.5 overflow-hidden">
+                        
+                        {/* Events */}
+                        <div className="space-y-0.5">
                           {surgeries.slice(0, 2).map((patient, idx) => (
                             <div 
                               key={idx}
-                              className="flex items-center gap-0.5 text-[9px] leading-tight"
-                              title={`${patient.first_name} ${patient.last_name} - ${patient.procedure_type || 'Zabieg'}`}
+                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight truncate ${
+                                patient.asap 
+                                  ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                              title={`${patient.first_name} ${patient.last_name} - ${patient.procedure_type || 'Zabieg'}${patient.asap ? ' (ASAP)' : ''}`}
                             >
-                              <span className="px-1 py-0.5 bg-blue-600 text-white rounded font-bold shrink-0">
-                                {getProcedureAbbrev(patient.procedure_type)}
-                              </span>
-                              <span className="truncate text-slate-700 font-medium">
-                                {patient.last_name}
-                              </span>
+                              {patient.asap && <Zap className="w-2.5 h-2.5 shrink-0" />}
+                              <span className="truncate font-medium">{patient.last_name}</span>
                             </div>
                           ))}
                           {surgeries.length > 2 && (
-                            <p className="text-[9px] text-slate-500 font-medium">+{surgeries.length - 2}</p>
+                            <p className="text-[10px] text-slate-500 pl-1">+{surgeries.length - 2} więcej</p>
                           )}
                           {!hasPatients && hasSlot && !isFull && (
-                            <span className="text-[9px] text-amber-700 font-medium">Wolny</span>
+                            <div className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-medium">
+                              Wolny termin
+                            </div>
                           )}
                           {isFull && (
-                            <span className="text-[9px] text-red-700 font-medium">Pełny</span>
+                            <div className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-medium">
+                              Niedostępny
+                            </div>
                           )}
                         </div>
                       </>
@@ -181,36 +196,33 @@ const Dashboard = () => {
               })}
             </div>
             
-            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600 flex-wrap">
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-emerald-100 ring-2 ring-emerald-400" />
-                <span>Z pacjentem</span>
+                <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200" />
+                <span>Zabieg</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-amber-100 ring-2 ring-amber-300" />
-                <span>Wolny termin</span>
+                <div className="w-3 h-3 rounded bg-amber-100 border border-amber-300" />
+                <span>ASAP</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-red-100 ring-2 ring-red-400" />
+                <div className="w-3 h-3 rounded bg-emerald-50 border border-emerald-200" />
+                <span>Wolny</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded bg-red-50 border border-red-200" />
                 <span>Niedostępny</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="px-1 py-0.5 bg-blue-600 text-white rounded text-[9px] font-bold">RIN</span>
-                <span>Typ zabiegu</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm border-l-4 border-l-orange-500 bg-slate-100" />
-                <span>Lokalizacja</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Upcoming Surgeries */}
-        <div className="bg-white rounded-xl border border-slate-200">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
-            <span className="px-2 py-0.5 bg-teal-100 text-teal-800 text-xs font-medium rounded-full">
+            <span className="px-2.5 py-1 bg-teal-100 text-teal-800 text-xs font-semibold rounded-full">
               {data?.upcoming_surgeries?.length || 0}
             </span>
           </div>
@@ -220,19 +232,40 @@ const Dashboard = () => {
                 {data.upcoming_surgeries.map((patient) => (
                   <div 
                     key={patient.id} 
-                    className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                      patient.asap 
+                        ? "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:border-amber-300"
+                        : "bg-slate-50 hover:bg-slate-100"
+                    }`}
                     onClick={() => navigate(`/patients/${patient.id}`)}
                     data-testid={`upcoming-${patient.id}`}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
-                      <Calendar className="w-5 h-5 text-teal-600" />
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      patient.asap ? "bg-amber-200" : "bg-teal-100"
+                    }`}>
+                      {patient.asap ? (
+                        <Zap className="w-5 h-5 text-amber-700" />
+                      ) : (
+                        <Calendar className="w-5 h-5 text-teal-600" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-900 text-sm truncate">{patient.first_name} {patient.last_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-slate-900 text-sm truncate">
+                          {patient.first_name} {patient.last_name}
+                        </p>
+                        {patient.asap && (
+                          <span className="px-1.5 py-0.5 bg-amber-200 text-amber-800 text-[10px] font-bold rounded">
+                            ASAP
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500 truncate">{patient.procedure_type || "Zabieg do ustalenia"}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold text-teal-700">{patient.surgery_date}</p>
+                      <p className="text-sm font-semibold text-teal-700">
+                        {new Date(patient.surgery_date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -249,7 +282,7 @@ const Dashboard = () => {
               onClick={() => navigate("/calendar")} 
               className="w-full text-sm text-teal-600 hover:text-teal-700 font-medium"
             >
-              Zobacz pełny kalendarz
+              Zobacz pełny kalendarz →
             </button>
           </div>
         </div>
@@ -258,10 +291,12 @@ const Dashboard = () => {
       {/* Bottom row */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Patients */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Ostatni pacjenci</h2>
-            <button onClick={() => navigate("/patients")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">Zobacz wszystkich</button>
+            <button onClick={() => navigate("/patients")} className="text-sm text-teal-600 hover:text-teal-700 font-medium">
+              Zobacz wszystkich →
+            </button>
           </div>
           <div className="p-4">
             {data?.recent_patients?.length > 0 ? (
@@ -269,12 +304,12 @@ const Dashboard = () => {
                 {data.recent_patients.map((patient) => (
                   <div 
                     key={patient.id}
-                    className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
                     onClick={() => navigate(`/patients/${patient.id}`)}
                     data-testid={`recent-${patient.id}`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-slate-600" />
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <User className="w-5 h-5 text-slate-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-900 text-sm truncate">{patient.first_name} {patient.last_name}</p>
@@ -293,7 +328,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="bg-white rounded-xl border border-slate-200">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="px-6 py-4 border-b border-slate-100">
             <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Statystyki</h2>
           </div>
@@ -307,12 +342,12 @@ const Dashboard = () => {
             ].map((stat, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                 <div className="flex items-center gap-2">
-                  <div className={`w-7 h-7 rounded-lg bg-${stat.color}-100 flex items-center justify-center`}>
+                  <div className={`w-8 h-8 rounded-lg bg-${stat.color}-100 flex items-center justify-center`}>
                     <stat.icon className={`w-4 h-4 text-${stat.color}-600`} />
                   </div>
                   <span className="text-sm text-slate-600">{stat.label}</span>
                 </div>
-                <span className="text-lg font-semibold text-slate-900">{stat.value}</span>
+                <span className="text-xl font-bold text-slate-900">{stat.value}</span>
               </div>
             ))}
           </div>
@@ -321,7 +356,7 @@ const Dashboard = () => {
               onClick={() => navigate("/stats")} 
               className="w-full text-sm text-teal-600 hover:text-teal-700 font-medium"
             >
-              Zobacz szczegółowe statystyki
+              Zobacz szczegółowe statystyki →
             </button>
           </div>
         </div>
