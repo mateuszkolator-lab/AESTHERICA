@@ -33,6 +33,10 @@ class ControlComplete(BaseModel):
     completed_date: Optional[str] = None  # ISO date, defaults to today
     notes: Optional[str] = None
 
+class NoContactUpdate(BaseModel):
+    no_contact: bool
+    no_contact_note: Optional[str] = None
+
 class ControlEntry(BaseModel):
     type: str
     label: str
@@ -51,6 +55,10 @@ class PatientWithControls(BaseModel):
     surgery_date: str
     controls: List[ControlEntry]
     next_control: Optional[ControlEntry] = None
+    no_contact: bool = False
+    no_contact_note: Optional[str] = None
+    no_contact_date: Optional[str] = None
+    no_contact_by: Optional[str] = None
 
 @router.get("/patients", response_model=List[PatientWithControls])
 async def get_patients_with_controls(user: dict = Depends(get_auth)):
@@ -143,7 +151,11 @@ async def get_patients_with_controls(user: dict = Depends(get_auth)):
             "procedure_type": patient.get("procedure_type", ""),
             "surgery_date": surgery_date_str,
             "controls": controls,
-            "next_control": next_control
+            "next_control": next_control,
+            "no_contact": patient.get("no_contact", False),
+            "no_contact_note": patient.get("no_contact_note"),
+            "no_contact_date": patient.get("no_contact_date"),
+            "no_contact_by": patient.get("no_contact_by")
         })
     
     # Sort by next control due date (soonest first), then by patients without next control at the end
@@ -215,3 +227,30 @@ async def unmark_control_complete(
     })
     
     return {"message": "Control mark removed"}
+
+@router.post("/patients/{patient_id}/no-contact")
+async def toggle_no_contact(
+    patient_id: str,
+    data: NoContactUpdate,
+    user: dict = Depends(get_auth)
+):
+    """Toggle no-contact flag on a patient"""
+    db = get_db()
+    
+    patient = await db.patients.find_one({"id": patient_id})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    user_data = await db.users.find_one({"id": user.get("user_id")})
+    user_name = f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}" if user_data else "Nieznany"
+    
+    update = {
+        "no_contact": data.no_contact,
+        "no_contact_note": data.no_contact_note if data.no_contact else None,
+        "no_contact_date": datetime.now(timezone.utc).isoformat() if data.no_contact else None,
+        "no_contact_by": user_name if data.no_contact else None
+    }
+    
+    await db.patients.update_one({"id": patient_id}, {"$set": update})
+    
+    return {"message": "Brak kontaktu zaktualizowany", "no_contact": data.no_contact}
