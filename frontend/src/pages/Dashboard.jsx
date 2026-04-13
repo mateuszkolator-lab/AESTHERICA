@@ -61,19 +61,6 @@ const Dashboard = () => {
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
-  const handleToggleConfirm = async (patientId, currentConfirmed) => {
-    try {
-      await api.post(`/patients/${patientId}/confirm`);
-      setData(prev => ({
-        ...prev,
-        upcoming_surgeries: prev.upcoming_surgeries.map(p => p.id === patientId ? { ...p, confirmed: !currentConfirmed } : p)
-      }));
-      toast.success(currentConfirmed ? "Cofnięto potwierdzenie" : "Potwierdzono termin telefonicznie");
-    } catch (err) {
-      toast.error("Nie udało się zmienić statusu potwierdzenia");
-    }
-  };
-
 
   return (
     <div className="p-8" data-testid="dashboard-page">
@@ -203,27 +190,14 @@ const Dashboard = () => {
                                 e.stopPropagation();
                                 navigate(`/patients/${patient.id}`);
                               }}
-                              className="group/event px-2 py-1 rounded-lg text-xs font-medium truncate transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200"
+                              className="px-2 py-1 rounded-lg text-xs font-medium truncate transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200"
                               title={`${patient.first_name} ${patient.last_name}${patient.asap ? ' (ASAP)' : ''}`}
                             >
                               <div className="flex items-center gap-1 w-full">
                                 {patient.asap && <Zap className="w-3.5 h-3.5 shrink-0 text-amber-500" />}
                                 <span className="truncate flex-1">{patient.last_name} {patient.first_name[0]}.</span>
-                                {patient.status === "planned" && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      handleToggleConfirm(patient.id, patient.confirmed);
-                                    }}
-                                    className={`w-4 h-4 shrink-0 rounded text-[9px] font-bold flex items-center justify-center transition-all ${
-                                      patient.confirmed
-                                        ? "bg-teal-600 text-white"
-                                        : "opacity-0 group-hover/event:opacity-100 bg-slate-300 text-slate-500 hover:bg-teal-400 hover:text-white"
-                                    }`}
-                                    title={patient.confirmed ? "Potwierdzony telefonicznie — kliknij aby cofnąć" : "Kliknij aby potwierdzić termin telefonicznie"}
-                                    data-testid={`confirm-${patient.id}`}
-                                  >P</button>
+                                {patient.status === "planned" && patient.confirmed && (
+                                  <span className="w-4 h-4 shrink-0 rounded bg-teal-600 text-white text-[9px] font-bold flex items-center justify-center">P</span>
                                 )}
                               </div>
                             </div>
