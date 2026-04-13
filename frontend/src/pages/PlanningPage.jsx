@@ -3,35 +3,38 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Calendar, CalendarPlus, Plus, Edit, Trash2, MapPin, 
-  User, Phone, Sparkles, UserCheck, CheckCircle2, AlertCircle 
+  User, Phone, Sparkles, UserCheck, CheckCircle2, AlertCircle, Zap
 } from "lucide-react";
 import api from "../utils/api";
+import { getLocationColor } from "../utils/constants";
 import AddSlotModal from "../components/modals/AddSlotModal";
 
 const PlanningPage = () => {
   const [slots, setSlots] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [editSlot, setEditSlot] = useState(null);
   const [activeTab, setActiveTab] = useState("slots");
+  const [hoveredSlot, setHoveredSlot] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
-      const [slotsRes, locRes] = await Promise.all([
+      const [slotsRes, locRes, patientsRes] = await Promise.all([
         api.get("/surgery-slots"),
-        api.get("/locations")
+        api.get("/locations"),
+        api.get("/patients")
       ]);
       setSlots(slotsRes.data);
       setLocations(locRes.data);
+      setPatients(patientsRes.data);
     } catch (err) {
-      toast.error("Nie udało się załadować danych");
+      toast.error("Nie udalo sie zaladowac danych");
     } finally {
       setLoading(false);
     }
@@ -43,20 +46,20 @@ const PlanningPage = () => {
       const res = await api.get("/surgery-slots/suggestions");
       setSuggestions(res.data);
     } catch (err) {
-      toast.error("Nie udało się załadować sugestii");
+      toast.error("Nie udalo sie zaladowac sugestii");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteSlot = async (id) => {
-    if (!window.confirm("Usunąć ten termin operacji?")) return;
+    if (!window.confirm("Usunac ten termin operacji?")) return;
     try {
       await api.delete(`/surgery-slots/${id}`);
-      toast.success("Termin usunięty");
+      toast.success("Termin usuniety");
       loadData();
     } catch (err) {
-      toast.error("Nie udało się usunąć terminu");
+      toast.error("Nie udalo sie usunac terminu");
     }
   };
 
@@ -66,7 +69,7 @@ const PlanningPage = () => {
       toast.success("Status terminu zmieniony");
       loadData();
     } catch (err) {
-      toast.error("Nie udało się zmienić statusu");
+      toast.error("Nie udalo sie zmienic statusu");
     }
   };
 
@@ -77,7 +80,7 @@ const PlanningPage = () => {
       loadSuggestions();
       loadData();
     } catch (err) {
-      toast.error("Nie udało się przypisać pacjenta");
+      toast.error("Nie udalo sie przypisac pacjenta");
     }
   };
 
@@ -86,10 +89,27 @@ const PlanningPage = () => {
     return loc ? loc.name : "-";
   };
 
+  const getLocationBadge = (locationId) => {
+    if (!locationId) return null;
+    const name = getLocationName(locationId);
+    if (name === "-") return null;
+    const color = getLocationColor(name);
+    return (
+      <span
+        className="px-1.5 py-0.5 text-[10px] font-bold rounded text-white"
+        style={{ backgroundColor: color?.hex || '#94a3b8' }}
+      >
+        {name.substring(0, 3).toUpperCase()}
+      </span>
+    );
+  };
+
+  const getPatientsForDate = (date) => {
+    return patients.filter(p => p.surgery_date === date);
+  };
+
   useEffect(() => {
-    if (activeTab === "suggestions") {
-      loadSuggestions();
-    }
+    if (activeTab === "suggestions") loadSuggestions();
   }, [activeTab]);
 
   if (loading && activeTab === "slots") return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
@@ -99,7 +119,7 @@ const PlanningPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Planowanie operacji</h1>
-          <p className="text-slate-500 mt-1">Zarządzaj terminami i przypisuj pacjentów</p>
+          <p className="text-slate-500 mt-1">Zarzadzaj terminami i przypisuj pacjentow</p>
         </div>
         <button
           onClick={() => setShowAddSlot(true)}
@@ -115,9 +135,7 @@ const PlanningPage = () => {
         <button
           onClick={() => setActiveTab("slots")}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === "slots" 
-              ? "bg-teal-700 text-white" 
-              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+            activeTab === "slots" ? "bg-teal-700 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
           }`}
           data-testid="tab-slots"
         >
@@ -127,9 +145,7 @@ const PlanningPage = () => {
         <button
           onClick={() => setActiveTab("suggestions")}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === "suggestions" 
-              ? "bg-teal-700 text-white" 
-              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+            activeTab === "suggestions" ? "bg-teal-700 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
           }`}
           data-testid="tab-suggestions"
         >
@@ -141,96 +157,138 @@ const PlanningPage = () => {
       {activeTab === "slots" && (
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="px-6 py-4 border-b border-slate-100">
-            <h2 className="text-lg font-semibold text-slate-900">Dostępne terminy operacji</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Dostepne terminy operacji</h2>
           </div>
           <div className="p-6">
             {slots.length > 0 ? (
               <div className="space-y-3">
-                {slots.map((slot) => (
-                  <div 
-                    key={slot.id} 
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      slot.is_full 
-                        ? "bg-red-50 border-red-200" 
-                        : slot.assigned_patient_id 
-                          ? "bg-emerald-50 border-emerald-200" 
-                          : "bg-slate-50 border-slate-200"
-                    }`}
-                    data-testid={`slot-${slot.id}`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        slot.is_full 
-                          ? "bg-red-100" 
-                          : slot.assigned_patient_id 
-                            ? "bg-emerald-100" 
-                            : "bg-teal-100"
-                      }`}>
-                        <Calendar className={`w-6 h-6 ${
+                {slots.map((slot) => {
+                  const slotPatients = getPatientsForDate(slot.date);
+                  const locColor = slot.location_id ? getLocationColor(getLocationName(slot.location_id)) : null;
+                  
+                  return (
+                    <div 
+                      key={slot.id}
+                      className="relative"
+                      onMouseEnter={() => setHoveredSlot(slot.id)}
+                      onMouseLeave={() => setHoveredSlot(null)}
+                    >
+                      <div
+                        className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
                           slot.is_full 
-                            ? "text-red-600" 
-                            : slot.assigned_patient_id 
-                              ? "text-emerald-600" 
-                              : "text-teal-600"
-                        }`} />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-900 text-lg">{slot.date}</p>
-                        <div className="flex items-center gap-3 text-sm text-slate-500">
-                          {slot.location_id && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {getLocationName(slot.location_id)}
+                            ? "bg-red-50 border-red-200" 
+                            : slotPatients.length > 0
+                              ? "bg-slate-50 border-slate-300" 
+                              : "bg-slate-50 border-slate-200"
+                        }`}
+                        style={locColor ? { borderLeftWidth: '6px', borderLeftColor: locColor.hex } : {}}
+                        data-testid={`slot-${slot.id}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                            slot.is_full ? "bg-red-100" : slotPatients.length > 0 ? "bg-teal-100" : "bg-slate-100"
+                          }`}>
+                            <Calendar className={`w-6 h-6 ${
+                              slot.is_full ? "text-red-600" : slotPatients.length > 0 ? "text-teal-600" : "text-slate-500"
+                            }`} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-3">
+                              <p className="font-semibold text-slate-900 text-lg">{slot.date}</p>
+                              {getLocationBadge(slot.location_id)}
+                              {slotPatients.length > 0 && (
+                                <span className="text-xs text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">
+                                  {slotPatients.length} pacj.
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-slate-500">
+                              {slot.location_id && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {getLocationName(slot.location_id)}
+                                </span>
+                              )}
+                              {slot.notes && <span>{slot.notes}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {slot.is_full ? (
+                            <span className="px-3 py-1.5 bg-red-100 text-red-800 rounded-full text-sm font-medium">Pelny</span>
+                          ) : slotPatients.length > 0 ? (
+                            <span className="flex items-center gap-2 px-3 py-1.5 bg-teal-100 text-teal-800 rounded-full text-sm font-medium">
+                              <UserCheck className="w-4 h-4" />
+                              Przypisani: {slotPatients.length}
                             </span>
+                          ) : (
+                            <span className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">Wolny</span>
                           )}
-                          {slot.notes && <span>{slot.notes}</span>}
+                          <button
+                            onClick={() => handleToggleFull(slot.id)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              slot.is_full 
+                                ? "bg-slate-100 text-slate-700 hover:bg-slate-200" 
+                                : "bg-red-100 text-red-700 hover:bg-red-200"
+                            }`}
+                            data-testid={`toggle-full-${slot.id}`}
+                          >
+                            {slot.is_full ? "Odblokuj" : "Oznacz pelny"}
+                          </button>
+                          <button
+                            onClick={() => setEditSlot(slot)}
+                            className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                            data-testid={`edit-slot-${slot.id}`}
+                          >
+                            <Edit className="w-4 h-4 text-slate-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSlot(slot.id)}
+                            className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                            data-testid={`delete-slot-${slot.id}`}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {slot.is_full ? (
-                        <span className="px-3 py-1.5 bg-red-100 text-red-800 rounded-full text-sm font-medium">Pełny</span>
-                      ) : slot.assigned_patient_id ? (
-                        <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
-                          <UserCheck className="w-4 h-4" />
-                          Przypisany
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">Wolny</span>
+
+                      {/* Hover tooltip with assigned patients */}
+                      {hoveredSlot === slot.id && slotPatients.length > 0 && (
+                        <div className="absolute left-16 top-full mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-4 min-w-[280px]" data-testid={`slot-tooltip-${slot.id}`}>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                            Pacjenci na {slot.date}
+                          </p>
+                          <div className="space-y-2">
+                            {slotPatients.map((p) => (
+                              <div 
+                                key={p.id}
+                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                                onClick={() => navigate(`/patients/${p.id}`)}
+                              >
+                                <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                                  <User className="w-4 h-4 text-teal-600" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium text-slate-900 truncate">{p.first_name} {p.last_name}</p>
+                                    {p.asap && <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                                    {getLocationBadge(p.location_id)}
+                                  </div>
+                                  <p className="text-xs text-slate-500">{p.procedure_type || "Zabieg"}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
-                      <button
-                        onClick={() => handleToggleFull(slot.id)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                          slot.is_full 
-                            ? "bg-slate-100 text-slate-700 hover:bg-slate-200" 
-                            : "bg-red-100 text-red-700 hover:bg-red-200"
-                        }`}
-                        data-testid={`toggle-full-${slot.id}`}
-                      >
-                        {slot.is_full ? "Odblokuj" : "Oznacz pełny"}
-                      </button>
-                      <button
-                        onClick={() => setEditSlot(slot)}
-                        className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-                        data-testid={`edit-slot-${slot.id}`}
-                      >
-                        <Edit className="w-4 h-4 text-slate-600" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSlot(slot.id)}
-                        className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                        data-testid={`delete-slot-${slot.id}`}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12">
                 <CalendarPlus className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">Brak dodanych terminów operacji</p>
+                <p className="text-slate-500">Brak dodanych terminow operacji</p>
                 <button
                   onClick={() => setShowAddSlot(true)}
                   className="mt-4 text-teal-600 hover:text-teal-700 font-medium"
@@ -250,20 +308,33 @@ const PlanningPage = () => {
           ) : suggestions.length > 0 ? (
             suggestions.map((item) => (
               <div key={item.slot.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <div className="px-6 py-4 bg-gradient-to-r from-teal-50 to-white border-b border-slate-100 flex items-center justify-between">
+                <div 
+                  className="px-6 py-4 bg-gradient-to-r from-teal-50 to-white border-b border-slate-100 flex items-center justify-between"
+                  style={item.slot.location_name ? { borderLeftWidth: '6px', borderLeftColor: getLocationColor(item.slot.location_name)?.hex || '#94a3b8' } : {}}
+                >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center">
                       <Calendar className="w-6 h-6 text-teal-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 text-lg">{item.slot.date}</p>
+                      <div className="flex items-center gap-3">
+                        <p className="font-semibold text-slate-900 text-lg">{item.slot.date}</p>
+                        {item.slot.location_name && (
+                          <span
+                            className="px-1.5 py-0.5 text-[10px] font-bold rounded text-white"
+                            style={{ backgroundColor: getLocationColor(item.slot.location_name)?.hex || '#94a3b8' }}
+                          >
+                            {item.slot.location_name.trim().substring(0, 3).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-500">
-                        {item.slot.location_name || "Lokalizacja nie wybrana"}
+                        {item.slot.location_name?.trim() || "Lokalizacja nie wybrana"}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-500">Pasujących pacjentów</p>
+                    <p className="text-sm text-slate-500">Pasujacych pacjentow</p>
                     <p className="text-2xl font-semibold text-teal-700">{item.suggested_patients.length}</p>
                   </div>
                 </div>
@@ -291,25 +362,22 @@ const PlanningPage = () => {
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
-                                {patient.asap && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">
-                                    <Sparkles className="w-3 h-3" />
-                                    ASAP
+                                {patient.asap && <Zap className="w-3.5 h-3.5 text-amber-500" />}
+                                {patient.location_name && (
+                                  <span
+                                    className="px-1.5 py-0.5 text-[10px] font-bold rounded text-white"
+                                    style={{ backgroundColor: getLocationColor(patient.location_name)?.hex || '#94a3b8' }}
+                                  >
+                                    {patient.location_name.trim().substring(0, 3).toUpperCase()}
                                   </span>
                                 )}
                               </div>
                               <div className="flex items-center gap-3 text-sm text-slate-500 flex-wrap mt-1">
-                                <span>{patient.procedure_type || "Zabieg nieokreślony"}</span>
+                                <span>{patient.procedure_type || "Zabieg nieokreslony"}</span>
                                 {patient.phone && (
                                   <span className="flex items-center gap-1">
                                     <Phone className="w-3 h-3" />
                                     {patient.phone}
-                                  </span>
-                                )}
-                                {patient.location_name && (
-                                  <span className="flex items-center gap-1 text-emerald-600 font-medium">
-                                    <MapPin className="w-3 h-3" />
-                                    {patient.location_name}
                                   </span>
                                 )}
                               </div>
@@ -358,10 +426,7 @@ const PlanningPage = () => {
                   ) : (
                     <div className="text-center py-8">
                       <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="text-slate-500">Brak pasujących pacjentów dla tego terminu</p>
-                      <p className="text-sm text-slate-400 mt-1">
-                        Sprawdź czy pacjenci mają ustawione preferowane daty i lokalizacje
-                      </p>
+                      <p className="text-slate-500">Brak pasujacych pacjentow dla tego terminu</p>
                     </div>
                   )}
                 </div>
@@ -370,10 +435,7 @@ const PlanningPage = () => {
           ) : (
             <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
               <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">Brak wolnych terminów do dopasowania</p>
-              <p className="text-sm text-slate-400 mt-1">
-                Dodaj terminy operacji, aby zobaczyć sugestie pacjentów
-              </p>
+              <p className="text-slate-500">Brak wolnych terminow do dopasowania</p>
             </div>
           )}
         </div>

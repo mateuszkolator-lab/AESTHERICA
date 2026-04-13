@@ -14,6 +14,7 @@ import {
 const CalendarPage = () => {
   const [calendarData, setCalendarData] = useState(null);
   const [patients, setPatients] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [draggedPatient, setDraggedPatient] = useState(null);
@@ -27,12 +28,14 @@ const CalendarPage = () => {
 
   const loadData = async () => {
     try {
-      const [calRes, patientsRes] = await Promise.all([
+      const [calRes, patientsRes, locRes] = await Promise.all([
         api.get("/surgery-slots/calendar-data"),
-        api.get("/patients")
+        api.get("/patients"),
+        api.get("/locations")
       ]);
       setCalendarData(calRes.data);
       setPatients(patientsRes.data.filter(p => p.surgery_date));
+      setLocations(locRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować kalendarza");
     } finally {
@@ -169,13 +172,26 @@ const CalendarPage = () => {
                         <div className="flex items-start gap-2">
                           <GripVertical className="w-4 h-4 text-slate-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {patient.asap && (
                                 <span className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-200 text-amber-800 text-[10px] font-bold rounded">
                                   <Zap className="w-3 h-3" />
                                   ASAP
                                 </span>
                               )}
+                              {patient.location_id && (() => {
+                                const locName = locations?.find(l => l.id === patient.location_id)?.name;
+                                if (!locName) return null;
+                                const color = getLocationColor(locName);
+                                return (
+                                  <span
+                                    className="px-1.5 py-0.5 text-[10px] font-bold rounded text-white"
+                                    style={{ backgroundColor: color?.hex || '#94a3b8' }}
+                                  >
+                                    {locName.trim().substring(0, 3).toUpperCase()}
+                                  </span>
+                                );
+                              })()}
                               <span className="font-semibold text-slate-900 text-sm truncate">
                                 {patient.first_name} {patient.last_name}
                               </span>
