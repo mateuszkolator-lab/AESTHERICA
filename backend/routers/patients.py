@@ -155,6 +155,19 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
     
     return {"message": "Patient updated successfully"}
 
+@router.post("/{patient_id}/confirm")
+async def toggle_confirm(patient_id: str, user: dict = Depends(get_auth)):
+    """Toggle phone confirmation for a planned patient"""
+    db = get_db()
+    patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    new_val = not patient.get("confirmed", False)
+    await db.patients.update_one({"id": patient_id}, {"$set": {"confirmed": new_val}})
+    return {"confirmed": new_val}
+
+
 @router.delete("/{patient_id}")
 async def delete_patient(patient_id: str, user: dict = Depends(get_auth)):
     db = get_db()
