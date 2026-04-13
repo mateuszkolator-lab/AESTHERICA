@@ -75,7 +75,9 @@ async def login(request: LoginRequest):
     token = create_token({
         "sub": user["email"],
         "user_id": user["id"],
-        "role": user["role"]
+        "role": user["role"],
+        "location_ids": user.get("location_ids", []),
+        "global_access": user.get("global_access", False)
     })
     
     # Return user info (without password)
@@ -84,7 +86,9 @@ async def login(request: LoginRequest):
         "email": user["email"],
         "first_name": user["first_name"],
         "last_name": user["last_name"],
-        "role": user["role"]
+        "role": user["role"],
+        "location_ids": user.get("location_ids", []),
+        "global_access": user.get("global_access", False)
     }
     
     return {"token": token, "user": user_info}
@@ -123,9 +127,50 @@ async def init_default_admin():
         "last_name": "Kolator",
         "role": "admin",
         "is_active": True,
+        "location_ids": [],
+        "global_access": True,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "last_login": None
     }
     
     await db.users.insert_one(default_admin)
     print("✅ Default admin created: mateusz.kolator@gmail.com")
+
+
+
+def get_patient_location_filter(user: dict) -> dict:
+    """Returns MongoDB query filter for patients based on user's location access.
+    Admin and global_access users see everything.
+    Others see patients assigned to their locations + unassigned patients."""
+    if user.get("role") == "admin" or user.get("global_access"):
+        return {}
+    location_ids = user.get("location_ids", [])
+    if not location_ids:
+        return {"location_id": "__impossible__"}
+    return {"$or": [
+        {"location_id": {"$in": location_ids}},
+        {"location_id": None},
+        {"location_id": ""}
+    ]}
+
+def get_slot_location_filter(user: dict) -> dict:
+    """Returns MongoDB query filter for surgery slots based on user's location access."""
+    if user.get("role") == "admin" or user.get("global_access"):
+        return {}
+    location_ids = user.get("location_ids", [])
+    if not location_ids:
+        return {"location_id": "__impossible__"}
+    return {"location_id": {"$in": location_ids}}
+
+async def migrate_users_location_fields():
+    """Add location_ids and global_access to existing users that don't have them."""
+    db = get_db()
+    await db.users.update_many(
+        {"location_ids": {"$exists": False}},
+        {"$set": {"location_ids": [], "global_access": False}}
+    )
+    # Ensure admins have global_access
+    await db.users.update_many(
+        {"role": "admin", "global_access": {"$ne": True}},
+        {"$set": {"global_access": True}}
+    )

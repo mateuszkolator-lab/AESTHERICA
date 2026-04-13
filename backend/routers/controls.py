@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from datetime import datetime, timezone, timedelta
 
 from models.database import get_db
-from routers.auth import verify_token
+from routers.auth import verify_token, get_patient_location_filter
 
 router = APIRouter(prefix="/controls", tags=["Follow-up Controls"])
 
@@ -68,21 +68,24 @@ async def get_patients_with_controls(user: dict = Depends(get_auth)):
     # Get patients with completed surgeries (have surgery_date in the past)
     today = datetime.now(timezone.utc).date()
     
-    patients = await db.patients.find(
-        {
-            "surgery_date": {"$ne": None, "$ne": ""},
-            "status": {"$in": ["completed", "po_zabiegu", "zoperowany"]}
-        },
-        {"_id": 0}
-    ).to_list(1000)
+    loc_filter = get_patient_location_filter(user)
+    
+    base_q1 = {
+        "surgery_date": {"$nin": [None, ""]},
+        "status": {"$in": ["completed", "po_zabiegu", "zoperowany"]}
+    }
+    base_q2 = {
+        "surgery_date": {"$nin": [None, ""], "$lte": today.isoformat()}
+    }
+    
+    if loc_filter:
+        base_q1 = {"$and": [base_q1, loc_filter]}
+        base_q2 = {"$and": [base_q2, loc_filter]}
+    
+    patients = await db.patients.find(base_q1, {"_id": 0}).to_list(1000)
     
     # Also include patients with surgery_date in the past regardless of status
-    patients_by_date = await db.patients.find(
-        {
-            "surgery_date": {"$ne": None, "$ne": "", "$lte": today.isoformat()}
-        },
-        {"_id": 0}
-    ).to_list(1000)
+    patients_by_date = await db.patients.find(base_q2, {"_id": 0}).to_list(1000)
     
     # Merge and dedupe
     seen_ids = set()

@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 load_dotenv()
 
 # Import routers
-from routers.auth import router as auth_router, init_default_admin
+from routers.auth import router as auth_router, init_default_admin, migrate_users_location_fields
 from routers.patients import router as patients_router
 from routers.surgery_slots import router as surgery_slots_router
 from routers.settings import router as settings_router
@@ -27,6 +27,7 @@ from models.database import get_client
 async def lifespan(app: FastAPI):
     # Startup
     await init_default_admin()
+    await migrate_users_location_fields()
     yield
     # Shutdown
     get_client().close()

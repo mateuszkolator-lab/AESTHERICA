@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from models.database import get_db
 from models.schemas import PatientCreate, PatientUpdate, VisitCreate
-from routers.auth import verify_token
+from routers.auth import verify_token, get_patient_location_filter
 from routers.audit import log_patient_change
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
@@ -39,10 +39,17 @@ async def get_patients(
 ):
     db = get_db()
     query = {}
+    
+    # Apply location-based access filter
+    loc_filter = get_patient_location_filter(user)
+    if loc_filter:
+        query.update(loc_filter)
+    elif location_id:
+        # Admin/global: allow explicit location filtering
+        query["location_id"] = location_id
+    
     if status:
         query["status"] = status
-    if location_id:
-        query["location_id"] = location_id
     if asap is not None:
         query["asap"] = asap
     

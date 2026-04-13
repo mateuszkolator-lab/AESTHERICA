@@ -8,7 +8,7 @@ from openpyxl.utils import get_column_letter
 from fastapi.responses import StreamingResponse
 
 from models.database import get_db
-from routers.auth import verify_token
+from routers.auth import verify_token, get_patient_location_filter
 
 router = APIRouter(tags=["Stats & Dashboard"])
 
@@ -24,9 +24,13 @@ async def get_stats(year: Optional[int] = None, location_id: Optional[str] = Non
     
     year_str = str(year)
     
-    # Base query filter
+    # Base query filter - combine location access + optional explicit filter
+    loc_access = get_patient_location_filter(user)
     base_filter = {}
+    if loc_access:
+        base_filter.update(loc_access)
     if location_id:
+        # Explicit location filter (for admin UI dropdown)
         base_filter["location_id"] = location_id
     
     # Total patients
@@ -126,21 +130,28 @@ async def get_dashboard(user: dict = Depends(get_auth)):
     db = get_db()
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # All upcoming surgeries (from today onwards)
+    loc_filter = get_patient_location_filter(user)
+    
+    # All upcoming surgeries - filtered by location access
+    upcoming_q = {"surgery_date": {"$gte": today}, "status": {"$in": ["planned", "awaiting"]}}
+    if loc_filter:
+        upcoming_q = {"$and": [upcoming_q, loc_filter]}
+    
     upcoming = await db.patients.find(
-        {"surgery_date": {"$gte": today}, "status": {"$in": ["planned", "awaiting"]}},
+        upcoming_q,
         {"_id": 0}
     ).sort("surgery_date", 1).to_list(100)
     
-    # Recent patients
-    recent = await db.patients.find({}, {"_id": 0}).sort("created_at", -1).to_list(5)
+    # Recent patients - filtered by location access
+    recent = await db.patients.find(loc_filter or {}, {"_id": 0}).sort("created_at", -1).to_list(5)
     
-    # Quick stats
-    total = await db.patients.count_documents({})
-    operated = await db.patients.count_documents({"status": "operated"})
-    planned = await db.patients.count_documents({"status": "planned"})
-    awaiting = await db.patients.count_documents({"status": "awaiting"})
-    consultation = await db.patients.count_documents({"status": "consultation"})
+    # Quick stats - filtered by location access
+    base = loc_filter or {}
+    total = await db.patients.count_documents(base)
+    operated = await db.patients.count_documents({**base, "status": "operated"})
+    planned = await db.patients.count_documents({**base, "status": "planned"})
+    awaiting = await db.patients.count_documents({**base, "status": "awaiting"})
+    consultation = await db.patients.count_documents({**base, "status": "consultation"})
     
     return {
         "upcoming_surgeries": upcoming,
@@ -161,7 +172,8 @@ async def export_patients(
     user: dict = Depends(get_auth)
 ):
     db = get_db()
-    query = {}
+    loc_filter = get_patient_location_filter(user)
+    query = loc_filter or {}
     if status:
         query["status"] = status
     if year:
@@ -217,8 +229,13 @@ async def get_waiting_summary(user: dict = Depends(get_auth)):
     db = get_db()
     
     # Aggregate patients by status and procedure_type (excluding 'operated')
+    loc_filter = get_patient_location_filter(user)
+    match_stage = {"status": {"$in": ["consultation", "planned", "awaiting"]}}
+    if loc_filter:
+        match_stage = {"$and": [match_stage, loc_filter]}
+    
     pipeline = [
-        {"$match": {"status": {"$in": ["consultation", "planned", "awaiting"]}}},
+        {"$match": match_stage},
         {"$group": {
             "_id": {
                 "status": "$status",

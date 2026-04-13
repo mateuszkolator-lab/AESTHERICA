@@ -3,15 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Users, Plus, Trash2, Edit2, Key, Shield, User as UserIcon, 
-  Mail, Check, X, ChevronLeft 
+  Mail, Check, X, ChevronLeft, MapPin, Globe
 } from "lucide-react";
 import api from "../utils/api";
 import { useAuth } from "../contexts/AuthContext";
+import { getLocationColor } from "../utils/constants";
 
 const UsersPage = () => {
   const navigate = useNavigate();
   const { user: currentUser, isAdmin } = useAuth();
   const [users, setUsers] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -24,14 +26,20 @@ const UsersPage = () => {
     password: "",
     first_name: "",
     last_name: "",
-    role: "doctor"
+    role: "doctor",
+    location_ids: [],
+    global_access: false
   });
   const [newPassword, setNewPassword] = useState("");
 
   const loadUsers = useCallback(async () => {
     try {
-      const res = await api.get("/users/");
-      setUsers(res.data);
+      const [usersRes, locsRes] = await Promise.all([
+        api.get("/users/"),
+        api.get("/locations")
+      ]);
+      setUsers(usersRes.data);
+      setLocations(locsRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować użytkowników");
     } finally {
@@ -53,7 +61,7 @@ const UsersPage = () => {
       await api.post("/users/", formData);
       toast.success("Użytkownik dodany!");
       setShowAddModal(false);
-      setFormData({ email: "", password: "", first_name: "", last_name: "", role: "doctor" });
+      setFormData({ email: "", password: "", first_name: "", last_name: "", role: "doctor", location_ids: [], global_access: false });
       loadUsers();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Błąd podczas dodawania użytkownika");
@@ -67,7 +75,9 @@ const UsersPage = () => {
         first_name: formData.first_name,
         last_name: formData.last_name,
         role: formData.role,
-        is_active: formData.is_active
+        is_active: formData.is_active,
+        location_ids: formData.location_ids,
+        global_access: formData.global_access
       });
       toast.success("Użytkownik zaktualizowany!");
       setShowEditModal(false);
@@ -107,7 +117,9 @@ const UsersPage = () => {
       first_name: user.first_name,
       last_name: user.last_name,
       role: user.role,
-      is_active: user.is_active
+      is_active: user.is_active,
+      location_ids: user.location_ids || [],
+      global_access: user.global_access || false
     });
     setShowEditModal(true);
   };
@@ -146,7 +158,7 @@ const UsersPage = () => {
         </div>
         <button
           onClick={() => {
-            setFormData({ email: "", password: "", first_name: "", last_name: "", role: "doctor" });
+            setFormData({ email: "", password: "", first_name: "", last_name: "", role: "doctor", location_ids: [], global_access: false });
             setShowAddModal(true);
           }}
           className="flex items-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg font-medium transition-colors"
@@ -165,6 +177,7 @@ const UsersPage = () => {
               <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Użytkownik</th>
               <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Email</th>
               <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Rola</th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Placówki</th>
               <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Status</th>
               <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Ostatnie logowanie</th>
               <th className="text-right px-6 py-4 text-sm font-medium text-slate-600">Akcje</th>
@@ -198,6 +211,32 @@ const UsersPage = () => {
                     {user.role === "admin" ? <Shield className="w-3 h-3" /> : <UserIcon className="w-3 h-3" />}
                     {user.role === "admin" ? "Administrator" : "Użytkownik"}
                   </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {(user.role === "admin" || user.global_access) ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                        <Globe className="w-3 h-3" /> Wszystkie
+                      </span>
+                    ) : (user.location_ids || []).length > 0 ? (
+                      (user.location_ids || []).map(locId => {
+                        const loc = locations.find(l => l.id === locId);
+                        if (!loc) return null;
+                        const color = getLocationColor(loc.name);
+                        return (
+                          <span 
+                            key={locId}
+                            className="px-2 py-0.5 text-xs font-bold rounded text-white"
+                            style={{ backgroundColor: color?.hex || '#94a3b8' }}
+                          >
+                            {loc.name.trim().substring(0, 3).toUpperCase()}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="text-xs text-slate-400">Brak</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   {user.is_active ? (
@@ -317,6 +356,51 @@ const UsersPage = () => {
                     <option value="admin">Administrator</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Przypisane placówki</label>
+                  <div className="space-y-2">
+                    {locations.map(loc => {
+                      const color = getLocationColor(loc.name);
+                      return (
+                        <label key={loc.id} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-slate-50">
+                          <input
+                            type="checkbox"
+                            checked={(formData.location_ids || []).includes(loc.id)}
+                            onChange={(e) => {
+                              const ids = formData.location_ids || [];
+                              setFormData({
+                                ...formData,
+                                location_ids: e.target.checked 
+                                  ? [...ids, loc.id] 
+                                  : ids.filter(id => id !== loc.id)
+                              });
+                            }}
+                            className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                            data-testid={`location-checkbox-${loc.id}`}
+                          />
+                          <span 
+                            className="w-3 h-3 rounded-sm shrink-0"
+                            style={{ backgroundColor: color?.hex || '#94a3b8' }}
+                          />
+                          <span className="text-sm text-slate-700">{loc.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.global_access || false}
+                      onChange={(e) => setFormData({...formData, global_access: e.target.checked})}
+                      className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                      data-testid="global-access-checkbox"
+                    />
+                    <Globe className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm text-slate-700">Dostęp globalny (widzi wszystkie placówki)</span>
+                  </label>
+                </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <button
@@ -387,6 +471,49 @@ const UsersPage = () => {
                       className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
                     />
                     <span className="text-sm text-slate-700">Konto aktywne</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Przypisane placówki</label>
+                  <div className="space-y-2">
+                    {locations.map(loc => {
+                      const color = getLocationColor(loc.name);
+                      return (
+                        <label key={loc.id} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-slate-50">
+                          <input
+                            type="checkbox"
+                            checked={(formData.location_ids || []).includes(loc.id)}
+                            onChange={(e) => {
+                              const ids = formData.location_ids || [];
+                              setFormData({
+                                ...formData,
+                                location_ids: e.target.checked 
+                                  ? [...ids, loc.id] 
+                                  : ids.filter(id => id !== loc.id)
+                              });
+                            }}
+                            className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                          />
+                          <span 
+                            className="w-3 h-3 rounded-sm shrink-0"
+                            style={{ backgroundColor: color?.hex || '#94a3b8' }}
+                          />
+                          <span className="text-sm text-slate-700">{loc.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.global_access || false}
+                      onChange={(e) => setFormData({...formData, global_access: e.target.checked})}
+                      className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                    />
+                    <Globe className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm text-slate-700">Dostęp globalny</span>
                   </label>
                 </div>
               </div>

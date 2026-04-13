@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from models.database import get_db
 from models.schemas import SurgerySlotCreate, SurgerySlotUpdate
-from routers.auth import verify_token
+from routers.auth import verify_token, get_slot_location_filter, get_patient_location_filter
 
 router = APIRouter(prefix="/surgery-slots", tags=["Surgery Slots"])
 
@@ -15,7 +15,7 @@ def get_auth(authorization: str = Header(None)):
 @router.get("")
 async def get_slots(include_past: bool = False, user: dict = Depends(get_auth)):
     db = get_db()
-    query = {}
+    query = {**get_slot_location_filter(user)}
     if not include_past:
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         query["date"] = {"$gte": today}
@@ -52,8 +52,9 @@ async def create_slot(slot: SurgerySlotCreate, user: dict = Depends(get_auth)):
 async def get_calendar_data(user: dict = Depends(get_auth)):
     db = get_db()
     
-    # Get all slots
-    slots = await db.surgery_slots.find({}, {"_id": 0}).to_list(1000)
+    # Get slots filtered by user's locations
+    slot_filter = get_slot_location_filter(user)
+    slots = await db.surgery_slots.find(slot_filter, {"_id": 0}).to_list(1000)
     
     # Get locations for name lookup
     locations = await db.locations.find({}, {"_id": 0}).to_list(100)
@@ -63,9 +64,14 @@ async def get_calendar_data(user: dict = Depends(get_auth)):
     for slot in slots:
         slot["location_name"] = location_map.get(slot.get("location_id"))
     
-    # Get patients without surgery date (unassigned)
+    # Get patients without surgery date (unassigned) - filtered by location access
+    patient_loc_filter = get_patient_location_filter(user)
+    unassigned_query = {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting"]}}
+    if patient_loc_filter:
+        unassigned_query = {"$and": [unassigned_query, patient_loc_filter]}
+    
     unassigned = await db.patients.find(
-        {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting"]}},
+        unassigned_query,
         {"_id": 0, "visits": 0}
     ).to_list(1000)
     
@@ -79,9 +85,10 @@ async def get_suggestions(user: dict = Depends(get_auth)):
     db = get_db()
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # Get available slots (not full)
+    # Get available slots (not full) - filtered by user's locations
+    slot_query = {**get_slot_location_filter(user), "date": {"$gte": today}, "is_full": False}
     slots = await db.surgery_slots.find(
-        {"date": {"$gte": today}, "is_full": False},
+        slot_query,
         {"_id": 0}
     ).sort("date", 1).to_list(100)
     
@@ -89,9 +96,14 @@ async def get_suggestions(user: dict = Depends(get_auth)):
     locations = await db.locations.find({}, {"_id": 0}).to_list(100)
     location_map = {loc["id"]: loc["name"] for loc in locations}
     
-    # Get patients who need scheduling
+    # Get patients who need scheduling - filtered by location access
+    patient_loc_filter = get_patient_location_filter(user)
+    patient_query = {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting"]}}
+    if patient_loc_filter:
+        patient_query = {"$and": [patient_query, patient_loc_filter]}
+    
     patients = await db.patients.find(
-        {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting"]}},
+        patient_query,
         {"_id": 0, "visits": 0}
     ).to_list(1000)
     

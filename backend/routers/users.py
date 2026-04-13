@@ -24,13 +24,17 @@ class UserCreate(BaseModel):
     password: str
     first_name: str
     last_name: str
-    role: str = "doctor"  # "admin" or "doctor"
+    role: str = "doctor"
+    location_ids: List[str] = []
+    global_access: bool = False
 
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     role: Optional[str] = None
     is_active: Optional[bool] = None
+    location_ids: Optional[List[str]] = None
+    global_access: Optional[bool] = None
 
 class UserResponse(BaseModel):
     id: str
@@ -39,6 +43,8 @@ class UserResponse(BaseModel):
     last_name: str
     role: str
     is_active: bool
+    location_ids: List[str] = []
+    global_access: bool = False
     created_at: str
     last_login: Optional[str] = None
 
@@ -97,6 +103,8 @@ async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin
         "last_name": user_data.last_name,
         "role": user_data.role,
         "is_active": True,
+        "location_ids": user_data.location_ids,
+        "global_access": user_data.global_access,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "last_login": None
     }
@@ -111,6 +119,8 @@ async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin
         "last_name": new_user["last_name"],
         "role": new_user["role"],
         "is_active": new_user["is_active"],
+        "location_ids": new_user["location_ids"],
+        "global_access": new_user["global_access"],
         "created_at": new_user["created_at"],
         "last_login": new_user["last_login"]
     }
@@ -136,6 +146,10 @@ async def update_user(user_id: str, user_data: UserUpdate, admin: dict = Depends
         update_data["role"] = user_data.role
     if user_data.is_active is not None:
         update_data["is_active"] = user_data.is_active
+    if user_data.location_ids is not None:
+        update_data["location_ids"] = user_data.location_ids
+    if user_data.global_access is not None:
+        update_data["global_access"] = user_data.global_access
     
     if update_data:
         await db.users.update_one({"id": user_id}, {"$set": update_data})
