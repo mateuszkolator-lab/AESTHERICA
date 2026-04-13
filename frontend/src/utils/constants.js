@@ -94,17 +94,17 @@ export const getStatusColorBg = (status) => {
 export const getLocationColor = (locationName) => {
   if (!locationName) return null;
   const colorMap = {
-    "Pro-Familia": { border: "border-l-orange-500", dot: "bg-orange-500" },
-    "Medicus": { border: "border-l-violet-500", dot: "bg-violet-500" },
+    "Pro-Familia": { border: "border-l-orange-500", dot: "bg-orange-500", hex: "#f97316" },
+    "Medicus": { border: "border-l-violet-500", dot: "bg-violet-500", hex: "#8b5cf6" },
   };
   for (const [key, value] of Object.entries(colorMap)) {
     if (locationName.includes(key)) return value;
   }
   const colors = [
-    { border: "border-l-cyan-500", dot: "bg-cyan-500" },
-    { border: "border-l-pink-500", dot: "bg-pink-500" },
-    { border: "border-l-lime-500", dot: "bg-lime-500" },
-    { border: "border-l-indigo-500", dot: "bg-indigo-500" },
+    { border: "border-l-cyan-500", dot: "bg-cyan-500", hex: "#06b6d4" },
+    { border: "border-l-pink-500", dot: "bg-pink-500", hex: "#ec4899" },
+    { border: "border-l-lime-500", dot: "bg-lime-500", hex: "#84cc16" },
+    { border: "border-l-indigo-500", dot: "bg-indigo-500", hex: "#6366f1" },
   ];
   const hash = locationName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colors[hash % colors.length];
