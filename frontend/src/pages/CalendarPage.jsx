@@ -55,6 +55,11 @@ const CalendarPage = () => {
   const handleDragStart = (e, patient) => {
     setDraggedPatient(patient);
     e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", patient.id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedPatient(null);
   };
 
   const handleDragOver = (e) => {
@@ -81,20 +86,28 @@ const CalendarPage = () => {
     }
 
     try {
+      // 1. Unassign from old slot if exists
       if (draggedPatient.surgery_date) {
-        const previousSlot = calendarData?.slots?.find(s => s.date === draggedPatient.surgery_date && s.assigned_patient_id === draggedPatient.id);
+        const previousSlot = calendarData?.slots?.find(
+          s => s.date === draggedPatient.surgery_date && s.assigned_patient_id === draggedPatient.id
+        );
         if (previousSlot) {
           await api.post(`/surgery-slots/${previousSlot.id}/unassign`);
+        } else {
+          // No slot match — just clear surgery_date so assign sets it fresh
+          await api.put(`/patients/${draggedPatient.id}`, { surgery_date: null });
         }
       }
 
+      // 2. Assign to target
       if (targetSlot) {
         await api.post(`/surgery-slots/${targetSlot.id}/assign/${draggedPatient.id}`);
       } else {
-        const newSlot = await api.post("/surgery-slots", { date: dateStr });
-        await api.post(`/surgery-slots/${newSlot.data.id}/assign/${draggedPatient.id}`);
+        // Update patient date directly (no slot for this day)
+        await api.put(`/patients/${draggedPatient.id}`, { surgery_date: dateStr, status: "planned" });
       }
-      toast.success(`Pacjent przeniesiony na ${dateStr}`);
+
+      toast.success(`Przeniesiono ${draggedPatient.first_name} ${draggedPatient.last_name} na ${dateStr}`);
       loadData();
     } catch (err) {
       toast.error("Nie udało się przenieść pacjenta");
@@ -145,6 +158,7 @@ const CalendarPage = () => {
                         key={patient.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, patient)}
+                        onDragEnd={handleDragEnd}
                         className={`group p-3 rounded-xl cursor-grab active:cursor-grabbing transition-all hover:shadow-md ${
                           patient.asap 
                             ? "bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 hover:border-amber-400"
@@ -271,7 +285,8 @@ const CalendarPage = () => {
                       key={i}
                       onDragOver={day && !isPast ? handleDragOver : undefined}
                       onDrop={day && !isPast ? (e) => handleDrop(e, day) : undefined}
-                      className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative ${
+                      onClick={day && (dayPatients.length > 0 || hasSlot) ? () => setSelectedDay(day) : undefined}
+                      className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative cursor-pointer ${
                         !day 
                           ? "bg-slate-100" 
                           : isPast 
@@ -323,7 +338,7 @@ const CalendarPage = () => {
                           </div>
                           
                           {/* Events */}
-                          <div className="space-y-1">
+                          <div className="space-y-1 relative z-20">
                             {dayPatients.slice(0, 3).map((patient) => (
                               <div
                                 key={patient.id}
@@ -332,18 +347,21 @@ const CalendarPage = () => {
                                   e.stopPropagation();
                                   handleDragStart(e, patient);
                                 } : undefined}
+                                onDragEnd={handleDragEnd}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(`/patients/${patient.id}`);
                                 }}
                                 className={`px-2 py-1 rounded-lg text-xs font-medium truncate transition-all ${
-                                  isPast ? "cursor-default" : "cursor-grab active:cursor-grabbing hover:shadow-md"
+                                  isPast ? "cursor-default" : "cursor-grab active:cursor-grabbing hover:shadow-md hover:scale-[1.02]"
+                                } ${
+                                  draggedPatient?.id === patient.id ? "opacity-50 ring-2 ring-teal-400" : ""
                                 } ${
                                   patient.asap 
                                     ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-sm"
                                     : `${getStatusColorBg(patient.status)} text-white shadow-sm`
                                 }`}
-                                title={`${patient.first_name} ${patient.last_name}${patient.asap ? ' (ASAP)' : ''}`}
+                                title={`${patient.first_name} ${patient.last_name}${patient.asap ? ' (ASAP)' : ''} — przeciągnij aby zmienić termin`}
                                 data-testid={`calendar-event-${patient.id}`}
                               >
                                 <div className="flex items-center gap-1">
@@ -354,7 +372,7 @@ const CalendarPage = () => {
                             ))}
                             {dayPatients.length > 3 && (
                               <button
-                                onClick={() => setSelectedDay(day)}
+                                onClick={(e) => { e.stopPropagation(); setSelectedDay(day); }}
                                 className="text-[10px] text-teal-600 hover:text-teal-700 font-medium w-full text-left px-1"
                               >
                                 +{dayPatients.length - 3} więcej
@@ -366,15 +384,6 @@ const CalendarPage = () => {
                               </div>
                             )}
                           </div>
-                          
-                          {/* Click to view details */}
-                          {(dayPatients.length > 0 || hasSlot) && (
-                            <button
-                              onClick={() => setSelectedDay(day)}
-                              className="absolute inset-0 z-10"
-                              style={{ background: 'transparent' }}
-                            />
-                          )}
                         </>
                       )}
                     </div>
