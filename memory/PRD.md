@@ -49,6 +49,7 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 
 ## Naprawione błędy (13.04.2026)
 - **Drag & Drop bug**: Pacjenci niepowiązani ze slotem (assigned_patient_id innego pacjenta) nie mogli być przenoszeni. Naprawiono frontend (usunięto zbędny PUT z null) i backend (zmiana na model_dump(exclude_unset=True)).
+- **Ostrzeżenie przy zmianie placówki**: Dodano modal ostrzegawczy przy przenoszeniu pacjenta między różnymi placówkami (np. Pro-Familia → Medicus) z kolorowymi badge'ami i wymogiem potwierdzenia.
 
 ## Endpointy API
 

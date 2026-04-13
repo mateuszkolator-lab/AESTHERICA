@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Calendar, ChevronLeft, ChevronRight, User, MapPin, 
-  Phone, X, Zap, GripVertical
+  Phone, X, Zap, GripVertical, AlertTriangle
 } from "lucide-react";
 import api from "../utils/api";
 import { 
@@ -20,6 +20,7 @@ const CalendarPage = () => {
   const [draggedPatient, setDraggedPatient] = useState(null);
   const [showUnassigned, setShowUnassigned] = useState(true);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [pendingDrop, setPendingDrop] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -106,32 +107,51 @@ const CalendarPage = () => {
       return;
     }
 
+    // Check if moving between different locations
+    const patientLocId = draggedPatient.location_id;
+    const targetLocId = targetSlot?.location_id;
+    if (patientLocId && targetLocId && patientLocId !== targetLocId) {
+      const fromName = locations.find(l => l.id === patientLocId)?.name?.trim() || "Nieznana";
+      const toName = (targetSlot.location_name?.trim()) || locations.find(l => l.id === targetLocId)?.name?.trim() || "Nieznana";
+      setPendingDrop({ patient: draggedPatient, date, dateStr, targetSlot, fromLocation: fromName, toLocation: toName });
+      setDraggedPatient(null);
+      return;
+    }
+
+    await executeDrop(draggedPatient, dateStr, targetSlot);
+    setDraggedPatient(null);
+  };
+
+  const executeDrop = async (patient, dateStr, targetSlot) => {
     try {
       // 1. Unassign from old slot if patient was assigned to one
-      if (draggedPatient.surgery_date) {
+      if (patient.surgery_date) {
         const previousSlot = calendarData?.slots?.find(
-          s => s.date === draggedPatient.surgery_date && s.assigned_patient_id === draggedPatient.id
+          s => s.date === patient.surgery_date && s.assigned_patient_id === patient.id
         );
         if (previousSlot) {
           await api.post(`/surgery-slots/${previousSlot.id}/unassign`);
         }
-        // If no slot match, skip clearing — the assign/update below will set the new date
       }
 
       // 2. Assign to target
       if (targetSlot) {
-        await api.post(`/surgery-slots/${targetSlot.id}/assign/${draggedPatient.id}`);
+        await api.post(`/surgery-slots/${targetSlot.id}/assign/${patient.id}`);
       } else {
-        // Update patient date directly (no slot for this day)
-        await api.put(`/patients/${draggedPatient.id}`, { surgery_date: dateStr, status: "planned" });
+        await api.put(`/patients/${patient.id}`, { surgery_date: dateStr, status: "planned" });
       }
 
-      toast.success(`Przeniesiono ${draggedPatient.first_name} ${draggedPatient.last_name} na ${dateStr}`);
+      toast.success(`Przeniesiono ${patient.last_name} ${patient.first_name?.[0] || ""}. na ${dateStr}`);
       loadData();
     } catch (err) {
       toast.error("Nie udało się przenieść pacjenta");
     }
-    setDraggedPatient(null);
+  };
+
+  const confirmPendingDrop = async () => {
+    if (!pendingDrop) return;
+    await executeDrop(pendingDrop.patient, pendingDrop.dateStr, pendingDrop.targetSlot);
+    setPendingDrop(null);
   };
 
   // Sortuj pacjentów bez terminu: ASAP najpierw, potem wg preferowanej daty
@@ -589,6 +609,72 @@ const CalendarPage = () => {
                 className="flex-1 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium transition-colors"
               >
                 Zarządzaj terminami
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Location Change Confirmation Modal */}
+      {pendingDrop && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="location-change-modal" onClick={() => setPendingDrop(null)}>
+          <div 
+            className="bg-white rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Zmiana placówki</h2>
+                <p className="text-sm text-slate-500">Przeniesienie do innej lokalizacji</p>
+              </div>
+            </div>
+            
+            <div className="px-6 py-5">
+              <p className="text-slate-700 mb-4">
+                Przenosisz pacjenta <strong>{pendingDrop.patient.last_name} {pendingDrop.patient.first_name?.[0]}.</strong> na datę <strong>{pendingDrop.dateStr}</strong>.
+              </p>
+              <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span 
+                    className="px-2 py-1 text-xs font-bold rounded text-white shrink-0"
+                    style={{ backgroundColor: getLocationColor(pendingDrop.fromLocation)?.hex || '#94a3b8' }}
+                  >
+                    {pendingDrop.fromLocation.substring(0, 3).toUpperCase()}
+                  </span>
+                  <span className="text-sm font-medium text-slate-700 truncate">{pendingDrop.fromLocation}</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-amber-500 shrink-0" />
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span 
+                    className="px-2 py-1 text-xs font-bold rounded text-white shrink-0"
+                    style={{ backgroundColor: getLocationColor(pendingDrop.toLocation)?.hex || '#94a3b8' }}
+                  >
+                    {pendingDrop.toLocation.substring(0, 3).toUpperCase()}
+                  </span>
+                  <span className="text-sm font-medium text-slate-700 truncate">{pendingDrop.toLocation}</span>
+                </div>
+              </div>
+              <p className="text-sm text-amber-700 mt-3">
+                Pacjent zostanie przeniesiony do innej placówki. Czy na pewno chcesz kontynuować?
+              </p>
+            </div>
+            
+            <div className="px-6 py-4 border-t border-slate-100 flex gap-3 bg-slate-50 rounded-b-2xl">
+              <button
+                onClick={() => setPendingDrop(null)}
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-white font-medium transition-colors"
+                data-testid="location-change-cancel"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={confirmPendingDrop}
+                className="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition-colors"
+                data-testid="location-change-confirm"
+              >
+                Potwierdź przeniesienie
               </button>
             </div>
           </div>
