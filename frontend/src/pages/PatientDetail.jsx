@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   ChevronLeft, User, Mail, Phone, MapPin, DollarSign, 
-  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool
+  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool, CheckCircle2
 } from "lucide-react";
 import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor } from "../utils/constants";
@@ -51,6 +51,16 @@ const PatientDetail = () => {
   const getLocationName = (locationId) => {
     const loc = locations.find((l) => l.id === locationId);
     return loc ? loc.name : "-";
+  };
+
+  const handleToggleConfirm = async () => {
+    try {
+      const res = await api.post(`/patients/${id}/confirm`);
+      setPatient(prev => ({ ...prev, confirmed: res.data.confirmed }));
+      toast.success(res.data.confirmed ? "Potwierdzono termin telefonicznie" : "Cofnięto potwierdzenie");
+    } catch (err) {
+      toast.error("Nie udało się zmienić statusu potwierdzenia");
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
@@ -153,6 +163,20 @@ const PatientDetail = () => {
               <p className="text-sm text-slate-500">Data operacji</p>
               <p className="font-medium text-slate-900">{patient.surgery_date || "-"}</p>
             </div>
+            {patient.status === "planned" && patient.surgery_date && (
+              <button
+                onClick={handleToggleConfirm}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                  patient.confirmed
+                    ? "bg-teal-100 text-teal-800 border border-teal-300 hover:bg-teal-200"
+                    : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200"
+                }`}
+                data-testid="confirm-appointment-button"
+              >
+                <CheckCircle2 className={`w-5 h-5 ${patient.confirmed ? 'text-teal-600' : 'text-slate-400'}`} />
+                {patient.confirmed ? "Termin potwierdzony" : "Potwierdź termin telefonicznie"}
+              </button>
+            )}
             <div>
               <p className="text-sm text-slate-500">Preferowany zakres dat</p>
               <p className="font-medium text-slate-900">

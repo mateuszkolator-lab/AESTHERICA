@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { waitForAppReady, dismissToasts, removeEmergentBadge, login } from '../fixtures/helpers';
 
-const PAGE_URL = process.env.REACT_APP_BACKEND_URL || 'https://rhinoplan.preview.emergentagent.com';
+const PAGE_URL = process.env.REACT_APP_BACKEND_URL || 'https://clinic-scheduler-pro-1.preview.emergentagent.com';
 const TEST_PATIENT_ID = 'e1778a07-50f5-41d0-8c2e-5675ae5b6a63';
 
 test.describe('RhinoPlanner Feature', () => {
