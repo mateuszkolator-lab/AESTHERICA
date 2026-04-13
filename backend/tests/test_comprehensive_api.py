@@ -8,11 +8,11 @@ import os
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://clinic-scheduler-pro-1.preview.emergentagent.com').rstrip('/')
 
-# Test credentials from test_credentials.md
-ADMIN_EMAIL = "mateusz.kolator@gmail.com"
-ADMIN_PASSWORD = "Matikolati123!"
-TEST_USER_EMAIL = "jan.kowalski@klinika.pl"
-TEST_USER_PASSWORD = "haslo123"
+# Test credentials from environment
+ADMIN_EMAIL = os.getenv('TEST_ADMIN_EMAIL', 'mateusz.kolator@gmail.com')
+ADMIN_PASSWORD = os.getenv('TEST_ADMIN_PASSWORD', 'Matikolati123!')
+TEST_USER_EMAIL = os.getenv('TEST_USER_EMAIL', 'jan.kowalski@klinika.pl')
+TEST_USER_PASSWORD = os.getenv('TEST_USER_PASSWORD', 'haslo123')
 
 
 class TestAuthEndpoints:

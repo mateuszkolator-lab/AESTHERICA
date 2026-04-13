@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { Download, ChevronUp, ChevronDown, Users, MapPin, TrendingUp, Filter } from "lucide-react";
 import api, { API_BASE } from "../utils/api";
@@ -12,11 +12,7 @@ const StatsPage = () => {
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState({ key: 'count', direction: 'desc' });
 
-  useEffect(() => {
-    loadStats();
-  }, [year, locationFilter]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       let url = `/stats?year=${year}`;
       if (locationFilter) url += `&location_id=${locationFilter}`;
@@ -31,7 +27,11 @@ const StatsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [year, locationFilter]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   const handleSort = (key) => {
     setSortConfig(prev => ({

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
@@ -27,11 +27,7 @@ const PatientsList = () => {
   const [statusChangeId, setStatusChangeId] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadData();
-  }, [sortBy, sortOrder]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       params.append("sort_by", sortBy);
@@ -50,7 +46,11 @@ const PatientsList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sortBy, sortOrder]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const toggleStatusFilter = (status) => {
     if (statusFilters.includes(status)) {

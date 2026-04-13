@@ -149,12 +149,7 @@ const RhinoPlannerPage = () => {
   const [history, setHistory] = useState({ frontal: [], profile: [], base: [] });
   const [historyIndex, setHistoryIndex] = useState({ frontal: -1, profile: -1, base: -1 });
 
-  // Pobierz dane pacjenta i istniejący plan
-  useEffect(() => {
-    loadData();
-  }, [patientId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [patientRes, planRes] = await Promise.all([
         api.get(`/patients/${patientId}`),
@@ -196,11 +191,15 @@ const RhinoPlannerPage = () => {
       }
     } catch (err) {
       toast.error("Nie udało się załadować danych");
-      console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId]);
+
+  // Pobierz dane pacjenta i istniejący plan
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Initialize single canvas
   const initCanvas = useCallback((canvasEl, fabricRef, diagramType) => {
@@ -258,11 +257,7 @@ const RhinoPlannerPage = () => {
     
     // Longer delay to ensure DOM is ready
     const timer = setTimeout(() => {
-      console.log("Initializing canvas, activeView:", activeView);
-      console.log("Refs:", canvasFrontalRef.current, fabricFrontalRef.current);
-      
       if (activeView === "frontal" && canvasFrontalRef.current && !fabricFrontalRef.current) {
-        console.log("Creating frontal canvas");
         initCanvas(canvasFrontalRef.current, fabricFrontalRef, "frontal");
       } else if (activeView === "profile" && canvasProfileRef.current && !fabricProfileRef.current) {
         initCanvas(canvasProfileRef.current, fabricProfileRef, "profile");
@@ -273,13 +268,12 @@ const RhinoPlannerPage = () => {
       // Re-render active canvas
       const canvas = getActiveCanvas();
       if (canvas) {
-        console.log("Re-rendering canvas, objects:", canvas.getObjects().length);
         canvas.requestRenderAll();
       }
-    }, 500); // Increased delay
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [loading, activeView, initCanvas]);
+  }, [loading, activeView, initCanvas, getActiveCanvas]);
   
   // Cleanup on unmount
   useEffect(() => {
@@ -358,10 +352,18 @@ const RhinoPlannerPage = () => {
       setShowDiagramPicker(false);
       toast.success("Tło ustawione!");
     } catch (err) {
-      console.error("Failed to load diagram:", err);
       toast.error("Nie udało się załadować diagramu");
     }
   };
+
+  const getActiveCanvas = useCallback(() => {
+    switch (activeView) {
+      case "frontal": return fabricFrontalRef.current;
+      case "profile": return fabricProfileRef.current;
+      case "base": return fabricBaseRef.current;
+      default: return null;
+    }
+  }, [activeView]);
 
   // Aktualizuj narzędzie rysowania
   useEffect(() => {
@@ -379,16 +381,7 @@ const RhinoPlannerPage = () => {
     } else {
       canvas.isDrawingMode = false;
     }
-  }, [activeTool, activeColor, brushSize, activeView]);
-
-  const getActiveCanvas = () => {
-    switch (activeView) {
-      case "frontal": return fabricFrontalRef.current;
-      case "profile": return fabricProfileRef.current;
-      case "base": return fabricBaseRef.current;
-      default: return null;
-    }
-  };
+  }, [activeTool, activeColor, brushSize, getActiveCanvas]);
 
   // Dodaj kształty
   const addShape = (type) => {
@@ -475,7 +468,6 @@ const RhinoPlannerPage = () => {
       toast.success("Plan zapisany!");
     } catch (err) {
       toast.error("Nie udało się zapisać planu");
-      console.error(err);
     } finally {
       setSaving(false);
     }
@@ -713,7 +705,6 @@ const RhinoPlannerPage = () => {
       toast.success("PDF wyeksportowany!");
     } catch (err) {
       toast.error("Błąd eksportu PDF");
-      console.error(err);
     }
   };
 

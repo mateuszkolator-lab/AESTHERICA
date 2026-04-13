@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
@@ -22,12 +22,7 @@ const PatientDetail = () => {
   const [showAddVisit, setShowAddVisit] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
 
-  useEffect(() => {
-    loadPatient();
-    loadLocations();
-  }, [id]);
-
-  const loadPatient = async () => {
+  const loadPatient = useCallback(async () => {
     try {
       const res = await api.get(`/patients/${id}`);
       setPatient(res.data);
@@ -37,16 +32,21 @@ const PatientDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
 
-  const loadLocations = async () => {
+  const loadLocations = useCallback(async () => {
     try {
       const res = await api.get("/locations");
       setLocations(res.data);
     } catch (err) {
-      console.error("Nie udało się załadować lokalizacji");
+      // Location loading is non-critical
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadPatient();
+    loadLocations();
+  }, [loadPatient, loadLocations]);
 
   const getLocationName = (locationId) => {
     const loc = locations.find((l) => l.id === locationId);

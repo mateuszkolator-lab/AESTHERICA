@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
@@ -28,15 +28,7 @@ const UsersPage = () => {
   });
   const [newPassword, setNewPassword] = useState("");
 
-  useEffect(() => {
-    if (!isAdmin()) {
-      navigate("/");
-      return;
-    }
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const res = await api.get("/users/");
       setUsers(res.data);
@@ -45,7 +37,15 @@ const UsersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isAdmin()) {
+      navigate("/");
+      return;
+    }
+    loadUsers();
+  }, [isAdmin, navigate, loadUsers]);
 
   const handleAddUser = async (e) => {
     e.preventDefault();

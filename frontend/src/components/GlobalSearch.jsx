@@ -59,7 +59,7 @@ const GlobalSearch = () => {
       setResults(filtered);
       setSelectedIndex(0);
     } catch (err) {
-      console.error("Search error:", err);
+      // Search failed silently
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, CheckCircle2, AlertCircle, Calendar, Link2, Unlink, ChevronDown } from "lucide-react";
@@ -19,25 +19,19 @@ const SettingsPage = () => {
   const [connectingCalendar, setConnectingCalendar] = useState(false);
   const [loadingCalendars, setLoadingCalendars] = useState(false);
 
-  useEffect(() => {
-    loadData();
-    
-    // Check URL params for calendar connection status
-    const calendarConnected = searchParams.get('calendar_connected');
-    const calendarError = searchParams.get('calendar_error');
-    
-    if (calendarConnected === 'true') {
-      toast.success("Połączono z Kalendarzem Google!");
-      // Clean URL
-      window.history.replaceState({}, '', '/ustawienia');
+  const loadGoogleCalendars = useCallback(async () => {
+    setLoadingCalendars(true);
+    try {
+      const res = await api.get("/calendar/calendars");
+      setGoogleCalendars(res.data);
+    } catch (err) {
+      // Calendar loading is non-critical
+    } finally {
+      setLoadingCalendars(false);
     }
-    if (calendarError) {
-      toast.error(`Błąd połączenia: ${calendarError}`);
-      window.history.replaceState({}, '', '/ustawienia');
-    }
-  }, [searchParams]);
+  }, []);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [locRes, ptRes, calRes] = await Promise.all([
         api.get("/locations"),
@@ -57,19 +51,25 @@ const SettingsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadGoogleCalendars]);
 
-  const loadGoogleCalendars = async () => {
-    setLoadingCalendars(true);
-    try {
-      const res = await api.get("/calendar/calendars");
-      setGoogleCalendars(res.data);
-    } catch (err) {
-      console.error("Failed to load calendars:", err);
-    } finally {
-      setLoadingCalendars(false);
+  useEffect(() => {
+    loadData();
+    
+    // Check URL params for calendar connection status
+    const calendarConnected = searchParams.get('calendar_connected');
+    const calendarError = searchParams.get('calendar_error');
+    
+    if (calendarConnected === 'true') {
+      toast.success("Połączono z Kalendarzem Google!");
+      // Clean URL
+      window.history.replaceState({}, '', '/ustawienia');
     }
-  };
+    if (calendarError) {
+      toast.error(`Błąd połączenia: ${calendarError}`);
+      window.history.replaceState({}, '', '/ustawienia');
+    }
+  }, [loadData, searchParams]);
 
   const handleConnectGoogle = async () => {
     setConnectingCalendar(true);

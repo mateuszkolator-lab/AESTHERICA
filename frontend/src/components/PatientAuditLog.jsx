@@ -41,7 +41,7 @@ const PatientAuditLog = ({ patientId }) => {
       const res = await api.get(`/audit/patient/${patientId}?limit=50`);
       setLogs(res.data);
     } catch (err) {
-      console.error("Failed to load audit log:", err);
+      // Audit log loading is non-critical
     } finally {
       setLoading(false);
     }

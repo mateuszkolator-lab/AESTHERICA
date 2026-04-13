@@ -51,6 +51,13 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - **Drag & Drop bug**: Pacjenci niepowiązani ze slotem (assigned_patient_id innego pacjenta) nie mogli być przenoszeni. Naprawiono frontend (usunięto zbędny PUT z null) i backend (zmiana na model_dump(exclude_unset=True)).
 - **Ostrzeżenie przy zmianie placówki**: Dodano modal ostrzegawczy przy przenoszeniu pacjenta między różnymi placówkami (np. Pro-Familia → Medicus) z kolorowymi badge'ami i wymogiem potwierdzenia.
 
+## Code Review Refactoring (13.04.2026)
+- **Hardcoded secrets**: Przeniesiono dane uwierzytelniające z testów do os.getenv() (4 pliki testowe)
+- **Hook dependencies**: Naprawiono 30 instancji brakujących zależności useEffect we wszystkich 12 plikach za pomocą useCallback
+- **AuthContext**: Opakowano login/logout/updateUser/isAdmin w useCallback dla stabilnych referencji
+- **Console statements**: Usunięto wszystkie 14 instrukcji console.log/error z produkcyjnego kodu
+- **Random → secrets**: Zamieniono moduł random na secrets w generatorze testowych pacjentów (utils.py)
+
 ## Endpointy API
 
 ### Uwierzytelnianie

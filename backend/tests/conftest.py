@@ -15,7 +15,7 @@ def api_client():
 def auth_token(api_client):
     """Get authentication token"""
     response = api_client.post(f"{BASE_URL}/api/auth/login", json={
-        "password": "Matikolati123!"
+        "password": os.getenv('TEST_ADMIN_PASSWORD', 'Matikolati123!')
     })
     if response.status_code == 200:
         return response.json().get("token")

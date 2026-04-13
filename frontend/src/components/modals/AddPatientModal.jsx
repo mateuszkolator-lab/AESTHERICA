@@ -41,7 +41,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       setLocations(locRes.data);
       setProcedureTypes(ptRes.data);
     } catch (err) {
-      console.error("Nie udało się załadować danych");
+      toast.error("Nie udało się załadować danych");
     }
   };
 
@@ -107,7 +107,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
         });
         uploaded++;
       } catch (err) {
-        console.error("Błąd uploadu zdjęcia:", err);
+        // Photo upload failed, continue with remaining
       }
     }
     

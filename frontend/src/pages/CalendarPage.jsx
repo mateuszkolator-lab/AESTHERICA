@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
@@ -23,11 +23,7 @@ const CalendarPage = () => {
   const [pendingDrop, setPendingDrop] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [calRes, patientsRes, locRes] = await Promise.all([
         api.get("/surgery-slots/calendar-data"),
@@ -42,7 +38,11 @@ const CalendarPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const getPatientsByDate = (date) => {
     if (!date) return [];

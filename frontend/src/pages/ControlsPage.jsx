@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
@@ -24,11 +24,7 @@ const ControlsPage = () => {
   const [noContactNote, setNoContactNote] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(null);
 
-  useEffect(() => {
-    loadPatients();
-  }, []);
-
-  const loadPatients = async () => {
+  const loadPatients = useCallback(async () => {
     try {
       const res = await api.get("/controls/patients");
       setPatients(res.data);
@@ -37,7 +33,11 @@ const ControlsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
 
   const markControlComplete = async (patientId, controlType) => {
     try {

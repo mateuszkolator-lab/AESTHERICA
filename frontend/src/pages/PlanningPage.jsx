@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
@@ -21,9 +21,7 @@ const PlanningPage = () => {
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [slotsRes, locRes, patientsRes] = await Promise.all([
         api.get("/surgery-slots"),
@@ -38,9 +36,11 @@ const PlanningPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadSuggestions = async () => {
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const loadSuggestions = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/surgery-slots/suggestions");
@@ -50,7 +50,7 @@ const PlanningPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleDeleteSlot = async (id) => {
     if (!window.confirm("Usunac ten termin operacji?")) return;
@@ -110,7 +110,7 @@ const PlanningPage = () => {
 
   useEffect(() => {
     if (activeTab === "suggestions") loadSuggestions();
-  }, [activeTab]);
+  }, [activeTab, loadSuggestions]);
 
   if (loading && activeTab === "slots") return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
