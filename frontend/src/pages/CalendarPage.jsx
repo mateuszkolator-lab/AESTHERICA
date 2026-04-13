@@ -383,6 +383,9 @@ const CalendarPage = () => {
                               >
                                 <div className="flex items-center gap-1">
                                   {patient.asap && <Zap className="w-3.5 h-3.5 shrink-0 text-amber-500" />}
+                                  {patient.status === "planned" && (
+                                    <span className="w-4 h-4 shrink-0 rounded bg-teal-600 text-white text-[9px] font-bold flex items-center justify-center" title="Zaplanowany">P</span>
+                                  )}
                                   <span className="truncate">{patient.first_name} {patient.last_name[0]}.</span>
                                 </div>
                               </div>
@@ -412,6 +415,10 @@ const CalendarPage = () => {
 
           {/* Legend */}
           <div className="mt-4 flex flex-wrap items-center justify-center gap-4 lg:gap-6 text-xs text-slate-600 bg-white p-4 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 rounded bg-teal-600 text-white text-[9px] font-bold flex items-center justify-center">P</span>
+              <span>Zaplanowany</span>
+            </div>
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-500" />
               <span>ASAP</span>
