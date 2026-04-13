@@ -103,9 +103,10 @@ const Dashboard = () => {
           <div className="p-4">
             {/* Day headers */}
             <div className="grid grid-cols-7 mb-2">
-              {["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Ndz"].map((day, i) => (
-                <div key={day} className={`text-center text-xs font-semibold py-2 ${i >= 5 ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {day}
+              {["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"].map((day, i) => (
+                <div key={day} className={`text-center text-xs font-semibold py-3 ${i >= 5 ? 'text-slate-400' : 'text-slate-600'}`}>
+                  <span className="hidden lg:inline">{day}</span>
+                  <span className="lg:hidden">{day.slice(0, 3)}</span>
                 </div>
               ))}
             </div>
@@ -158,7 +159,7 @@ const Dashboard = () => {
                               ? "bg-teal-600 text-white" 
                               : isPast 
                                 ? "text-slate-400"
-                                : "text-slate-700"
+                                : "text-slate-700 hover:bg-slate-100"
                           }`}>
                             {day.getDate()}
                           </div>
@@ -180,7 +181,7 @@ const Dashboard = () => {
                         </div>
                         
                         {/* Events */}
-                        <div className="space-y-1">
+                        <div className="space-y-1 relative z-20">
                           {surgeries.slice(0, 3).map((patient, idx) => (
                             <div 
                               key={idx}
@@ -188,8 +189,8 @@ const Dashboard = () => {
                                 e.stopPropagation();
                                 navigate(`/patients/${patient.id}`);
                               }}
-                              className={`px-2 py-1 rounded-lg text-xs font-medium truncate transition-all cursor-pointer hover:shadow-md bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200`}
-                              title={`${patient.first_name} ${patient.last_name} - ${patient.procedure_type || 'Zabieg'}${patient.asap ? ' (ASAP)' : ''}`}
+                              className="px-2 py-1 rounded-lg text-xs font-medium truncate transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200"
+                              title={`${patient.first_name} ${patient.last_name}${patient.asap ? ' (ASAP)' : ''}`}
                             >
                               <div className="flex items-center gap-1">
                                 {patient.asap && <Zap className="w-3.5 h-3.5 shrink-0 text-amber-500" />}
@@ -198,7 +199,12 @@ const Dashboard = () => {
                             </div>
                           ))}
                           {surgeries.length > 3 && (
-                            <p className="text-[10px] text-teal-600 font-medium pl-1">+{surgeries.length - 3} więcej</p>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSelectedDay(day); }}
+                              className="text-[10px] text-teal-600 hover:text-teal-700 font-medium w-full text-left px-1"
+                            >
+                              +{surgeries.length - 3} więcej
+                            </button>
                           )}
                           {!hasPatients && hasSlot && !isFull && (
                             <div className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-medium">

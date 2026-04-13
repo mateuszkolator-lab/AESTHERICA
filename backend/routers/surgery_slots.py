@@ -21,6 +21,13 @@ async def get_slots(include_past: bool = False, user: dict = Depends(get_auth)):
         query["date"] = {"$gte": today}
     
     slots = await db.surgery_slots.find(query, {"_id": 0}).sort("date", 1).to_list(1000)
+    
+    # Enrich with location names
+    locations = await db.locations.find({}, {"_id": 0}).to_list(100)
+    location_map = {loc["id"]: loc["name"] for loc in locations}
+    for slot in slots:
+        slot["location_name"] = location_map.get(slot.get("location_id"))
+    
     return slots
 
 @router.post("")
