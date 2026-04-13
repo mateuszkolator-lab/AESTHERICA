@@ -203,7 +203,7 @@ const Dashboard = () => {
                                 e.stopPropagation();
                                 navigate(`/patients/${patient.id}`);
                               }}
-                              className="px-2 py-1 rounded-lg text-xs font-medium truncate transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200"
+                              className="group/event px-2 py-1 rounded-lg text-xs font-medium truncate transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200"
                               title={`${patient.first_name} ${patient.last_name}${patient.asap ? ' (ASAP)' : ''}`}
                             >
                               <div className="flex items-center gap-1 w-full">
@@ -219,7 +219,7 @@ const Dashboard = () => {
                                     className={`w-4 h-4 shrink-0 rounded text-[9px] font-bold flex items-center justify-center transition-all ${
                                       patient.confirmed
                                         ? "bg-teal-600 text-white"
-                                        : "bg-slate-300 text-slate-500 hover:bg-teal-400 hover:text-white"
+                                        : "opacity-0 group-hover/event:opacity-100 bg-slate-300 text-slate-500 hover:bg-teal-400 hover:text-white"
                                     }`}
                                     title={patient.confirmed ? "Potwierdzony telefonicznie — kliknij aby cofnąć" : "Kliknij aby potwierdzić termin telefonicznie"}
                                     data-testid={`confirm-${patient.id}`}
