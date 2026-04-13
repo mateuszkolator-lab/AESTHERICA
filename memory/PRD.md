@@ -58,6 +58,20 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - **Console statements**: Usunięto wszystkie 14 instrukcji console.log/error z produkcyjnego kodu
 - **Random → secrets**: Zamieniono moduł random na secrets w generatorze testowych pacjentów (utils.py)
 
+## Filtrowanie po placówkach (13.04.2026) - DONE
+- **Model użytkownika**: Dodano pola `location_ids` (lista ID placówek) i `global_access` (bool) do schematu użytkownika
+- **JWT Token**: Token zawiera `location_ids` i `global_access` użytkownika
+- **Migracja**: Automatyczna migracja istniejących użytkowników przy starcie serwera (admini → global_access=true)
+- **Filtrowanie API**: Wszystkie endpointy filtrowane po placówkach:
+  - Pacjenci (GET /api/patients) - widzi swoich + nieprzypisanych
+  - Kalendarz (GET /api/surgery-slots/calendar-data) - widzi sloty swojej placówki
+  - Pulpit (GET /api/dashboard) - filtrowane statystyki i nadchodzące operacje
+  - Kontrole (GET /api/controls/patients) - filtrowane kontrole pooperacyjne
+  - Statystyki (GET /api/stats) - filtrowane dane statystyczne
+  - Eksport (GET /api/export/patients) - filtrowane dane
+- **UI Użytkownicy**: Kolumna "Placówki" w tabeli, checkboxy lokalizacji i toggle "Dostęp globalny" w modalach dodawania/edycji
+- **Reguły**: Admin widzi wszystko. Użytkownik z global_access widzi wszystko. Reszta widzi tylko dane swoich placówek + pacjentów bez przypisanej placówki.
+
 ## Endpointy API
 
 ### Uwierzytelnianie
