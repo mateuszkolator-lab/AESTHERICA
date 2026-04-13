@@ -8,7 +8,7 @@ import {
 import api from "../utils/api";
 import { 
   STATUS_LABELS, getStatusColor, getStatusColorBg, getLocationColor, 
-  getProcedureAbbrev, getDaysInMonth, DAY_NAMES 
+  getProcedureAbbrev, getDaysInMonth, DAY_NAMES, formatDateLocal 
 } from "../utils/constants";
 import DashboardDayModal from "../components/modals/DashboardDayModal";
 
@@ -44,13 +44,13 @@ const Dashboard = () => {
 
   const getSlotForDate = (date) => {
     if (!date) return null;
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = formatDateLocal(date);
     return slots.find(s => s.date === dateStr);
   };
 
   const getSurgeriesForDate = (date) => {
     if (!date || !data?.upcoming_surgeries) return [];
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = formatDateLocal(date);
     return data.upcoming_surgeries.filter(p => p.surgery_date === dateStr);
   };
 

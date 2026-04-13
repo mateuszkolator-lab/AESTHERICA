@@ -72,9 +72,9 @@ async def get_suggestions(user: dict = Depends(get_auth)):
     db = get_db()
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # Get available slots
+    # Get available slots (not full)
     slots = await db.surgery_slots.find(
-        {"date": {"$gte": today}, "is_full": False, "assigned_patient_id": None},
+        {"date": {"$gte": today}, "is_full": False},
         {"_id": 0}
     ).sort("date", 1).to_list(100)
     

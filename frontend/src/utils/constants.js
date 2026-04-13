@@ -131,7 +131,8 @@ export const getDaysInMonth = (date) => {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
-  const startingDay = firstDay.getDay();
+  // Convert to Monday-first: Mon=0, Tue=1, ..., Sun=6
+  const startingDay = (firstDay.getDay() + 6) % 7;
   
   const days = [];
   for (let i = 0; i < startingDay; i++) {
