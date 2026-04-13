@@ -107,17 +107,15 @@ const CalendarPage = () => {
     }
 
     try {
-      // 1. Unassign from old slot if exists
+      // 1. Unassign from old slot if patient was assigned to one
       if (draggedPatient.surgery_date) {
         const previousSlot = calendarData?.slots?.find(
           s => s.date === draggedPatient.surgery_date && s.assigned_patient_id === draggedPatient.id
         );
         if (previousSlot) {
           await api.post(`/surgery-slots/${previousSlot.id}/unassign`);
-        } else {
-          // No slot match — just clear surgery_date so assign sets it fresh
-          await api.put(`/patients/${draggedPatient.id}`, { surgery_date: null });
         }
+        // If no slot match, skip clearing — the assign/update below will set the new date
       }
 
       // 2. Assign to target

@@ -35,20 +35,20 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 ### Kalendarz i planowanie - DONE
 - Google/Apple Calendar UI z ASAP badges
 - Obramowania: zielone (wolne) / czerwone (pełne)
-- Drag-and-drop pacjentów na kalendarz
+- Drag-and-drop pacjentów na kalendarz (naprawiony 13.04.2026)
 - Integracja z Google Calendar
+- Potwierdzenie telefoniczne ("P") na kalendarzu i w karcie pacjenta
 
 ### Statystyki - DONE
 - Podsumowanie procedur, eksport do Excela
+- Dostęp tylko dla administratora
 
 ### RhinoPlanner - DONE
 - Canvas Fabric.js z 3 widokami anatomicznymi
 - Narzędzia rysowania, eksport PDF
 
-## Testy - Wyniki (28.03.2026)
-- Backend API: 100% (16/16 testów)
-- Frontend UI: 100% (wszystkie flow)
-- Plik raportu: /app/test_reports/iteration_3.json
+## Naprawione błędy (13.04.2026)
+- **Drag & Drop bug**: Pacjenci niepowiązani ze slotem (assigned_patient_id innego pacjenta) nie mogli być przenoszeni. Naprawiono frontend (usunięto zbędny PUT z null) i backend (zmiana na model_dump(exclude_unset=True)).
 
 ## Endpointy API
 
@@ -70,11 +70,13 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - GET /api/patients/{id} - Szczegóły
 - PUT /api/patients/{id} - Edytuj
 - DELETE /api/patients/{id} - Usuń
+- POST /api/patients/{id}/confirm - Toggle potwierdzenia tel.
 
 ### Kontrole
 - GET /api/controls/patients - Lista z kontrolami
 - POST /api/controls/patients/{id}/complete - Oznacz kontrolę
 - DELETE /api/controls/patients/{id}/complete/{type} - Cofnij
+- POST /api/controls/patients/{id}/no-contact - Toggle brak kontaktu
 
 ### Audyt
 - GET /api/audit/patient/{id} - Historia pacjenta
@@ -90,8 +92,14 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - GET /api/stats - Statystyki
 - GET /api/export/patients - Eksport Excel
 
+### Kalendarz
+- GET /api/surgery-slots/calendar-data - Dane kalendarza
+- POST /api/surgery-slots/{id}/assign/{patient_id} - Przypisz pacjenta
+- POST /api/surgery-slots/{id}/unassign - Odpisz pacjenta
+
 ## Przyszłe zadania
 - (P1) Testy RhinoPlanner na tablecie z rysikiem
+- (P1) Eksport statystyk do Excela
 - (P2) Powiadomienia email/SMS
 - (P3) Portal pacjenta
 

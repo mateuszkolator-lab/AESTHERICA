@@ -110,7 +110,9 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
     if not old_patient:
         raise HTTPException(status_code=404, detail="Patient not found")
     
-    update_data = {k: v for k, v in patient.model_dump().items() if v is not None}
+    # Use exclude_unset=True to only include fields explicitly sent in the request
+    # This allows setting fields to null (e.g. surgery_date: null)
+    update_data = patient.model_dump(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
     
