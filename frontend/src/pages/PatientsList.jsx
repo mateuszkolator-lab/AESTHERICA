@@ -444,14 +444,25 @@ const PatientsList = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {patient.preferred_date_start || patient.preferred_date_end ? (
-                        <div className="text-sm">
-                          <p className="text-slate-600">{patient.preferred_date_start || "?"}</p>
-                          <p className="text-slate-400">do {patient.preferred_date_end || "?"}</p>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
+                      {(() => {
+                        const ranges = patient.preferred_dates?.length 
+                          ? patient.preferred_dates 
+                          : (patient.preferred_date_start || patient.preferred_date_end) 
+                            ? [{ start: patient.preferred_date_start, end: patient.preferred_date_end }] 
+                            : [];
+                        return ranges.length > 0 ? (
+                          <div className="text-sm space-y-0.5">
+                            {ranges.map((r, i) => (
+                              <div key={i}>
+                                <span className="text-slate-600">{r.start || "?"}</span>
+                                <span className="text-slate-400"> do {r.end || "?"}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 text-slate-600">
                       {patient.surgery_date || "-"}

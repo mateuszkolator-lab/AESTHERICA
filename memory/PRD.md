@@ -119,6 +119,14 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - POST /api/surgery-slots/{id}/assign/{patient_id} - Przypisz pacjenta
 - POST /api/surgery-slots/{id}/unassign - Odpisz pacjenta
 
+## Wiele preferowanych zakresów dat (13.04.2026) - DONE
+- Pacjent może mieć wiele preferowanych zakresów dat (np. marzec-kwiecień + wrzesień-październik)
+- Nowe pole `preferred_dates` (tablica obiektów {start, end}) w modelu pacjenta
+- Backward-compatible: stare pola `preferred_date_start`/`preferred_date_end` nadal działają jako fallback
+- UI: Dynamiczne pola z przyciskami dodaj/usuń w modalu edycji/dodawania pacjenta
+- Backend: Logika sugestii slotów sprawdza wszystkie zakresy dat pacjenta
+- Wyświetlanie: Karta pacjenta, lista pacjentów, kalendarz (panel bez terminu), planowanie
+
 ## Przyszłe zadania
 - (P1) Testy RhinoPlanner na tablecie z rysikiem
 - (P1) Eksport statystyk do Excela

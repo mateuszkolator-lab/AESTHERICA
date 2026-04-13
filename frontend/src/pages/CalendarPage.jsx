@@ -160,9 +160,8 @@ const CalendarPage = () => {
     return [...patients].sort((a, b) => {
       if (a.asap && !b.asap) return -1;
       if (!a.asap && b.asap) return 1;
-      const dateA = a.preferred_date_start || "9999-99-99";
-      const dateB = b.preferred_date_start || "9999-99-99";
-      return dateA.localeCompare(dateB);
+      const getFirstStart = (p) => p.preferred_dates?.[0]?.start || p.preferred_date_start || "9999-99-99";
+      return getFirstStart(a).localeCompare(getFirstStart(b));
     });
   }, [calendarData?.unassigned_patients]);
 
@@ -235,11 +234,22 @@ const CalendarPage = () => {
                             <div className="mt-1 text-xs text-slate-500">
                               {patient.procedure_type || "Zabieg nieokreślony"}
                             </div>
-                            {(patient.preferred_date_start || patient.preferred_date_end) && (
-                              <div className="mt-1.5 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded inline-block">
-                                Preferowany: {patient.preferred_date_start || "?"} → {patient.preferred_date_end || "?"}
-                              </div>
-                            )}
+                            {(() => {
+                              const ranges = patient.preferred_dates?.length 
+                                ? patient.preferred_dates 
+                                : (patient.preferred_date_start || patient.preferred_date_end) 
+                                  ? [{ start: patient.preferred_date_start, end: patient.preferred_date_end }] 
+                                  : [];
+                              return ranges.length > 0 && (
+                                <div className="mt-1.5 space-y-0.5">
+                                  {ranges.map((r, i) => (
+                                    <div key={i} className="text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded inline-block mr-1">
+                                      {r.start || "?"} → {r.end || "?"}
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>

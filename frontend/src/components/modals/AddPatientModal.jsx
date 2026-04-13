@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
-import { X, Image as ImageIcon, Sparkles } from "lucide-react";
+import { X, Image as ImageIcon, Sparkles, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
 
 const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
+  // Convert legacy single range to preferred_dates array
+  const initPreferredDates = (data) => {
+    if (data?.preferred_dates?.length) return data.preferred_dates;
+    if (data?.preferred_date_start || data?.preferred_date_end) {
+      return [{ start: data.preferred_date_start || "", end: data.preferred_date_end || "" }];
+    }
+    return [];
+  };
+
   const [formData, setFormData] = useState(initialData || {
     first_name: "",
     last_name: "",
@@ -13,14 +22,13 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
     gender: "",
     status: "consultation",
     procedure_type: "",
-    preferred_date_start: "",
-    preferred_date_end: "",
     surgery_date: "",
     location_id: "",
     price: "",
     notes: "",
     asap: false
   });
+  const [preferredDates, setPreferredDates] = useState(initPreferredDates(initialData));
   const [locations, setLocations] = useState([]);
   const [procedureTypes, setProcedureTypes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -122,6 +130,12 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       const data = { ...formData };
       if (data.price) data.price = parseFloat(data.price);
       else delete data.price;
+      
+      // Set preferred_dates and legacy fields
+      const validRanges = preferredDates.filter(r => r.start || r.end);
+      data.preferred_dates = validRanges;
+      data.preferred_date_start = validRanges[0]?.start || null;
+      data.preferred_date_end = validRanges[0]?.end || null;
       
       if (initialData) {
         await api.put(`/patients/${initialData.id}`, data);
@@ -312,22 +326,52 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Preferowany zakres dat</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="date"
-                    value={formData.preferred_date_start}
-                    onChange={(e) => setFormData({ ...formData, preferred_date_start: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    data-testid="preferred-start-input"
-                  />
-                  <input
-                    type="date"
-                    value={formData.preferred_date_end}
-                    onChange={(e) => setFormData({ ...formData, preferred_date_end: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    data-testid="preferred-end-input"
-                  />
+                <label className="block text-sm font-medium text-slate-700 mb-2">Preferowane zakresy dat</label>
+                <div className="space-y-2">
+                  {preferredDates.map((range, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={range.start || ""}
+                        onChange={(e) => {
+                          const updated = [...preferredDates];
+                          updated[idx] = { ...updated[idx], start: e.target.value };
+                          setPreferredDates(updated);
+                        }}
+                        className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        data-testid={`preferred-start-${idx}`}
+                      />
+                      <span className="text-slate-400 text-sm shrink-0">do</span>
+                      <input
+                        type="date"
+                        value={range.end || ""}
+                        onChange={(e) => {
+                          const updated = [...preferredDates];
+                          updated[idx] = { ...updated[idx], end: e.target.value };
+                          setPreferredDates(updated);
+                        }}
+                        className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        data-testid={`preferred-end-${idx}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPreferredDates(preferredDates.filter((_, i) => i !== idx))}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                        data-testid={`remove-range-${idx}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setPreferredDates([...preferredDates, { start: "", end: "" }])}
+                    className="flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-700 font-medium mt-1"
+                    data-testid="add-date-range"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Dodaj zakres dat
+                  </button>
                 </div>
               </div>
 

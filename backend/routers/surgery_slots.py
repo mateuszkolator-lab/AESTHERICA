@@ -120,20 +120,33 @@ async def get_suggestions(user: dict = Depends(get_auth)):
             date_match = False
             location_match = False
             
-            # Check date preference
-            pref_start = patient.get("preferred_date_start")
-            pref_end = patient.get("preferred_date_end")
+            # Check date preference - support multiple preferred_dates
+            preferred_ranges = patient.get("preferred_dates") or []
+            # Fallback to old single range
+            if not preferred_ranges:
+                pref_start = patient.get("preferred_date_start")
+                pref_end = patient.get("preferred_date_end")
+                if pref_start or pref_end:
+                    preferred_ranges = [{"start": pref_start, "end": pref_end}]
             
-            if pref_start and pref_end:
-                if pref_start <= slot_date <= pref_end:
-                    match_score += 40
-                    date_match = True
-            elif pref_start and slot_date >= pref_start:
-                match_score += 20
-                date_match = True
-            elif pref_end and slot_date <= pref_end:
-                match_score += 20
-                date_match = True
+            if preferred_ranges:
+                for pr in preferred_ranges:
+                    ps = pr.get("start")
+                    pe = pr.get("end")
+                    if ps and pe and ps <= slot_date <= pe:
+                        match_score += 40
+                        date_match = True
+                        break
+                    elif ps and not pe and slot_date >= ps:
+                        match_score += 20
+                        date_match = True
+                        break
+                    elif pe and not ps and slot_date <= pe:
+                        match_score += 20
+                        date_match = True
+                        break
+                if not date_match:
+                    match_score += 5  # Has preferences but no match
             else:
                 # No preference, still a candidate
                 match_score += 10

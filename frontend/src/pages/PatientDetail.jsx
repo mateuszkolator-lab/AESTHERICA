@@ -178,12 +178,25 @@ const PatientDetail = () => {
               </button>
             )}
             <div>
-              <p className="text-sm text-slate-500">Preferowany zakres dat</p>
-              <p className="font-medium text-slate-900">
-                {patient.preferred_date_start && patient.preferred_date_end 
-                  ? `${patient.preferred_date_start} do ${patient.preferred_date_end}`
-                  : "-"}
-              </p>
+              <p className="text-sm text-slate-500">Preferowane zakresy dat</p>
+              {(() => {
+                const ranges = patient.preferred_dates?.length 
+                  ? patient.preferred_dates 
+                  : (patient.preferred_date_start || patient.preferred_date_end) 
+                    ? [{ start: patient.preferred_date_start, end: patient.preferred_date_end }] 
+                    : [];
+                return ranges.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {ranges.map((r, i) => (
+                      <p key={i} className="font-medium text-slate-900">
+                        {r.start || "?"} do {r.end || "?"}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="font-medium text-slate-900">-</p>
+                );
+              })()}
             </div>
           </div>
         </div>

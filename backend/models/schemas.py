@@ -13,6 +13,7 @@ class PatientBase(BaseModel):
     procedure_type: Optional[str] = None
     preferred_date_start: Optional[str] = None
     preferred_date_end: Optional[str] = None
+    preferred_dates: Optional[List[dict]] = None
     surgery_date: Optional[str] = None
     location_id: Optional[str] = None
     price: Optional[float] = None
@@ -33,6 +34,7 @@ class PatientUpdate(BaseModel):
     procedure_type: Optional[str] = None
     preferred_date_start: Optional[str] = None
     preferred_date_end: Optional[str] = None
+    preferred_dates: Optional[List[dict]] = None
     surgery_date: Optional[str] = None
     location_id: Optional[str] = None
     price: Optional[float] = None

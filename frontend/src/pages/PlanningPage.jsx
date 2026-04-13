@@ -402,10 +402,19 @@ const PlanningPage = () => {
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right">
-                              <p className="text-xs text-slate-500">Preferowany zakres</p>
-                              <p className="text-sm font-medium text-slate-700">
-                                {patient.preferred_date_start || "?"} - {patient.preferred_date_end || "?"}
-                              </p>
+                              <p className="text-xs text-slate-500">Preferowane daty</p>
+                              {(patient.preferred_dates?.length ? patient.preferred_dates : 
+                                (patient.preferred_date_start || patient.preferred_date_end) 
+                                  ? [{ start: patient.preferred_date_start, end: patient.preferred_date_end }] 
+                                  : []
+                              ).map((r, i) => (
+                                <p key={i} className="text-sm font-medium text-slate-700">
+                                  {r.start || "?"} - {r.end || "?"}
+                                </p>
+                              ))}
+                              {!patient.preferred_dates?.length && !patient.preferred_date_start && !patient.preferred_date_end && (
+                                <p className="text-sm text-slate-400">Brak</p>
+                              )}
                             </div>
                             <button
                               onClick={() => handleAssignPatient(item.slot.id, patient.id)}
