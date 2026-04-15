@@ -6,7 +6,7 @@ import {
   X, Eye, Trash2, User, Sparkles, MapPin 
 } from "lucide-react";
 import api from "../utils/api";
-import { STATUS_LABELS, getStatusColor, STATUS_OPTIONS } from "../utils/constants";
+import { STATUS_LABELS, getStatusColor, STATUS_OPTIONS, getLocationColor } from "../utils/constants";
 import AddPatientModal from "../components/modals/AddPatientModal";
 
 const PatientsList = () => {
@@ -363,6 +363,7 @@ const PatientsList = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Pacjent</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Kontakt</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Placówka</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Preferowana data</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Data operacji</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Zabieg</th>
@@ -442,6 +443,21 @@ const PatientsList = () => {
                           </div>
                         )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {(() => {
+                        const loc = locations.find(l => l.id === patient.location_id);
+                        if (!loc) return <span className="text-slate-400">-</span>;
+                        const color = getLocationColor(loc.name);
+                        return (
+                          <span 
+                            className="px-2 py-0.5 text-xs font-bold rounded text-white"
+                            style={{ backgroundColor: color?.hex || '#94a3b8' }}
+                          >
+                            {loc.name.trim().substring(0, 3).toUpperCase()}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4">
                       {(() => {

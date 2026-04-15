@@ -409,7 +409,9 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                   <select
                     value={formData.location_id}
                     onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                      !formData.location_id ? 'border-amber-300 bg-amber-50' : 'border-slate-200'
+                    }`}
                     data-testid="location-select"
                   >
                     <option value="">Wybierz lokalizację</option>
@@ -417,6 +419,12 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                       <option key={loc.id} value={loc.id}>{loc.name}</option>
                     ))}
                   </select>
+                  {!formData.location_id && (
+                    <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                      <span className="inline-block w-1 h-1 rounded-full bg-amber-500" />
+                      Zalecane: Przypisz pacjenta do placówki
+                    </p>
+                  )}
                 </div>
               </div>
 
