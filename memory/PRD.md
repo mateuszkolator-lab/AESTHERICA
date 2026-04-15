@@ -67,6 +67,12 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - POST /api/patients/{id}/confirm (toggle "P")
 - POST /api/controls/patients/{id}/no-contact
 
+## Synchronizacja z Google Calendar (15.04.2026) - DONE
+- Przycisk "Dodaj do Google Calendar" / "Zaktualizuj w Google Calendar" na karcie pacjenta
+- Automatyczna synchronizacja przy przypisaniu pacjenta do slotu (assign)
+- Automatyczne usunięcie z Google Calendar przy odpisaniu pacjenta (unassign)
+- Wymagania: Połączenie z Google (Ustawienia) + Przypisanie kalendarza do lokalizacji
+
 ## Przyszłe zadania
 - (P1) Testy RhinoPlanner na tablecie z rysikiem
 - (P1) Eksport statystyk do Excela

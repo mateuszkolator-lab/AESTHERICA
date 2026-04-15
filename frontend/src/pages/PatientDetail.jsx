@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   ChevronLeft, User, Mail, Phone, MapPin, DollarSign, 
-  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool, CheckCircle2
+  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool, CheckCircle2, CalendarSync
 } from "lucide-react";
 import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor } from "../utils/constants";
@@ -60,6 +60,21 @@ const PatientDetail = () => {
       toast.success(res.data.confirmed ? "Potwierdzono termin telefonicznie" : "Cofnięto potwierdzenie");
     } catch (err) {
       toast.error("Nie udało się zmienić statusu potwierdzenia");
+    }
+  };
+
+  const [syncing, setSyncing] = useState(false);
+  const handleSyncGoogle = async () => {
+    setSyncing(true);
+    try {
+      const res = await api.post(`/calendar/sync/${id}`);
+      setPatient(prev => ({ ...prev, google_event_id: res.data.event_id }));
+      toast.success("Zsynchronizowano z Kalendarzem Google");
+    } catch (err) {
+      const msg = err.response?.data?.detail || "Nie udało się zsynchronizować";
+      toast.error(msg);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -175,6 +190,21 @@ const PatientDetail = () => {
               >
                 <CheckCircle2 className={`w-5 h-5 ${patient.confirmed ? 'text-teal-600' : 'text-slate-400'}`} />
                 {patient.confirmed ? "Termin potwierdzony" : "Potwierdź termin telefonicznie"}
+              </button>
+            )}
+            {patient.surgery_date && patient.location_id && (
+              <button
+                onClick={handleSyncGoogle}
+                disabled={syncing}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                  patient.google_event_id
+                    ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                    : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200"
+                } disabled:opacity-50`}
+                data-testid="sync-google-calendar-button"
+              >
+                <CalendarSync className={`w-5 h-5 ${patient.google_event_id ? 'text-blue-500' : 'text-slate-400'}`} />
+                {syncing ? "Synchronizacja..." : patient.google_event_id ? "Zaktualizuj w Google Calendar" : "Dodaj do Google Calendar"}
               </button>
             )}
             <div>
