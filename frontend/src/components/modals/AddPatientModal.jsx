@@ -152,6 +152,8 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
         } else {
           data.status = "consultation";
         }
+      } else {
+        data.status = "planned";
       }
       
       if (initialData) {
