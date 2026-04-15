@@ -125,6 +125,14 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Warn if no location selected (only for new patients)
+    if (!initialData && !formData.location_id) {
+      if (!window.confirm("Nie wybrano lokalizacji. Czy na pewno chcesz dodać pacjenta bez przypisanej placówki?")) {
+        return;
+      }
+    }
+    
     setLoading(true);
     try {
       const data = { ...formData };
