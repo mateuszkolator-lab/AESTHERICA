@@ -98,6 +98,19 @@ async def get_calendar_service():
         return None
 
 
+def build_calendar_event(patient, surgery_date, location_name=""):
+    """Build Google Calendar event body from patient data"""
+    procedure = patient.get('procedure_type', 'Zabieg')
+    confirmed = patient.get('confirmed', False)
+    prefix = "P/ " if confirmed else ""
+    return {
+        'summary': f"{prefix}{patient['last_name']} {patient['first_name']} - {procedure}",
+        'description': f"Pacjent: {patient['first_name']} {patient['last_name']}\nZabieg: {procedure}\nLokalizacja: {location_name}\nPotwierdzony: {'Tak' if confirmed else 'Nie'}\nNotatki: {patient.get('notes', '')}",
+        'start': {'date': surgery_date},
+        'end': {'date': surgery_date},
+    }
+
+
 @router.get("/status")
 async def get_calendar_status(user: dict = Depends(get_auth)):
     """Check if Google Calendar is connected"""
@@ -315,17 +328,7 @@ async def sync_patient_to_calendar(patient_id: str, user: dict = Depends(get_aut
         raise HTTPException(status_code=400, detail="Google Calendar not connected")
     
     # Create event
-    procedure = patient.get('procedure_type', 'Zabieg')
-    event = {
-        'summary': f"{patient['first_name']} {patient['last_name']} - {procedure}",
-        'description': f"Pacjent: {patient['first_name']} {patient['last_name']}\nZabieg: {procedure}\nLokalizacja: {location_name}\nNotatki: {patient.get('notes', '')}",
-        'start': {
-            'date': patient['surgery_date'],
-        },
-        'end': {
-            'date': patient['surgery_date'],
-        },
-    }
+    event = build_calendar_event(patient, patient['surgery_date'], location_name)
     
     try:
         # Check if event already exists

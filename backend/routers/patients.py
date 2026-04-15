@@ -170,18 +170,12 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
             try:
                 location = await db.locations.find_one({"id": location_id})
                 if location and location.get("google_calendar_id"):
-                    from routers.calendar import get_calendar_service
+                    from routers.calendar import get_calendar_service, build_calendar_event
                     service = await get_calendar_service()
                     if service:
-                        procedure = update_data.get("procedure_type") or old_patient.get("procedure_type", "Zabieg")
-                        fname = update_data.get("first_name") or old_patient.get("first_name", "")
-                        lname = update_data.get("last_name") or old_patient.get("last_name", "")
-                        event_body = {
-                            'summary': f"{fname} {lname} - {procedure}",
-                            'description': f"Pacjent: {fname} {lname}\nZabieg: {procedure}\nLokalizacja: {location.get('name', '')}\nNotatki: {old_patient.get('notes', '')}",
-                            'start': {'date': new_date},
-                            'end': {'date': new_date},
-                        }
+                        # Merge updated fields with old patient data for event
+                        merged = {**old_patient, **update_data}
+                        event_body = build_calendar_event(merged, new_date, location.get('name', ''))
                         existing_event_id = old_patient.get('google_event_id')
                         if existing_event_id:
                             try:
@@ -220,6 +214,24 @@ async def toggle_confirm(patient_id: str, user: dict = Depends(get_auth)):
     
     new_val = not patient.get("confirmed", False)
     await db.patients.update_one({"id": patient_id}, {"$set": {"confirmed": new_val}})
+    
+    # Update Google Calendar event with confirmation status
+    if patient.get("google_event_id") and patient.get("surgery_date") and patient.get("location_id"):
+        try:
+            location = await db.locations.find_one({"id": patient["location_id"]})
+            if location and location.get("google_calendar_id"):
+                from routers.calendar import get_calendar_service, build_calendar_event
+                service = await get_calendar_service()
+                if service:
+                    updated_patient = {**patient, "confirmed": new_val}
+                    event_body = build_calendar_event(updated_patient, patient["surgery_date"], location.get("name", ""))
+                    try:
+                        service.events().update(calendarId=location["google_calendar_id"], eventId=patient["google_event_id"], body=event_body).execute()
+                    except Exception:
+                        pass
+        except Exception as e:
+            print(f"Calendar update on confirm toggle failed: {e}")
+    
     return {"confirmed": new_val}
 
 

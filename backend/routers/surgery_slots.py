@@ -262,16 +262,10 @@ async def assign_patient(slot_id: str, patient_id: str, user: dict = Depends(get
         try:
             location = await db.locations.find_one({"id": new_location_id})
             if location and location.get("google_calendar_id"):
-                from routers.calendar import get_calendar_service
+                from routers.calendar import get_calendar_service, build_calendar_event
                 service = await get_calendar_service()
                 if service:
-                    procedure = patient.get('procedure_type', 'Zabieg')
-                    event_body = {
-                        'summary': f"{patient['first_name']} {patient['last_name']} - {procedure}",
-                        'description': f"Pacjent: {patient['first_name']} {patient['last_name']}\nZabieg: {procedure}\nLokalizacja: {location.get('name', '')}\nNotatki: {patient.get('notes', '')}",
-                        'start': {'date': slot["date"]},
-                        'end': {'date': slot["date"]},
-                    }
+                    event_body = build_calendar_event(patient, slot["date"], location.get('name', ''))
                     existing_event_id = patient.get('google_event_id')
                     if existing_event_id:
                         try:
