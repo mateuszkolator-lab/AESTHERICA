@@ -221,17 +221,6 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Imię *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    data-testid="first-name-input"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Nazwisko *</label>
                   <input
                     type="text"
@@ -240,6 +229,17 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                     data-testid="last-name-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Imię *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    data-testid="first-name-input"
                   />
                 </div>
               </div>
