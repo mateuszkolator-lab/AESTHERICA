@@ -162,6 +162,52 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
             changes=changes
         )
     
+    # Auto-sync to Google Calendar when surgery_date changes
+    if "surgery_date" in update_data:
+        new_date = update_data["surgery_date"]
+        location_id = update_data.get("location_id") or old_patient.get("location_id")
+        if new_date and location_id:
+            try:
+                location = await db.locations.find_one({"id": location_id})
+                if location and location.get("google_calendar_id"):
+                    from routers.calendar import get_calendar_service
+                    service = await get_calendar_service()
+                    if service:
+                        procedure = update_data.get("procedure_type") or old_patient.get("procedure_type", "Zabieg")
+                        fname = update_data.get("first_name") or old_patient.get("first_name", "")
+                        lname = update_data.get("last_name") or old_patient.get("last_name", "")
+                        event_body = {
+                            'summary': f"{fname} {lname} - {procedure}",
+                            'description': f"Pacjent: {fname} {lname}\nZabieg: {procedure}\nLokalizacja: {location.get('name', '')}\nNotatki: {old_patient.get('notes', '')}",
+                            'start': {'date': new_date},
+                            'end': {'date': new_date},
+                        }
+                        existing_event_id = old_patient.get('google_event_id')
+                        if existing_event_id:
+                            try:
+                                event = service.events().update(calendarId=location['google_calendar_id'], eventId=existing_event_id, body=event_body).execute()
+                            except Exception:
+                                event = service.events().insert(calendarId=location['google_calendar_id'], body=event_body).execute()
+                        else:
+                            event = service.events().insert(calendarId=location['google_calendar_id'], body=event_body).execute()
+                        await db.patients.update_one({"id": patient_id}, {"$set": {"google_event_id": event['id']}})
+            except Exception as e:
+                print(f"Auto-sync to Google Calendar failed: {e}")
+        elif not new_date and old_patient.get("google_event_id"):
+            # Date cleared — remove from Google Calendar
+            try:
+                loc_id = old_patient.get("location_id")
+                if loc_id:
+                    location = await db.locations.find_one({"id": loc_id})
+                    if location and location.get("google_calendar_id"):
+                        from routers.calendar import get_calendar_service
+                        service = await get_calendar_service()
+                        if service:
+                            service.events().delete(calendarId=location['google_calendar_id'], eventId=old_patient['google_event_id']).execute()
+                            await db.patients.update_one({"id": patient_id}, {"$unset": {"google_event_id": ""}})
+            except Exception as e:
+                print(f"Auto-remove from Google Calendar failed: {e}")
+    
     return {"message": "Patient updated successfully"}
 
 @router.post("/{patient_id}/confirm")
