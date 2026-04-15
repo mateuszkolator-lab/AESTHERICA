@@ -145,6 +145,15 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       data.preferred_date_start = validRanges[0]?.start || null;
       data.preferred_date_end = validRanges[0]?.end || null;
       
+      // Auto-set status based on dates (only if status wasn't manually changed)
+      if (!data.surgery_date) {
+        if (validRanges.length > 0) {
+          data.status = "awaiting";
+        } else {
+          data.status = "consultation";
+        }
+      }
+      
       if (initialData) {
         await api.put(`/patients/${initialData.id}`, data);
         if (photos.length > 0) {
