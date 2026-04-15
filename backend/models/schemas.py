@@ -68,6 +68,7 @@ class SurgerySlotCreate(SurgerySlotBase):
     pass
 
 class SurgerySlotUpdate(BaseModel):
+    date: Optional[str] = None
     location_id: Optional[str] = None
     notes: Optional[str] = None
     is_full: Optional[bool] = None
