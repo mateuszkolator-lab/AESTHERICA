@@ -384,7 +384,7 @@ const PatientsList = () => {
                           <User className="w-5 h-5 text-teal-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
+                          <p className="font-medium text-slate-900">{patient.last_name} {patient.first_name}</p>
                           {patient.date_of_birth && <p className="text-sm text-slate-500">Ur.: {patient.date_of_birth}</p>}
                         </div>
                       </div>
