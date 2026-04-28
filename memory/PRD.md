@@ -1,85 +1,31 @@
 # AestheticaMD - System Zarządzania Pacjentami
 
 ## Opis projektu
-Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej twarzy, z funkcją planowania operacji rinoplastyki (RhinoPlanner).
+Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej twarzy.
 
 ## Zaimplementowane funkcje
+- System uwierzytelniania (JWT) z rolami Admin/Użytkownik
+- Filtrowanie po placówkach (location_ids, global_access)
+- Zarządzanie pacjentami (CRUD, sortowanie, filtrowanie, ASAP, wiele preferowanych zakresów dat)
+- Kalendarz i planowanie (drag & drop, PRO/MED badges, ostrzeżenie przy zmianie placówki)
+- Synchronizacja z Google Calendar (automatyczna przy assign/unassign/zmiana statusu/potwierdzenie)
+- Potwierdzenie telefoniczne ("P") z sync do Google Calendar
+- Kontrole pooperacyjne z "Brak kontaktu"
+- Statystyki (tylko admin, filtrowanie po placówce)
+- RhinoPlanner (canvas Fabric.js, eksport PDF)
+- Historia zmian pacjentów (Audit Log)
 
-### System uwierzytelniania (JWT) - DONE
-- Logowanie z email + hasło
-- Dwie role: Administrator i Użytkownik
-- Panel zarządzania użytkownikami (tylko admin)
-- Admin domyślny: mateusz.kolator@gmail.com
-
-### Filtrowanie po placówkach - DONE (13.04.2026)
-- Użytkownicy przypisani do placówek (location_ids) z flagą global_access
-- Admin i global_access widzą wszystko, reszta widzi dane swojej placówki + nieprzypisanych
-- Filtrowanie: Pacjenci, Kalendarz, Pulpit, Kontrole, Statystyki, Eksport, Sugestie
-- UI: Kolumna "Placówki" w tabeli użytkowników, checkboxy lokalizacji w modalach
-
-### Kontrole pooperacyjne - DONE
-- Lista pacjentów po operacji z harmonogramem kontroli (5 terminów)
-- Oznaczanie kontroli jako wykonanych, "Brak kontaktu" toggle
-- Sortowanie chronologiczne, filtry
-
-### Historia zmian pacjentów (Audit Log) - DONE
-
-### Zarządzanie pacjentami - DONE
-- CRUD, sortowanie, filtrowanie, flaga ASAP, status Rezygnacja
-- Zmiana statusu z listy, globalne wyszukiwanie (Ctrl+K)
-- Wiele preferowanych zakresów dat (preferred_dates) - 13.04.2026
-
-### Zdjęcia pacjentów - DONE
-
-### Kalendarz i planowanie - DONE
-- Google/Apple Calendar UI z ASAP badges, PRO/MED badges
-- Drag-and-drop z ostrzeżeniem przy zmianie placówki
-- Potwierdzenie telefoniczne ("P")
-
-### Statystyki - DONE (tylko admin)
-- Przychody planowane vs zrealizowane, filtrowanie po placówce
-
-### RhinoPlanner - DONE
-- Canvas Fabric.js z 3 widokami, eksport PDF
-
-## Naprawione błędy (13.04.2026)
-- Drag & Drop: Pacjenci niepowiązani ze slotem nie mogli być przenoszeni
-- Modal ostrzegawczy przy zmianie placówki (D&D PRO→MED)
-
-## Code Review Refactoring (13.04.2026)
-- Hardcoded secrets → os.getenv() w testach
-- 30 instancji brakujących hook dependencies → useCallback
-- AuthContext → useCallback dla stabilnych referencji
-- 14 console.log/error usunięte z produkcyjnego kodu
-- random → secrets w generatorze testowych pacjentów
-
-## Wiele preferowanych zakresów dat (13.04.2026)
-- preferred_dates: [{start, end}, ...] z backward-compat
-- Dynamiczne pola dat z dodaj/usuń we wszystkich widokach
-- Logika sugestii sprawdza wszystkie zakresy
-
-## Endpointy API
-- POST /api/auth/login, GET /api/auth/verify
-- CRUD /api/users/, /api/patients, /api/surgery-slots
-- GET /api/dashboard, /api/stats, /api/export/patients
-- GET /api/controls/patients, /api/audit/patient/{id}
-- PUT/GET/DELETE /api/rhinoplanner/patient/{id}
-- POST /api/patients/{id}/confirm (toggle "P")
-- POST /api/controls/patients/{id}/no-contact
-
-## Synchronizacja z Google Calendar (15.04.2026) - DONE
-- Przycisk "Dodaj do Google Calendar" / "Zaktualizuj w Google Calendar" na karcie pacjenta
-- Automatyczna synchronizacja przy przypisaniu pacjenta do slotu (assign)
-- Automatyczne usunięcie z Google Calendar przy odpisaniu pacjenta (unassign)
-- Wymagania: Połączenie z Google (Ustawienia) + Przypisanie kalendarza do lokalizacji
+## Ostatnie zmiany (28.04.2026)
+- Kolumna "Placówka" z badge'ami PRO/MED na liście pacjentów
+- Ostrzeżenie w formularzu gdy brak lokalizacji + potwierdzenie przed zapisem
+- Kolejność w formularzu: Nazwisko, Imię
+- Kolejność na liście: Nazwisko Imię
+- Auto-status: konsultacja/oczekujący/zaplanowany zależnie od dat
+- Google Calendar: prefix "P/" przy potwierdzonych, sync przy każdej zmianie pól
+- Fix kalendarza "Wiele terminów" (UTC→local, kolejność dni Pn-Nd)
+- Filtrowanie terminów po placówce w zakładce Planowanie
 
 ## Przyszłe zadania
-- (P1) Testy RhinoPlanner na tablecie z rysikiem
 - (P1) Eksport statystyk do Excela
 - (P2) Powiadomienia email/SMS
 - (P3) Portal pacjenta
-
-## Konfiguracja
-- Baza danych: MongoDB via motor (AsyncIOMotorClient)
-- Frontend: React + Tailwind CSS + Shadcn UI
-- Backend: FastAPI + PyJWT
