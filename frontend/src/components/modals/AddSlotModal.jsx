@@ -2,7 +2,9 @@ import { useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
-import { getDaysInMonth, DAY_NAMES } from "../../utils/constants";
+import { getDaysInMonth } from "../../utils/constants";
+
+const WEEKDAY_NAMES = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
 
 const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
   const [mode, setMode] = useState(slot ? "single" : "single");
@@ -18,10 +20,14 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
 
   const toggleDate = (date) => {
     if (!date) return;
-    const dateStr = date.toISOString().split("T")[0];
-    const today = new Date().toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     
-    if (dateStr < today) {
+    if (dateStr < todayStr) {
       toast.error("Nie można wybrać daty z przeszłości");
       return;
     }
@@ -35,7 +41,10 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
 
   const isDateSelected = (date) => {
     if (!date) return false;
-    const dateStr = date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
     return multiDates.includes(dateStr);
   };
 
@@ -95,7 +104,13 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
 
   const days = getDaysInMonth(calendarMonth);
   const monthName = calendarMonth.toLocaleString("pl-PL", { month: "long", year: "numeric" });
-  const today = new Date().toISOString().split("T")[0];
+  const todayDate = new Date();
+  const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+
+  const formatDay = (date) => {
+    if (!date) return "";
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="add-slot-modal">
@@ -176,7 +191,7 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
                 
                 <div className="p-3">
                   <div className="grid grid-cols-7 gap-1 mb-2">
-                    {DAY_NAMES.map((day) => (
+                    {WEEKDAY_NAMES.map((day) => (
                       <div key={day} className="text-center text-xs font-semibold text-slate-500 py-1">
                         {day}
                       </div>
@@ -186,8 +201,9 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
                   <div className="grid grid-cols-7 gap-1">
                     {days.map((day, i) => {
                       const isSelected = isDateSelected(day);
-                      const isToday = day && day.toISOString().split("T")[0] === today;
-                      const isPast = day && day.toISOString().split("T")[0] < today;
+                      const dayStr = day ? formatDay(day) : "";
+                      const isToday = dayStr === today;
+                      const isPast = dayStr && dayStr < today;
                       
                       return (
                         <button
@@ -206,7 +222,7 @@ const AddSlotModal = ({ locations, slot, onClose, onSuccess }) => {
                                     ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
                                     : "hover:bg-slate-100 text-slate-700"
                           }`}
-                          data-testid={day ? `cal-day-${day.toISOString().split("T")[0]}` : undefined}
+                          data-testid={day ? `cal-day-${dayStr}` : undefined}
                         >
                           {day?.getDate()}
                         </button>
