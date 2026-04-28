@@ -19,6 +19,7 @@ const PlanningPage = () => {
   const [editSlot, setEditSlot] = useState(null);
   const [activeTab, setActiveTab] = useState("slots");
   const [hoveredSlot, setHoveredSlot] = useState(null);
+  const [locationFilter, setLocationFilter] = useState("");
   const navigate = useNavigate();
 
   const loadData = useCallback(async () => {
@@ -156,13 +157,24 @@ const PlanningPage = () => {
 
       {activeTab === "slots" && (
         <div className="bg-white rounded-xl border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-100">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Dostepne terminy operacji</h2>
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              data-testid="location-filter-select"
+            >
+              <option value="">Wszystkie placówki</option>
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
           </div>
           <div className="p-6">
-            {slots.length > 0 ? (
+            {slots.filter(s => !locationFilter || s.location_id === locationFilter).length > 0 ? (
               <div className="space-y-3">
-                {slots.map((slot) => {
+                {slots.filter(s => !locationFilter || s.location_id === locationFilter).map((slot) => {
                   const slotPatients = getPatientsForDate(slot.date);
                   const locColor = slot.location_id ? getLocationColor(getLocationName(slot.location_id)) : null;
                   
@@ -288,7 +300,7 @@ const PlanningPage = () => {
             ) : (
               <div className="text-center py-12">
                 <CalendarPlus className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">Brak dodanych terminow operacji</p>
+                <p className="text-slate-500">{locationFilter ? "Brak terminów dla wybranej placówki" : "Brak dodanych terminow operacji"}</p>
                 <button
                   onClick={() => setShowAddSlot(true)}
                   className="mt-4 text-teal-600 hover:text-teal-700 font-medium"
