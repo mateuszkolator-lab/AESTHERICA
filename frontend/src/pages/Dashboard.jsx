@@ -296,8 +296,13 @@ const Dashboard = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
+                        {patient.confirmed && (
+                          <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded">
+                            P
+                          </span>
+                        )}
                         <p className="font-medium text-slate-900 text-sm truncate">
-                          {patient.first_name} {patient.last_name}
+                          {patient.last_name} {patient.first_name}
                         </p>
                         {patient.asap && (
                           <span className="px-1.5 py-0.5 bg-amber-200 text-amber-800 text-[10px] font-bold rounded">
