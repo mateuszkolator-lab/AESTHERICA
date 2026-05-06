@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
   const [locations, setLocations] = useState([]);
+  const [upcomingFilter, setUpcomingFilter] = useState("");
   const navigate = useNavigate();
 
   const loadDashboard = useCallback(async () => {
@@ -251,16 +252,29 @@ const Dashboard = () => {
 
         {/* Upcoming Surgeries */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
-            <span className="px-2.5 py-1 bg-teal-100 text-teal-800 text-xs font-semibold rounded-full">
-              {data?.upcoming_surgeries?.length || 0}
-            </span>
+          <div className="px-6 py-4 border-b border-slate-100">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Nadchodzące operacje</h2>
+              <span className="px-2.5 py-1 bg-teal-100 text-teal-800 text-xs font-semibold rounded-full">
+                {(data?.upcoming_surgeries || []).filter(p => !upcomingFilter || p.location_id === upcomingFilter).length}
+              </span>
+            </div>
+            <select
+              value={upcomingFilter}
+              onChange={(e) => setUpcomingFilter(e.target.value)}
+              className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              data-testid="upcoming-location-filter"
+            >
+              <option value="">Wszystkie placówki</option>
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
           </div>
           <div className="p-4 max-h-[400px] overflow-y-auto">
-            {data?.upcoming_surgeries?.length > 0 ? (
+            {(data?.upcoming_surgeries || []).filter(p => !upcomingFilter || p.location_id === upcomingFilter).length > 0 ? (
               <div className="space-y-2">
-                {data.upcoming_surgeries.map((patient) => (
+                {(data?.upcoming_surgeries || []).filter(p => !upcomingFilter || p.location_id === upcomingFilter).map((patient) => (
                   <div 
                     key={patient.id} 
                     className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all hover:shadow-md ${
