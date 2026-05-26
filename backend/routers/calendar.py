@@ -87,7 +87,16 @@ async def get_calendar_service():
                 'expiry': creds.expiry.isoformat() if creds.expiry else None
             })
         except Exception as e:
-            print(f"Error refreshing token: {e}")
+            error_str = str(e)
+            print(f"Error refreshing token: {error_str}")
+            # If invalid_grant, clear stored credentials so user can re-connect
+            if 'invalid_grant' in error_str:
+                db = get_db()
+                await db.settings.delete_one({"key": "google_calendar"})
+                raise HTTPException(
+                    status_code=401,
+                    detail="Sesja Google Calendar wygasła. Przejdź do Ustawień i ponownie połącz konto Google."
+                )
             return None
     
     try:
