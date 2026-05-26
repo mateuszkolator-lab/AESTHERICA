@@ -82,6 +82,20 @@ async def create_patient(patient: PatientCreate, user: dict = Depends(get_auth))
         details=f"Utworzono pacjenta: {patient_dict.get('first_name', '')} {patient_dict.get('last_name', '')}"
     )
     
+    # Auto-sync to Google Calendar if patient has surgery_date and location
+    if patient_dict.get("surgery_date") and patient_dict.get("location_id"):
+        try:
+            location = await db.locations.find_one({"id": patient_dict["location_id"]})
+            if location and location.get("google_calendar_id"):
+                from routers.calendar import get_calendar_service, build_calendar_event
+                service = await get_calendar_service()
+                if service:
+                    event_body = build_calendar_event(patient_dict, patient_dict["surgery_date"], location.get("name", ""))
+                    event = service.events().insert(calendarId=location["google_calendar_id"], body=event_body).execute()
+                    await db.patients.update_one({"id": patient_dict["id"]}, {"$set": {"google_event_id": event["id"]}})
+        except Exception as e:
+            print(f"Auto-sync new patient to Google Calendar failed: {e}")
+    
     return {"id": patient_dict["id"], "message": "Patient created successfully"}
 
 @router.get("/{patient_id}")
