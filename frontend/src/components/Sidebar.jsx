@@ -87,12 +87,13 @@ const Sidebar = ({ currentPath }) => {
       
       <div className="p-4 border-t border-slate-100">
         <button
-          onClick={() => { logout(); navigate("/login"); }}
-          className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors disabled:opacity-50"
           data-testid="logout-button"
         >
-          <LogOut className="w-5 h-5" />
-          {!collapsed && <span className="font-medium">Wyloguj</span>}
+          <LogOut className={`w-5 h-5 ${loggingOut ? 'animate-spin' : ''}`} />
+          {!collapsed && <span className="font-medium">{loggingOut ? "Synchronizacja..." : "Wyloguj"}</span>}
         </button>
       </div>
     </aside>

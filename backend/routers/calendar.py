@@ -406,3 +406,66 @@ async def remove_patient_from_calendar(patient_id: str, user: dict = Depends(get
     )
     
     return {"message": "Removed from Google Calendar"}
+
+
+@router.post("/sync-all")
+async def sync_all_to_calendar(user: dict = Depends(get_auth)):
+    """Sync all patients with surgery_date to Google Calendar"""
+    db = get_db()
+    
+    service = await get_calendar_service()
+    if not service:
+        raise HTTPException(status_code=400, detail="Google Calendar nie jest połączony")
+    
+    # Get all locations with google_calendar_id
+    locations = await db.locations.find({"google_calendar_id": {"$nin": [None, ""]}}, {"_id": 0}).to_list(100)
+    if not locations:
+        raise HTTPException(status_code=400, detail="Brak lokalizacji z przypisanym kalendarzem Google")
+    
+    loc_map = {loc["id"]: loc for loc in locations}
+    
+    # Get all patients with surgery_date and location
+    patients = await db.patients.find(
+        {"surgery_date": {"$nin": [None, ""]}, "location_id": {"$in": list(loc_map.keys())}},
+        {"_id": 0}
+    ).to_list(5000)
+    
+    synced = 0
+    errors = 0
+    
+    for patient in patients:
+        location = loc_map.get(patient.get("location_id"))
+        if not location or not location.get("google_calendar_id"):
+            continue
+        
+        try:
+            event_body = build_calendar_event(patient, patient["surgery_date"], location.get("name", ""))
+            existing_event_id = patient.get("google_event_id")
+            
+            if existing_event_id:
+                try:
+                    service.events().update(
+                        calendarId=location["google_calendar_id"],
+                        eventId=existing_event_id,
+                        body=event_body
+                    ).execute()
+                    synced += 1
+                except Exception:
+                    event = service.events().insert(
+                        calendarId=location["google_calendar_id"],
+                        body=event_body
+                    ).execute()
+                    await db.patients.update_one({"id": patient["id"]}, {"$set": {"google_event_id": event["id"]}})
+                    synced += 1
+            else:
+                event = service.events().insert(
+                    calendarId=location["google_calendar_id"],
+                    body=event_body
+                ).execute()
+                await db.patients.update_one({"id": patient["id"]}, {"$set": {"google_event_id": event["id"]}})
+                synced += 1
+        except Exception as e:
+            print(f"Sync error for patient {patient.get('id')}: {e}")
+            errors += 1
+    
+    return {"synced": synced, "errors": errors, "total": len(patients)}
