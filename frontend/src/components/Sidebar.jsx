@@ -10,6 +10,18 @@ const Sidebar = ({ currentPath }) => {
   const { logout, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await api.post("/calendar/sync-all");
+    } catch (err) {
+      // Sync failed silently — don't block logout
+    }
+    logout();
+    navigate("/login");
+  };
 
   const navItems = [
     { path: "/", icon: Home, label: "Pulpit" },
