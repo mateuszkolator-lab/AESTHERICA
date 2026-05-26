@@ -289,6 +289,24 @@ const SettingsPage = () => {
                     {connectingCalendar ? "Przekierowywanie..." : "Połącz z Google"}
                   </button>
                 )}
+                
+                {calendarStatus?.connected && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await api.post("/calendar/sync-all");
+                        toast.success(`Zsynchronizowano ${res.data.synced} z ${res.data.total} pacjentów (błędy: ${res.data.errors})`);
+                      } catch (err) {
+                        toast.error(err.response?.data?.detail || "Nie udało się zsynchronizować");
+                      }
+                    }}
+                    className="mt-4 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
+                    data-testid="sync-all-button"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Synchronizuj wszystko z Google Calendar
+                  </button>
+                )}
               </div>
             </div>
           </div>
