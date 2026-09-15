@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, CheckCircle2, AlertCircle, Calendar, Link2, Unlink, ChevronDown } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle2, AlertCircle, Calendar, Link2, Unlink, ChevronDown, ClipboardCheck } from "lucide-react";
 import api from "../utils/api";
 import { LocationModal, ProcedureTypeModal } from "../components/modals/SettingsModals";
 
@@ -164,6 +164,20 @@ const SettingsPage = () => {
                     <div className="flex gap-4 text-sm text-slate-500">
                       {pt.description && <span>{pt.description}</span>}
                       {pt.default_price && <span className="text-teal-600 font-medium">{pt.default_price.toLocaleString('pl-PL')} PLN</span>}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2" data-testid={`procedure-controls-${pt.id}`}>
+                      <ClipboardCheck className="w-3.5 h-3.5 text-slate-400" />
+                      {pt.control_intervals?.length > 0 ? (
+                        pt.control_intervals.map((ci) => (
+                          <span key={ci.days} className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-teal-50 text-teal-700 border border-teal-100">
+                            {ci.label || `${ci.days} dni`}
+                          </span>
+                        ))
+                      ) : pt.control_intervals ? (
+                        <span className="text-xs text-amber-600">Brak kontroli</span>
+                      ) : (
+                        <span className="text-xs text-slate-400">Domyślne: 1 tydz., 1 mies., 3 mies., 6 mies., 1 rok</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">

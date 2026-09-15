@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import GlobalSearch from "./components/GlobalSearch";
+import SurgeryConfirmModal from "./components/modals/SurgeryConfirmModal";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
@@ -25,6 +26,7 @@ const AppLayout = ({ children }) => {
       <Sidebar currentPath={location.pathname} />
       <main className="flex-1 overflow-auto">
         <GlobalSearch />
+        <SurgeryConfirmModal />
         {children}
       </main>
     </div>

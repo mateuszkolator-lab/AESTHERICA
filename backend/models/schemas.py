@@ -84,6 +84,7 @@ class ProcedureTypeBase(BaseModel):
     name: str
     description: Optional[str] = None
     default_price: Optional[float] = None
+    control_intervals: Optional[List[dict]] = None  # [{days: int, label: str}]
 
 class ProcedureTypeCreate(ProcedureTypeBase):
     pass

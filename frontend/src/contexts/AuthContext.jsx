@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    Object.keys(sessionStorage).filter(k => k.startsWith("surgery_confirm_")).forEach(k => sessionStorage.removeItem(k));
     setIsAuthenticated(false);
     setUser(null);
   }, []);

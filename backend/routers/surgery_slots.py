@@ -66,7 +66,7 @@ async def get_calendar_data(user: dict = Depends(get_auth)):
     
     # Get patients without surgery date (unassigned) - filtered by location access
     patient_loc_filter = get_patient_location_filter(user)
-    unassigned_query = {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting"]}}
+    unassigned_query = {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting", "thinking"]}}
     if patient_loc_filter:
         unassigned_query = {"$and": [unassigned_query, patient_loc_filter]}
     
@@ -98,7 +98,7 @@ async def get_suggestions(user: dict = Depends(get_auth)):
     
     # Get patients who need scheduling - filtered by location access
     patient_loc_filter = get_patient_location_filter(user)
-    patient_query = {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting"]}}
+    patient_query = {"$or": [{"surgery_date": None}, {"surgery_date": ""}], "status": {"$in": ["consultation", "awaiting", "thinking"]}}
     if patient_loc_filter:
         patient_query = {"$and": [patient_query, patient_loc_filter]}
     

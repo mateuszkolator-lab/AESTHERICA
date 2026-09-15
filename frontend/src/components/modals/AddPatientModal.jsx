@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Image as ImageIcon, Sparkles, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
+import { STATUS_OPTIONS } from "../../utils/constants";
 
 const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
   // Convert legacy single range to preferred_dates array
@@ -145,15 +146,18 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       data.preferred_date_start = validRanges[0]?.start || null;
       data.preferred_date_end = validRanges[0]?.end || null;
       
-      // Auto-set status based on dates (only if status wasn't manually changed)
-      if (!data.surgery_date) {
-        if (validRanges.length > 0) {
-          data.status = "awaiting";
+      // Auto-set status based on dates only for "scheduling" statuses;
+      // manual choices (Rezygnacja, Zastanawia się, Zoperowany) are respected
+      const autoStatuses = ["consultation", "awaiting", "planned"];
+      if (autoStatuses.includes(data.status)) {
+        if (!data.surgery_date) {
+          data.status = validRanges.length > 0 ? "awaiting" : "consultation";
         } else {
-          data.status = "consultation";
+          data.status = "planned";
         }
-      } else {
-        data.status = "planned";
+      }
+      if (data.status === "cancelled") {
+        data.surgery_date = null;
       }
       
       if (initialData) {
@@ -322,11 +326,15 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                     data-testid="status-select"
                   >
-                    <option value="consultation">Konsultacja (Niezdecydowany)</option>
-                    <option value="planned">Zaplanowany</option>
-                    <option value="awaiting">Oczekujący na termin</option>
-                    <option value="operated">Zoperowany</option>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
+                  {formData.status === "cancelled" && (
+                    <p className="text-xs text-red-600 mt-1" data-testid="cancelled-hint">
+                      Rezygnacja: data zabiegu zostanie usunięta, pacjent zniknie z kalendarza i Google Calendar
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Rodzaj zabiegu</label>

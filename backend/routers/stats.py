@@ -38,7 +38,7 @@ async def get_stats(year: Optional[int] = None, location_id: Optional[str] = Non
     
     # By status
     by_status = {}
-    for status in ["consultation", "planned", "awaiting", "operated"]:
+    for status in ["consultation", "planned", "awaiting", "thinking", "operated", "cancelled"]:
         by_status[status] = await db.patients.count_documents({**base_filter, "status": status})
     
     # Procedures by month (operated patients with surgery_date in given year)
@@ -152,6 +152,7 @@ async def get_dashboard(user: dict = Depends(get_auth)):
     planned = await db.patients.count_documents({**base, "status": "planned"})
     awaiting = await db.patients.count_documents({**base, "status": "awaiting"})
     consultation = await db.patients.count_documents({**base, "status": "consultation"})
+    thinking = await db.patients.count_documents({**base, "status": "thinking"})
     
     return {
         "upcoming_surgeries": upcoming,
@@ -161,7 +162,8 @@ async def get_dashboard(user: dict = Depends(get_auth)):
             "operated": operated,
             "planned": planned,
             "awaiting": awaiting,
-            "consultation": consultation
+            "consultation": consultation,
+            "thinking": thinking
         }
     }
 
@@ -230,7 +232,7 @@ async def get_waiting_summary(user: dict = Depends(get_auth)):
     
     # Aggregate patients by status and procedure_type (excluding 'operated')
     loc_filter = get_patient_location_filter(user)
-    match_stage = {"status": {"$in": ["consultation", "planned", "awaiting"]}}
+    match_stage = {"status": {"$in": ["consultation", "planned", "awaiting", "thinking"]}}
     if loc_filter:
         match_stage = {"$and": [match_stage, loc_filter]}
     

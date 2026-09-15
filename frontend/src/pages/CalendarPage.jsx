@@ -31,7 +31,7 @@ const CalendarPage = () => {
         api.get("/locations")
       ]);
       setCalendarData(calRes.data);
-      setPatients(patientsRes.data.filter(p => p.surgery_date));
+      setPatients(patientsRes.data.filter(p => p.surgery_date && p.status !== "cancelled"));
       setLocations(locRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować kalendarza");

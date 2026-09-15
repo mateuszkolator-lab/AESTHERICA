@@ -28,6 +28,83 @@ class PhotoUpdate(BaseModel):
 class BulkPhotoCreate(BaseModel):
     photos: List[dict]  # [{data, filename, angle, caption}, ...]
 
+class SurgeryOutcome(BaseModel):
+    performed: bool
+
+async def delete_google_event(db, patient: dict):
+    """Remove patient's Google Calendar event (best-effort)."""
+    if not patient.get("google_event_id") or not patient.get("location_id"):
+        return
+    try:
+        location = await db.locations.find_one({"id": patient["location_id"]})
+        if location and location.get("google_calendar_id"):
+            from routers.calendar import get_calendar_service
+            service = await get_calendar_service()
+            if service:
+                service.events().delete(calendarId=location["google_calendar_id"], eventId=patient["google_event_id"]).execute()
+    except Exception as e:
+        print(f"Google Calendar event delete failed: {e}")
+    await db.patients.update_one({"id": patient["id"]}, {"$unset": {"google_event_id": ""}})
+
+@router.get("/pending-surgery-confirmations")
+async def get_pending_surgery_confirmations(user: dict = Depends(get_auth)):
+    """Planned patients whose surgery date is today or already passed — need outcome confirmation."""
+    db = get_db()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    query = {"status": "planned", "surgery_date": {"$nin": [None, ""], "$lte": today}}
+    loc_filter = get_patient_location_filter(user)
+    if loc_filter:
+        query = {"$and": [query, loc_filter]}
+    patients = await db.patients.find(query, {"_id": 0, "visits": 0}).sort("surgery_date", 1).to_list(200)
+    locations = await db.locations.find({}, {"_id": 0}).to_list(100)
+    location_map = {loc["id"]: loc["name"] for loc in locations}
+    for p in patients:
+        p["location_name"] = location_map.get(p.get("location_id"))
+    return patients
+
+@router.post("/{patient_id}/surgery-outcome")
+async def set_surgery_outcome(patient_id: str, data: SurgeryOutcome, user: dict = Depends(get_auth)):
+    """Confirm whether a scheduled surgery took place."""
+    db = get_db()
+    patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    user_data = await db.users.find_one({"id": user.get("user_id")})
+    user_name = f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}".strip() if user_data else "Nieznany"
+    
+    if data.performed:
+        await db.patients.update_one({"id": patient_id}, {"$set": {
+            "status": "operated",
+            "surgery_confirmed_by": user_name,
+            "surgery_confirmed_at": now,
+            "updated_at": now
+        }})
+        await log_patient_change(
+            patient_id=patient_id, action="update", user=user,
+            changes={"Status": {"old": patient.get("status"), "new": "operated"}},
+            details=f"Potwierdzono wykonanie zabiegu w dniu {patient.get('surgery_date')}"
+        )
+        return {"status": "operated"}
+    
+    await db.patients.update_one({"id": patient_id}, {"$set": {
+        "status": "awaiting",
+        "surgery_date": None,
+        "confirmed": False,
+        "updated_at": now
+    }})
+    await delete_google_event(db, patient)
+    await log_patient_change(
+        patient_id=patient_id, action="update", user=user,
+        changes={
+            "Status": {"old": patient.get("status"), "new": "awaiting"},
+            "Data zabiegu": {"old": patient.get("surgery_date"), "new": None}
+        },
+        details=f"Zabieg z dnia {patient.get('surgery_date')} nie odbył się"
+    )
+    return {"status": "awaiting"}
+
 @router.get("")
 async def get_patients(
     status: Optional[str] = None,
@@ -139,6 +216,14 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
     
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
+    # Cancellation: clear surgery date (frees calendar slot), Google event is removed below
+    cancelling = update_data.get("status") == "cancelled" and old_patient.get("status") != "cancelled"
+    if cancelling:
+        update_data["surgery_date"] = None
+        update_data["confirmed"] = False
+        update_data["cancelled_at"] = update_data["updated_at"]
+        update_data["cancelled_surgery_date"] = old_patient.get("surgery_date")
+    
     # Track changes
     changes = {}
     field_labels = {
@@ -156,7 +241,7 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
     }
     
     for key, new_value in update_data.items():
-        if key in ["updated_at"]:
+        if key in ["updated_at", "cancelled_at", "cancelled_surgery_date", "confirmed"]:
             continue
         old_value = old_patient.get(key)
         if old_value != new_value:
@@ -173,7 +258,8 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
             patient_id=patient_id,
             action="update",
             user=user,
-            changes=changes
+            changes=changes,
+            details=f"Pacjent zrezygnował (usunięto termin zabiegu {old_patient.get('surgery_date')})" if cancelling and old_patient.get("surgery_date") else ("Pacjent zrezygnował" if cancelling else None)
         )
     
     # Auto-sync to Google Calendar when relevant fields change
@@ -188,19 +274,7 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
         date_cleared = "surgery_date" in update_data and not update_data["surgery_date"]
         
         if date_cleared and old_patient.get("google_event_id"):
-            # Remove from Google Calendar
-            try:
-                loc_id = old_patient.get("location_id")
-                if loc_id:
-                    location = await db.locations.find_one({"id": loc_id})
-                    if location and location.get("google_calendar_id"):
-                        from routers.calendar import get_calendar_service
-                        service = await get_calendar_service()
-                        if service:
-                            service.events().delete(calendarId=location['google_calendar_id'], eventId=old_patient['google_event_id']).execute()
-                            await db.patients.update_one({"id": patient_id}, {"$unset": {"google_event_id": ""}})
-            except Exception as e:
-                print(f"Auto-remove from Google Calendar failed: {e}")
+            await delete_google_event(db, old_patient)
         elif surgery_date and location_id:
             # Create or update event
             try:

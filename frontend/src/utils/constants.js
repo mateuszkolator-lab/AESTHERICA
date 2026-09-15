@@ -3,9 +3,24 @@ export const STATUS_LABELS = {
   consultation: "Konsultacja",
   planned: "Zaplanowany",
   awaiting: "Oczekujący",
+  thinking: "Zastanawia się",
   operated: "Zoperowany",
   cancelled: "Rezygnacja"
 };
+
+// Statuses hidden by default on patient list (visible when explicitly filtered)
+export const HIDDEN_BY_DEFAULT_STATUSES = ["operated", "cancelled"];
+
+// Presets for follow-up control intervals (per procedure type)
+export const CONTROL_PRESETS = [
+  { days: 7, label: "1 tydzień" },
+  { days: 14, label: "2 tygodnie" },
+  { days: 30, label: "1 miesiąc" },
+  { days: 90, label: "3 miesiące" },
+  { days: 180, label: "6 miesięcy" },
+  { days: 365, label: "1 rok" }
+];
+export const DEFAULT_CONTROL_INTERVALS = CONTROL_PRESETS.filter(p => p.days !== 14);
 
 export const VISIT_TYPE_LABELS = {
   consultation: "Konsultacja",
@@ -65,6 +80,7 @@ export const STATUS_OPTIONS = [
   { value: "consultation", label: "Konsultacja" },
   { value: "planned", label: "Zaplanowany" },
   { value: "awaiting", label: "Oczekujący" },
+  { value: "thinking", label: "Zastanawia się" },
   { value: "operated", label: "Zoperowany" },
   { value: "cancelled", label: "Rezygnacja" }
 ];
@@ -74,6 +90,7 @@ export const getStatusColor = (status) => {
     consultation: "bg-slate-100 text-slate-800",
     planned: "bg-blue-100 text-blue-800",
     awaiting: "bg-amber-100 text-amber-800",
+    thinking: "bg-violet-100 text-violet-800",
     operated: "bg-emerald-100 text-emerald-800",
     cancelled: "bg-red-100 text-red-800"
   };
@@ -84,6 +101,7 @@ export const getStatusColorBg = (status) => {
   const colors = {
     planned: "bg-blue-600",
     awaiting: "bg-amber-500",
+    thinking: "bg-violet-500",
     operated: "bg-emerald-600",
     cancelled: "bg-red-600"
   };

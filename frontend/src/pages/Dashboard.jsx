@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Users, Calendar, ChevronLeft, ChevronRight, User, 
-  CheckCircle2, Clock, Zap
+  CheckCircle2, Clock, Zap, HelpCircle
 } from "lucide-react";
 import api from "../utils/api";
 import { 
@@ -389,6 +389,7 @@ const Dashboard = () => {
               { label: "Zaplanowani", value: data?.stats?.planned || 0, icon: Calendar, color: "blue" },
               { label: "Oczekujący", value: data?.stats?.awaiting || 0, icon: Clock, color: "amber" },
               { label: "Konsultacje", value: data?.stats?.consultation || 0, icon: User, color: "slate" },
+              { label: "Zastanawiają się", value: data?.stats?.thinking || 0, icon: HelpCircle, color: "purple" },
             ].map((stat, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                 <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import api from "../utils/api";
 import { 
   Users, Calendar, BarChart3, Settings, LogOut, 
   Menu, Home, CalendarPlus, Shield, User, ClipboardCheck

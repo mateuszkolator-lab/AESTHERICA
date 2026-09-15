@@ -6,7 +6,7 @@ import {
   X, Eye, Trash2, User, Sparkles, MapPin 
 } from "lucide-react";
 import api from "../utils/api";
-import { STATUS_LABELS, getStatusColor, STATUS_OPTIONS, getLocationColor } from "../utils/constants";
+import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS, getLocationColor, HIDDEN_BY_DEFAULT_STATUSES } from "../utils/constants";
 import AddPatientModal from "../components/modals/AddPatientModal";
 
 const PatientsList = () => {
@@ -84,7 +84,9 @@ const PatientsList = () => {
       (p.email && p.email.toLowerCase().includes(query)) ||
       (p.phone && p.phone.includes(query))
     );
-    const matchesStatus = statusFilters.length === 0 || statusFilters.includes(p.status);
+    const matchesStatus = statusFilters.length === 0
+      ? !HIDDEN_BY_DEFAULT_STATUSES.includes(p.status)
+      : statusFilters.includes(p.status);
     const matchesProcedure = procedureFilters.length === 0 || procedureFilters.includes(p.procedure_type);
     const matchesLocation = !locationFilter || p.location_id === locationFilter;
     const matchesAsap = !asapFilter || p.asap === true;
@@ -108,6 +110,11 @@ const PatientsList = () => {
     setStatusChangeId(null);
     try {
       await api.put(`/patients/${patientId}`, { status: newStatus });
+      if (newStatus === "cancelled") {
+        toast.success("Pacjent oznaczony jako rezygnacja — usunięto z kalendarza");
+        loadData();
+        return;
+      }
       setPatients(prev => prev.map(p => p.id === patientId ? { ...p, status: newStatus } : p));
       toast.success(`Status zmieniony na: ${STATUS_LABELS[newStatus]}`);
     } catch (err) {
@@ -292,6 +299,18 @@ const PatientsList = () => {
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
           <div className="flex items-center gap-2 flex-wrap">
+            {statusFilters.length === 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 bg-slate-100 rounded-full" data-testid="hidden-statuses-hint">
+                Ukryto: Zoperowani, Rezygnacje
+                <button
+                  onClick={() => setStatusFilters([...HIDDEN_BY_DEFAULT_STATUSES])}
+                  className="text-teal-600 hover:text-teal-700 font-medium ml-1"
+                  data-testid="show-hidden-statuses"
+                >
+                  Pokaż
+                </button>
+              </span>
+            )}
             {statusFilters.map((status) => (
               <span
                 key={status}
@@ -430,13 +449,7 @@ const PatientsList = () => {
                                 }`}
                                 data-testid={`status-option-${patient.id}-${option.value}`}
                               >
-                                <span className={`w-2 h-2 rounded-full ${
-                                  option.value === 'consultation' ? 'bg-slate-500' :
-                                  option.value === 'planned' ? 'bg-blue-500' :
-                                  option.value === 'awaiting' ? 'bg-amber-500' :
-                                  option.value === 'operated' ? 'bg-emerald-500' :
-                                  'bg-red-500'
-                                }`} />
+                                <span className={`w-2 h-2 rounded-full ${getStatusColorBg(option.value)}`} />
                                 {option.label}
                               </button>
                             ))}

@@ -7,12 +7,17 @@ import {
 } from "lucide-react";
 import api from "../utils/api";
 
-const CONTROL_COLORS = {
-  "1_week": { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-  "1_month": { bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
-  "3_months": { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  "6_months": { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-  "1_year": { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" }
+const CONTROL_PALETTE = [
+  { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  { bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
+  { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+  { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
+  { bg: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-200" },
+];
+const getControlColors = (controls, type) => {
+  const idx = controls.findIndex(c => c.type === type);
+  return CONTROL_PALETTE[(idx < 0 ? 0 : idx) % CONTROL_PALETTE.length];
 };
 
 const ControlsPage = () => {
@@ -350,7 +355,7 @@ const ControlsPage = () => {
                     <div className="text-right hidden md:block">
                       <p className="text-xs text-slate-500 mb-1">Następna kontrola:</p>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${CONTROL_COLORS[patient.next_control.type]?.bg} ${CONTROL_COLORS[patient.next_control.type]?.text}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getControlColors(patient.controls, patient.next_control.type).bg} ${getControlColors(patient.controls, patient.next_control.type).text}`}>
                           {patient.next_control.label}
                         </span>
                         {getStatusBadge(patient.next_control)}
@@ -401,7 +406,7 @@ const ControlsPage = () => {
                   <h4 className="text-sm font-medium text-slate-700 mb-3">Harmonogram kontroli</h4>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                     {patient.controls.map((control) => {
-                      const colors = CONTROL_COLORS[control.type] || { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200" };
+                      const colors = getControlColors(patient.controls, control.type);
                       const isOverdue = !control.completed && getDaysUntil(control.due_date) < 0;
                       
                       return (

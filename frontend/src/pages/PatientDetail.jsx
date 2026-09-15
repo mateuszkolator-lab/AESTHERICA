@@ -3,10 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   ChevronLeft, User, Mail, Phone, MapPin, DollarSign, 
-  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool, CheckCircle2, CalendarSync
+  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool, CheckCircle2, CalendarSync, ChevronDown
 } from "lucide-react";
 import api from "../utils/api";
-import { STATUS_LABELS, getStatusColor } from "../utils/constants";
+import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS } from "../utils/constants";
 import AddPatientModal from "../components/modals/AddPatientModal";
 import { AddVisitModal, VisitCard } from "../components/patients/VisitComponents";
 import PhotoCompareModal from "../components/modals/PhotoCompareModal";
@@ -21,6 +21,20 @@ const PatientDetail = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddVisit, setShowAddVisit] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+
+  const handleStatusChange = async (newStatus) => {
+    setShowStatusMenu(false);
+    if (newStatus === patient.status) return;
+    if (newStatus === "cancelled" && !window.confirm("Oznaczyć pacjenta jako rezygnację? Data zabiegu zostanie usunięta, a wydarzenie zniknie z Google Calendar.")) return;
+    try {
+      await api.put(`/patients/${id}`, { status: newStatus });
+      toast.success(`Status zmieniony na: ${STATUS_LABELS[newStatus]}`);
+      loadPatient();
+    } catch (err) {
+      toast.error("Nie udało się zmienić statusu");
+    }
+  };
 
   const loadPatient = useCallback(async () => {
     try {
@@ -109,9 +123,37 @@ const PatientDetail = () => {
               {patient.first_name} {patient.last_name}
             </h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(patient.status)}`}>
-                {STATUS_LABELS[patient.status] || patient.status}
-              </span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowStatusMenu(!showStatusMenu)}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full transition-all hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 ${getStatusColor(patient.status)}`}
+                  title="Kliknij aby zmienić status"
+                  data-testid="detail-status-badge"
+                >
+                  {STATUS_LABELS[patient.status] || patient.status}
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showStatusMenu ? 'rotate-180' : ''}`} />
+                </button>
+                {showStatusMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowStatusMenu(false)} />
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-20 py-1" data-testid="detail-status-dropdown">
+                      {STATUS_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => handleStatusChange(option.value)}
+                          className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                            patient.status === option.value ? "bg-slate-100 font-semibold" : "hover:bg-slate-50"
+                          }`}
+                          data-testid={`detail-status-option-${option.value}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${getStatusColorBg(option.value)}`} />
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
               {patient.asap && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700" title="Jak najszybciej">
                   <Sparkles className="w-3 h-3" />
@@ -178,6 +220,12 @@ const PatientDetail = () => {
               <p className="text-sm text-slate-500">Data operacji</p>
               <p className="font-medium text-slate-900">{patient.surgery_date || "-"}</p>
             </div>
+            {patient.status === "cancelled" && patient.cancelled_surgery_date && (
+              <div>
+                <p className="text-sm text-slate-500">Anulowany termin</p>
+                <p className="font-medium text-red-600 line-through" data-testid="cancelled-surgery-date">{patient.cancelled_surgery_date}</p>
+              </div>
+            )}
             {patient.status === "planned" && patient.surgery_date && (
               <button
                 onClick={handleToggleConfirm}
