@@ -15,6 +15,16 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - RhinoPlanner (canvas Fabric.js, eksport PDF)
 - Historia zmian pacjentów (Audit Log)
 
+## Ostatnie zmiany (17.06.2026)
+- Statusy: nowy "Zastanawia się" (thinking); "Rezygnacja" wybieralna w edycji karty, na liście i w karcie (klik w badge)
+- Rezygnacja: backend czyści surgery_date (zapisuje cancelled_surgery_date), usuwa wydarzenie z Google Calendar, wpis w historii zmian
+- Fix: ręcznie wybrany status (operated/cancelled/thinking) nie jest już nadpisywany auto-statusem w formularzu
+- Lista pacjentów: domyślnie ukrywa Zoperowanych i Rezygnacje (chip "Ukryto… Pokaż")
+- Kontrole per zabieg: procedure_types.control_intervals [{days,label}] – edytor w Ustawieniach (presety + własne); klucze kontroli "<days>d", legacy (1_week…) mapowane
+- Okno "Czy zabiegi się odbyły?" po zalogowaniu (GET /api/patients/pending-surgery-confirmations, POST /api/patients/{id}/surgery-outcome) – Odbył się → operated; Nie odbył się → awaiting + data usunięta
+- Fix: brak importu `api` w Sidebar (sync Google przy wylogowaniu nie działał)
+- Serwer: certbot – przejście na plugin nginx + deploy-hook reload nginx (auto-odnawianie SSL)
+
 ## Ostatnie zmiany (26.05.2026)
 - Auto-sync Google Calendar przy tworzeniu nowego pacjenta z datą zabiegu
 - Endpoint /api/calendar/sync-all do pełnej synchronizacji
@@ -40,6 +50,7 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - SSL: Let's Encrypt (certbot)
 
 ## Przyszłe zadania
+- (P0) Automatyczne wylogowanie przy przestarzałym tokenie JWT (401 bez location_ids) – interceptor w utils/api.js
 - (P1) Eksport statystyk do Excela
 - (P2) Powiadomienia SMS/Email do pacjentów
 - (P2) Dashboard z KPI (przychód, % wypełnienia slotów)

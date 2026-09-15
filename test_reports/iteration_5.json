@@ -1,0 +1,81 @@
+{
+  "summary": "Comprehensive frontend+backend testing of Rezygnacja/Zastanawia się statuses, SurgeryConfirmModal flow, per-procedure control intervals, and calendar cancellation behavior. All 7 requested feature areas verified end-to-end. 0 critical or minor bugs found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "component": "PatientsList / Dashboard selects",
+        "issue": "Persisting React hydration console errors: '<span> cannot be a child of <select>/<option>' and '<span> cannot be a child of <tbody>' — caused by visual-editor injected <span data-ve-dynamic> wrappers around <option>/<tr> nodes. Non-functional dev tooling artifact (same as iteration_4). LOW.",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "passed_tests": {
+    "SurgeryConfirmModal": [
+      "Modal auto-opens on / after login with 15 pending planned patients (sessionStorage cleared)",
+      "Renders 15 rows, each with surgery-performed-<id> and surgery-not-performed-<id> buttons",
+      "'Przypomnij później' (surgery-confirm-later) closes modal; stays closed after navigation to /patients and back to /",
+      "Fresh test patient (planned, surgery_date=today) → click Odbył się → GET /api/patients/{id} returns status='operated' (surgery_date preserved)",
+      "Fresh test patient → click Nie odbył się → status='awaiting', surgery_date=None",
+      "Test patients cleaned up (DELETE 200)"
+    ],
+    "PatientsList": [
+      "Default view hides operated+cancelled; 'Ukryto: Zoperowani, Rezygnacje — Pokaż' hint chip (hidden-statuses-hint) visible",
+      "Clicking show-hidden-statuses applies filter (hint hidden, filtered rows appear)",
+      "Inline status change: status-badge-<id> click → status-option-<id>-thinking → badge shows 'Zastanawia się'",
+      "Inline change to cancelled shows confirm dialog, patient disappears from default list, API confirms status='cancelled' + surgery_date=null"
+    ],
+    "PatientDetail": [
+      "edit-patient-button opens modal; status-select contains all 6 options: consultation, planned, awaiting, thinking, operated, cancelled",
+      "Selecting cancelled shows cancelled-hint text",
+      "Submitting cancelled from edit modal persists status='cancelled', surgery_date=null, cancelled_surgery_date=<original date>",
+      "cancelled-surgery-date badge ('Anulowany termin') visible on detail page after cancel",
+      "detail-status-badge click opens detail-status-dropdown; detail-status-option-thinking changes badge to 'Zastanawia się'",
+      "Bug fix verified: editing an operated patient (status=operated, surgery_date set) with no status change and submitting keeps status=operated (previously forced to planned)"
+    ],
+    "Settings": [
+      "add-procedure-type-button opens modal with 6 presets (control-preset-7,14,30,90,180,365) and 5 default interval rows",
+      "Toggling control-preset-30 off reduces rows to 4; toggle on restores",
+      "add-control-interval adds new row; filling days=45 label='6 tygodni' persists via submit-procedure-type",
+      "New TEST_ProcedureType created via API; procedure-controls-<id> chip container shows all interval labels",
+      "Editing existing 'Septoplastyka' opens modal with exactly 2 rows (1 tydzień, 1 rok)",
+      "delete-procedure-<id> removes the created test procedure"
+    ],
+    "Controls": [
+      "/controls page loads without errors; 26 patients rendered via GET /api/controls/patients",
+      "Non-Septoplastyka patients show 5 default controls",
+      "Septoplastyka operated patient shows exactly 2 controls with type '7d'/'365d' and correct labels",
+      "POST /api/controls/patients/{id}/complete marks control completed:true (200)",
+      "DELETE /api/controls/patients/{id}/complete/{type} unmarks (completed:false, 200)"
+    ],
+    "Calendar_Dashboard": [
+      "/calendar page loads without page errors",
+      "GET /api/surgery-slots/calendar-data returns 0 cancelled patients",
+      "Dashboard on / renders 'Zastanawiają się' stats row"
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_5.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "React hydration errors from visual-editor injected wrappers around <option>/<tr> nodes remain (cosmetic, dev-only tooling)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (all pending-surgery-confirmations, surgery-outcome, procedure-types with control_intervals, controls complete/uncomplete, patient cancellation flows verified)",
+    "frontend": "100% (SurgeryConfirmModal, PatientsList hidden hint + inline status, PatientDetail edit modal + clickable badge, Settings procedure intervals editor, Controls page, Calendar page all verified)"
+  },
+  "test_credentials": {
+    "admin": "mateusz.kolator@gmail.com / Matikolati123!"
+  },
+  "seed_data_creation": "Created & fully cleaned up several TEST_ patients (TEST Performed, TEST NotPerformed, TESTINLINE Case, TESTDET Detail, TESTOP Operated, TESTCTL Septo, TESTCTL2 Septo) and one TEST_ProcedureType. No residual test data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All new features from this iteration (Rezygnacja + Zastanawia się statuses, SurgeryConfirmModal on Dashboard, hidden-statuses hint on PatientsList, inline status change badge, PatientDetail clickable badge + cancelled-surgery-date, per-procedure control_intervals with presets/custom rows, Septoplastyka 2-control override, calendar excluding cancelled) are working correctly. Backend URL: https://clinic-scheduler-pro-1.preview.emergentagent.com. Dashboard route is '/' (not '/dashboard'). SurgeryConfirmModal appears only if sessionStorage key surgery_confirm_dismissed_<YYYY-MM-DD> is absent — clear sessionStorage between logins to see it again."
+}
