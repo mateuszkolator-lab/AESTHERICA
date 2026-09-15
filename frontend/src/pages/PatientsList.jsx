@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Users, Search, Filter, Plus, ChevronRight, 
-  X, Eye, Trash2, User, Sparkles, MapPin 
+  X, Eye, Trash2, User, Sparkles, MapPin, RotateCcw 
 } from "lucide-react";
 import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS, getLocationColor, HIDDEN_BY_DEFAULT_STATUSES } from "../utils/constants";
@@ -120,6 +120,17 @@ const PatientsList = () => {
       toast.success(`Status zmieniony na: ${STATUS_LABELS[newStatus]}`);
     } catch (err) {
       toast.error("Nie udało się zmienić statusu");
+    }
+  };
+
+  const handleRestore = async (patientId, e) => {
+    e.stopPropagation();
+    try {
+      await api.post(`/patients/${patientId}/restore`);
+      toast.success("Pacjent przywrócony do oczekujących");
+      loadData();
+    } catch (err) {
+      toast.error("Nie udało się przywrócić pacjenta");
     }
   };
 
@@ -514,6 +525,16 @@ const PatientsList = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {patient.status === "cancelled" && (
+                          <button
+                            onClick={(e) => handleRestore(patient.id, e)}
+                            className="p-2 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Przywróć do oczekujących"
+                            data-testid={`restore-${patient.id}`}
+                          >
+                            <RotateCcw className="w-4 h-4 text-emerald-600" />
+                          </button>
+                        )}
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/patients/${patient.id}`); }}
                           className="p-2 hover:bg-slate-100 rounded-lg transition-colors"

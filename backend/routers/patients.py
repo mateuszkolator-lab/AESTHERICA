@@ -62,6 +62,35 @@ async def get_pending_surgery_confirmations(user: dict = Depends(get_auth)):
         p["location_name"] = location_map.get(p.get("location_id"))
     return patients
 
+@router.post("/{patient_id}/restore")
+async def restore_cancelled_patient(patient_id: str, user: dict = Depends(get_auth)):
+    """Bring a cancelled patient back to the waiting list, keeping cancellation history."""
+    db = get_db()
+    patient = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    if patient.get("status") != "cancelled":
+        raise HTTPException(status_code=400, detail="Patient is not cancelled")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    history_entry = {
+        "cancelled_at": patient.get("cancelled_at"),
+        "cancelled_surgery_date": patient.get("cancelled_surgery_date"),
+        "reason": patient.get("cancellation_reason"),
+        "restored_at": now
+    }
+    await db.patients.update_one({"id": patient_id}, {
+        "$set": {"status": "awaiting", "updated_at": now},
+        "$unset": {"cancellation_reason": "", "cancelled_at": "", "cancelled_surgery_date": ""},
+        "$push": {"cancellation_history": history_entry}
+    })
+    await log_patient_change(
+        patient_id=patient_id, action="update", user=user,
+        changes={"Status": {"old": "cancelled", "new": "awaiting"}},
+        details="Przywrócono pacjenta z rezygnacji do oczekujących" + (f" (poprzedni powód: {patient.get('cancellation_reason')})" if patient.get("cancellation_reason") else "")
+    )
+    return {"status": "awaiting"}
+
 @router.post("/{patient_id}/surgery-outcome")
 async def set_surgery_outcome(patient_id: str, data: SurgeryOutcome, user: dict = Depends(get_auth)):
     """Confirm whether a scheduled surgery took place."""

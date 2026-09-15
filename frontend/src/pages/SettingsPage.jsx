@@ -4,8 +4,11 @@ import { toast } from "sonner";
 import { Plus, Edit, Trash2, CheckCircle2, AlertCircle, Calendar, Link2, Unlink, ChevronDown, ClipboardCheck } from "lucide-react";
 import api from "../utils/api";
 import { LocationModal, ProcedureTypeModal } from "../components/modals/SettingsModals";
+import BackupSection from "../components/BackupSection";
+import { useAuth } from "../contexts/AuthContext";
 
 const SettingsPage = () => {
+  const { isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const [locations, setLocations] = useState([]);
   const [procedureTypes, setProcedureTypes] = useState([]);
@@ -253,7 +256,7 @@ const SettingsPage = () => {
       </div>
 
       {/* Google Calendar */}
-      <div className="bg-white rounded-xl border border-slate-200">
+      <div className="bg-white rounded-xl border border-slate-200 mb-6">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-teal-600" />
@@ -378,6 +381,8 @@ const SettingsPage = () => {
           )}
         </div>
       </div>
+
+      {isAdmin() && <BackupSection />}
 
       {(showAddLocation || editLocation) && (
         <LocationModal

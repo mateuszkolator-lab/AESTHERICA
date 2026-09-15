@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   ChevronLeft, User, Mail, Phone, MapPin, DollarSign, 
-  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool, CheckCircle2, CalendarSync, ChevronDown
+  Edit, Plus, ArrowLeftRight, Camera, Sparkles, PenTool, CheckCircle2, CalendarSync, ChevronDown, RotateCcw
 } from "lucide-react";
 import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS } from "../utils/constants";
@@ -49,6 +49,16 @@ const PatientDetail = () => {
       loadPatient();
     } catch (err) {
       toast.error("Nie udało się zmienić statusu");
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await api.post(`/patients/${id}/restore`);
+      toast.success("Pacjent przywrócony do oczekujących");
+      loadPatient();
+    } catch (err) {
+      toast.error("Nie udało się przywrócić pacjenta");
     }
   };
 
@@ -246,6 +256,25 @@ const PatientDetail = () => {
                 )}
                 <p className="text-sm text-red-500 mt-1">Powód rezygnacji</p>
                 <p className="font-medium text-red-800" data-testid="cancellation-reason">{patient.cancellation_reason || "Nie podano"}</p>
+                <button
+                  onClick={handleRestore}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-white border border-red-200 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                  data-testid="restore-patient-button"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Przywróć do oczekujących
+                </button>
+              </div>
+            )}
+            {patient.cancellation_history?.length > 0 && patient.status !== "cancelled" && (
+              <div className="text-xs text-slate-500" data-testid="cancellation-history">
+                <p className="font-medium text-slate-600 mb-1">Historia rezygnacji</p>
+                {patient.cancellation_history.map((h, i) => (
+                  <p key={i}>
+                    {h.cancelled_at ? new Date(h.cancelled_at).toLocaleDateString("pl-PL") : "?"} – {h.reason || "bez powodu"}
+                    {h.cancelled_surgery_date && ` (termin ${h.cancelled_surgery_date})`}
+                  </p>
+                ))}
               </div>
             )}
             {patient.status === "planned" && patient.surgery_date && (
