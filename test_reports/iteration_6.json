@@ -1,0 +1,26 @@
+{
+  "summary": "Full frontend E2E of AestheticaMD auto-logout on 401 + cancellation reason feature. Backend already verified by main agent; validated flows via UI + API assertions and cleaned up all TEST_ patients afterwards. All 7 target flows PASS: (1) invalid token in localStorage triggers redirect to /login, storage cleared, 'Sesja wygasła – zaloguj się ponownie' toast shown; (2) wrong password stays on /login with error toast — no redirect loop; (3) PatientsList inline status change to Rezygnacja opens CancelReasonModal, 'Cena' preset saved (surgery_date → null, cancelled_surgery_date preserved, cancellation_reason='Cena'); (4) PatientDetail dropdown + custom reason 'Wyjazd za granicę' persisted, cancellation-info + cancellation-reason rendered; (5) Edit modal on cancelled patient exposes cancellation-reason-select (value preset), change to 'Termin nie pasuje' persists; edit on non-cancelled patient does NOT touch cancellation_reason; (6) /stats cancellations-card with cancellations-total and cancel-reason-row-<reason> rows for both Cena and 'Termin nie pasuje' present; (7) Regression: SurgeryConfirmModal shows after fresh login, 'Przypomnij później' closes it; Controls + Settings pages load without errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (dev overlay)", "issues": ["Numerous React hydration warnings 'span cannot be a child of option/select/tbody' caused by ve-dynamic wrapper spans injected around <option>/<tr> in Dashboard, PatientsList, AddPatientModal (STATUS_OPTIONS map). Cosmetic/dev-tooling — does not break functionality but pollutes console. Likely from an editor instrumentation wrapper; if it's Emergent visual-editor tooling this is expected only in preview."]}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_6.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "api.js interceptor correctly skips /auth/login and only redirects when a token exists in localStorage — prevents redirect loops on wrong-password.",
+    "CancelReasonModal: 'Rezygnacja bez powodu' path (empty reason) allowed — confirm this is intentional business behaviour; backend should still accept null.",
+    "AddPatientModal cancellation_reason handling uses a placeholder ' ' (space) when switching to custom — trimmed before submit; works but a bit fragile. Consider a dedicated boolean for 'custom' mode.",
+    "PatientsList.jsx is 560+ lines — consider splitting inline-dropdown, filters, and table into subcomponents for maintainability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (verified by main agent)", "frontend": "100%"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created 3 patients via API (TESTCancel0/1/2 AutoTest, Pro-Familia, Rinoplastyka, surgery_date 2026-09-01). All deleted at end — verified 0 remaining TESTCancel* patients.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Feature is stable. Preview environment shows harmless React hydration warnings from ve-dynamic wrapper spans around <option>/<tr> — ignore. When testing cancellation flows always cleanup TEST_-prefixed patients via DELETE /api/patients/{id}. Use REACT_APP_BACKEND_URL from /app/frontend/.env. Submit button in AddPatientModal has data-testid=submit-patient (no 'Zapisz' text label match required)."
+}

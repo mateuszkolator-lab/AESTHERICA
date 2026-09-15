@@ -16,6 +16,8 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - Historia zmian pacjentów (Audit Log)
 
 ## Ostatnie zmiany (17.06.2026)
+- Auto-wylogowanie: interceptor axios (utils/api.js) – 401 → czyszczenie tokenu, redirect /login, toast „Sesja wygasła”; backend verify_token zwraca 401 dla tokenów bez location_ids/global_access
+- Powód rezygnacji: CancelReasonModal (presety + własny) na liście i w karcie; pole w formularzu edycji; `cancellation_reason` w karcie i historii; Statystyki – karta „Rezygnacje” z podziałem na powody (`cancellations_by_reason`)
 - Statusy: nowy "Zastanawia się" (thinking); "Rezygnacja" wybieralna w edycji karty, na liście i w karcie (klik w badge)
 - Rezygnacja: backend czyści surgery_date (zapisuje cancelled_surgery_date), usuwa wydarzenie z Google Calendar, wpis w historii zmian
 - Fix: ręcznie wybrany status (operated/cancelled/thinking) nie jest już nadpisywany auto-statusem w formularzu
@@ -50,7 +52,6 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - SSL: Let's Encrypt (certbot)
 
 ## Przyszłe zadania
-- (P0) Automatyczne wylogowanie przy przestarzałym tokenie JWT (401 bez location_ids) – interceptor w utils/api.js
 - (P1) Eksport statystyk do Excela
 - (P2) Powiadomienia SMS/Email do pacjentów
 - (P2) Dashboard z KPI (przychód, % wypełnienia slotów)
