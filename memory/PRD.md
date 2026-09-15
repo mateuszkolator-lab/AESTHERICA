@@ -16,6 +16,8 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - Historia zmian pacjentów (Audit Log)
 
 ## Ostatnie zmiany (17.06.2026)
+- Backup bazy: router `/api/backup` (admin) – status/run/download/files; scheduler w lifespan (1 kopia dziennie do BACKUP_DIR, retencja BACKUP_KEEP=14); sekcja „Kopia zapasowa bazy” w Ustawieniach (BackupSection.jsx). Wymaga BACKUP_DIR w backend/.env (na serwerze: /var/backups/aestheticamd)
+- Przywracanie rezygnacji: POST /api/patients/{id}/restore → awaiting, historia w `cancellation_history`, przycisk w karcie i na liście (ikona RotateCcw dla rezygnacji)
 - Auto-wylogowanie: interceptor axios (utils/api.js) – 401 → czyszczenie tokenu, redirect /login, toast „Sesja wygasła”; backend verify_token zwraca 401 dla tokenów bez location_ids/global_access
 - Powód rezygnacji: CancelReasonModal (presety + własny) na liście i w karcie; pole w formularzu edycji; `cancellation_reason` w karcie i historii; Statystyki – karta „Rezygnacje” z podziałem na powody (`cancellations_by_reason`)
 - Statusy: nowy "Zastanawia się" (thinking); "Rezygnacja" wybieralna w edycji karty, na liście i w karcie (klik w badge)

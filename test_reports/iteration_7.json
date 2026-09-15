@@ -1,0 +1,27 @@
+{
+  "summary": "Full E2E for AestheticaMD backup + restore features. Backend pytest (6/6 pass): /api/backup/status admin OK & non-admin 403, /api/backup/run creates valid ZIP (meta.json + per-collection JSON), /api/backup/download streams ZIP with attachment filename, path-traversal guarded (returns 404 for '..%2Fetc' and unknown 'evil.zip'), restore flow (status→awaiting, cancellation_reason cleared, cancellation_history length 1 with 'Cena'; second restore → 400). Frontend Playwright (all pass): Settings /settings shows backup-section with backup-auto-status 'Codzienny automatyczny backup włączony'; backup-run-button creates new row (before=2 → after=3); backup-download-button triggers browser download of fresh timestamped ZIP; backup-delete-<name> removes newly created timestamped backup (daily aestheticamd_YYYY-MM-DD.zip preserved). Restore-via-detail: cancellation-info shows restore-patient-button; after click patient status becomes awaiting, cancellation-history block appears with '15.09.2026 – Cena (termin 2026-08-01)'. Restore-via-list: show-hidden-statuses reveals cancelled patient rows, restore-<id> icon button visible; click restores patient (API confirmed status=awaiting, hist_len=1). All test patients and backup files cleaned up.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (dev overlay)", "issues": ["Same pre-existing React hydration warnings from ve-dynamic wrapper spans around <option>/<tr>/<tbody> (Dashboard, PatientsList). Cosmetic; likely Emergent visual-editor tooling injection in preview. Does not affect functionality."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_backup_restore.py", "/app/test_reports/pytest/backup_restore.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "backup.py: FILE_RE strictly whitelists 'aestheticamd_YYYY-MM-DD[_HHMMSS].zip' — good defense against path traversal (../etc and arbitrary filenames rejected with 404).",
+    "backup.py download endpoint writes a temp file then uses BackgroundTask(os.remove) — correct cleanup pattern; ZIP built in-memory then flushed.",
+    "backup_scheduler is a simple asyncio while-True with hourly sleep — no jitter/idempotency lock. Two workers could double-write for the same day; has_backup_for_today() guards but there's still a small race. Consider a file lock or naming atomic write (already using os.replace via _write_file — OK).",
+    "BackupSection.jsx: 'Utwórz kopię teraz' button disabled when !status?.auto_enabled — good UX. Uses window.confirm for delete (native dialog) — acceptable but Sonner-style modal would be more consistent.",
+    "PatientDetail.jsx cancellation-history only rendered when status !== 'cancelled' — correct (hidden while patient still cancelled to avoid duplicate info)."
+  ],
+  "updated_files": ["/app/backend/tests/test_backup_restore.py"],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100% (all target flows)"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123!. Non-admin created transiently via POST /api/users/ (email test_nonadmin@klinika.pl) and deleted in teardown; jan.kowalski credentials from memory file DO NOT work (login returns 'Invalid email or password').",
+  "seed_data_creation": "Created 2 test patients (TESTRestoreUI Alpha & Bravo) via UI-triggered fetch; cancelled with reason 'Cena', then restored. Both DELETEd at end (HTTP 200). Created & removed 1 timestamped backup ZIP via the run-button flow; daily aestheticamd_YYYY-MM-DD.zip preserved.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "jan.kowalski@klinika.pl seed user does not exist in DB — for role-based tests either seed him or POST a temp user via /api/users/ (fields: email, password, first_name, last_name, role='doctor'). Backup files live under /app/backend/backups. UI toast library is Sonner. Use REACT_APP_BACKEND_URL from /app/frontend/.env."
+}
