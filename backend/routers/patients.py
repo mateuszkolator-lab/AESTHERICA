@@ -237,7 +237,8 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
         "location_id": "Lokalizacja",
         "deposit": "Zaliczka",
         "notes": "Notatki",
-        "asap": "ASAP"
+        "asap": "ASAP",
+        "cancellation_reason": "Powód rezygnacji"
     }
     
     for key, new_value in update_data.items():
@@ -254,12 +255,20 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
     
     # Log changes if any
     if changes:
+        reason = update_data.get("cancellation_reason")
+        cancel_details = None
+        if cancelling:
+            cancel_details = "Pacjent zrezygnował"
+            if old_patient.get("surgery_date"):
+                cancel_details += f" (usunięto termin zabiegu {old_patient.get('surgery_date')})"
+            if reason:
+                cancel_details += f" – powód: {reason}"
         await log_patient_change(
             patient_id=patient_id,
             action="update",
             user=user,
             changes=changes,
-            details=f"Pacjent zrezygnował (usunięto termin zabiegu {old_patient.get('surgery_date')})" if cancelling and old_patient.get("surgery_date") else ("Pacjent zrezygnował" if cancelling else None)
+            details=cancel_details
         )
     
     # Auto-sync to Google Calendar when relevant fields change

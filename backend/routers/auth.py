@@ -38,6 +38,8 @@ def verify_token(authorization: str = None):
     try:
         token = authorization.replace("Bearer ", "")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if "location_ids" not in payload or "global_access" not in payload:
+            raise HTTPException(status_code=401, detail="Token outdated - please log in again")
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")

@@ -206,6 +206,36 @@ const StatsPage = () => {
         </div>
       </div>
 
+      {/* Cancellations */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8" data-testid="cancellations-card">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Rezygnacje</h3>
+            <p className="text-xs text-slate-400">Powody rezygnacji pacjentów</p>
+          </div>
+          <span className="text-3xl font-semibold text-red-600" data-testid="cancellations-total">{stats?.by_status?.cancelled || 0}</span>
+        </div>
+        {(stats?.cancellations_by_reason || []).length > 0 ? (
+          <div className="space-y-2">
+            {stats.cancellations_by_reason.map((item) => {
+              const total = stats?.by_status?.cancelled || 1;
+              const pct = Math.round((item.count / total) * 100);
+              return (
+                <div key={item.reason} className="flex items-center gap-3" data-testid={`cancel-reason-row-${item.reason}`}>
+                  <span className="w-44 text-sm text-slate-700 truncate" title={item.reason}>{item.reason}</span>
+                  <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-500 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="w-20 text-right text-sm text-slate-600">{item.count} <span className="text-slate-400">({pct}%)</span></span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400">Brak rezygnacji</p>
+        )}
+      </div>
+
       {/* Revenue Chart - Stacked (Planned + Operated) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-xl border border-slate-200 p-6">

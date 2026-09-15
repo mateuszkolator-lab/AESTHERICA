@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Image as ImageIcon, Sparkles, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
-import { STATUS_OPTIONS } from "../../utils/constants";
+import { STATUS_OPTIONS, CANCELLATION_REASONS } from "../../utils/constants";
 
 const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
   // Convert legacy single range to preferred_dates array
@@ -158,7 +158,14 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       }
       if (data.status === "cancelled") {
         data.surgery_date = null;
+        data.cancellation_reason = (data.cancellation_reason || "").trim() || null;
+      } else {
+        delete data.cancellation_reason;
       }
+      // Strip server-side fields that aren't part of the update schema
+      ["visits", "photos", "google_event_id", "google_calendar_event_id", "created_at", "updated_at", "id",
+       "cancelled_at", "cancelled_surgery_date", "surgery_confirmed_by", "surgery_confirmed_at", "confirmed",
+       "no_contact", "no_contact_note", "no_contact_date", "no_contact_by", "deposit"].forEach(k => delete data[k]);
       
       if (initialData) {
         await api.put(`/patients/${initialData.id}`, data);
@@ -331,9 +338,31 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                     ))}
                   </select>
                   {formData.status === "cancelled" && (
-                    <p className="text-xs text-red-600 mt-1" data-testid="cancelled-hint">
-                      Rezygnacja: data zabiegu zostanie usunięta, pacjent zniknie z kalendarza i Google Calendar
-                    </p>
+                    <div className="mt-2">
+                      <p className="text-xs text-red-600 mb-1.5" data-testid="cancelled-hint">
+                        Rezygnacja: data zabiegu zostanie usunięta, pacjent zniknie z kalendarza i Google Calendar
+                      </p>
+                      <select
+                        value={CANCELLATION_REASONS.includes(formData.cancellation_reason) ? formData.cancellation_reason : (formData.cancellation_reason ? "__custom" : "")}
+                        onChange={(e) => setFormData({ ...formData, cancellation_reason: e.target.value === "__custom" ? " " : e.target.value })}
+                        className="w-full px-3 py-2 border border-red-200 bg-red-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                        data-testid="cancellation-reason-select"
+                      >
+                        <option value="">Powód rezygnacji (opcjonalnie)</option>
+                        {CANCELLATION_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                        <option value="__custom">Inny powód…</option>
+                      </select>
+                      {formData.cancellation_reason && !CANCELLATION_REASONS.includes(formData.cancellation_reason) && (
+                        <input
+                          type="text"
+                          value={formData.cancellation_reason.trimStart()}
+                          onChange={(e) => setFormData({ ...formData, cancellation_reason: e.target.value || " " })}
+                          placeholder="Wpisz powód"
+                          className="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                          data-testid="cancellation-reason-input"
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
                 <div>

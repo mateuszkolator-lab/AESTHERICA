@@ -11,6 +11,7 @@ import AddPatientModal from "../components/modals/AddPatientModal";
 import { AddVisitModal, VisitCard } from "../components/patients/VisitComponents";
 import PhotoCompareModal from "../components/modals/PhotoCompareModal";
 import PatientAuditLog from "../components/PatientAuditLog";
+import CancelReasonModal from "../components/modals/CancelReasonModal";
 
 const PatientDetail = () => {
   const { id } = useParams();
@@ -22,14 +23,29 @@ const PatientDetail = () => {
   const [showAddVisit, setShowAddVisit] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const handleStatusChange = async (newStatus) => {
     setShowStatusMenu(false);
     if (newStatus === patient.status) return;
-    if (newStatus === "cancelled" && !window.confirm("Oznaczyć pacjenta jako rezygnację? Data zabiegu zostanie usunięta, a wydarzenie zniknie z Google Calendar.")) return;
+    if (newStatus === "cancelled") {
+      setShowCancelModal(true);
+      return;
+    }
     try {
       await api.put(`/patients/${id}`, { status: newStatus });
       toast.success(`Status zmieniony na: ${STATUS_LABELS[newStatus]}`);
+      loadPatient();
+    } catch (err) {
+      toast.error("Nie udało się zmienić statusu");
+    }
+  };
+
+  const handleCancelConfirm = async (reason) => {
+    setShowCancelModal(false);
+    try {
+      await api.put(`/patients/${id}`, { status: "cancelled", cancellation_reason: reason });
+      toast.success("Pacjent oznaczony jako rezygnacja");
       loadPatient();
     } catch (err) {
       toast.error("Nie udało się zmienić statusu");
@@ -220,10 +236,16 @@ const PatientDetail = () => {
               <p className="text-sm text-slate-500">Data operacji</p>
               <p className="font-medium text-slate-900">{patient.surgery_date || "-"}</p>
             </div>
-            {patient.status === "cancelled" && patient.cancelled_surgery_date && (
-              <div>
-                <p className="text-sm text-slate-500">Anulowany termin</p>
-                <p className="font-medium text-red-600 line-through" data-testid="cancelled-surgery-date">{patient.cancelled_surgery_date}</p>
+            {patient.status === "cancelled" && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-lg" data-testid="cancellation-info">
+                {patient.cancelled_surgery_date && (
+                  <>
+                    <p className="text-sm text-red-500">Anulowany termin</p>
+                    <p className="font-medium text-red-700 line-through" data-testid="cancelled-surgery-date">{patient.cancelled_surgery_date}</p>
+                  </>
+                )}
+                <p className="text-sm text-red-500 mt-1">Powód rezygnacji</p>
+                <p className="font-medium text-red-800" data-testid="cancellation-reason">{patient.cancellation_reason || "Nie podano"}</p>
               </div>
             )}
             {patient.status === "planned" && patient.surgery_date && (
@@ -369,6 +391,14 @@ const PatientDetail = () => {
           initialData={patient}
           onClose={() => setShowEditModal(false)} 
           onSuccess={() => { setShowEditModal(false); loadPatient(); }} 
+        />
+      )}
+
+      {showCancelModal && (
+        <CancelReasonModal
+          patientName={`${patient.last_name} ${patient.first_name}`}
+          onConfirm={handleCancelConfirm}
+          onClose={() => setShowCancelModal(false)}
         />
       )}
 

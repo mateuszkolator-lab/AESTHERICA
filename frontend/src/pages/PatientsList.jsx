@@ -8,6 +8,7 @@ import {
 import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS, getLocationColor, HIDDEN_BY_DEFAULT_STATUSES } from "../utils/constants";
 import AddPatientModal from "../components/modals/AddPatientModal";
+import CancelReasonModal from "../components/modals/CancelReasonModal";
 
 const PatientsList = () => {
   const [patients, setPatients] = useState([]);
@@ -25,6 +26,7 @@ const PatientsList = () => {
   const [sortOrder, setSortOrder] = useState("desc");
   const [showAddModal, setShowAddModal] = useState(false);
   const [statusChangeId, setStatusChangeId] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const navigate = useNavigate();
 
   const loadData = useCallback(async () => {
@@ -108,15 +110,26 @@ const PatientsList = () => {
   const handleStatusChange = async (patientId, newStatus, e) => {
     e.stopPropagation();
     setStatusChangeId(null);
+    if (newStatus === "cancelled") {
+      setCancelTarget(patients.find(p => p.id === patientId));
+      return;
+    }
     try {
       await api.put(`/patients/${patientId}`, { status: newStatus });
-      if (newStatus === "cancelled") {
-        toast.success("Pacjent oznaczony jako rezygnacja — usunięto z kalendarza");
-        loadData();
-        return;
-      }
       setPatients(prev => prev.map(p => p.id === patientId ? { ...p, status: newStatus } : p));
       toast.success(`Status zmieniony na: ${STATUS_LABELS[newStatus]}`);
+    } catch (err) {
+      toast.error("Nie udało się zmienić statusu");
+    }
+  };
+
+  const handleCancelConfirm = async (reason) => {
+    const target = cancelTarget;
+    setCancelTarget(null);
+    try {
+      await api.put(`/patients/${target.id}`, { status: "cancelled", cancellation_reason: reason });
+      toast.success("Pacjent oznaczony jako rezygnacja — usunięto z kalendarza");
+      loadData();
     } catch (err) {
       toast.error("Nie udało się zmienić statusu");
     }
@@ -532,6 +545,13 @@ const PatientsList = () => {
       )}
 
       {showAddModal && <AddPatientModal onClose={() => setShowAddModal(false)} onSuccess={() => { setShowAddModal(false); loadData(); }} />}
+      {cancelTarget && (
+        <CancelReasonModal
+          patientName={`${cancelTarget.last_name} ${cancelTarget.first_name}`}
+          onConfirm={handleCancelConfirm}
+          onClose={() => setCancelTarget(null)}
+        />
+      )}
     </div>
   );
 };

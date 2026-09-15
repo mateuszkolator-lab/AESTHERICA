@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
-import { API_BASE } from "../utils/api";
+import { API_BASE, SESSION_EXPIRED_KEY } from "../utils/api";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +11,13 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (sessionStorage.getItem(SESSION_EXPIRED_KEY)) {
+      sessionStorage.removeItem(SESSION_EXPIRED_KEY);
+      toast.warning("Sesja wygasła – zaloguj się ponownie", { id: "session-expired" });
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

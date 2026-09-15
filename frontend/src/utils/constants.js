@@ -11,6 +11,15 @@ export const STATUS_LABELS = {
 // Statuses hidden by default on patient list (visible when explicitly filtered)
 export const HIDDEN_BY_DEFAULT_STATUSES = ["operated", "cancelled"];
 
+export const CANCELLATION_REASONS = [
+  "Cena",
+  "Termin nie pasuje",
+  "Wybrał innego lekarza",
+  "Względy zdrowotne",
+  "Brak kontaktu",
+  "Zmiana decyzji"
+];
+
 // Presets for follow-up control intervals (per procedure type)
 export const CONTROL_PRESETS = [
   { days: 7, label: "1 tydzień" },

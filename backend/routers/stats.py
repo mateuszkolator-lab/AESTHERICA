@@ -113,9 +113,19 @@ async def get_stats(year: Optional[int] = None, location_id: Optional[str] = Non
         for item in rev_loc_data
     ]
     
+    # Cancellations grouped by reason
+    cancel_pipeline = [
+        {"$match": {**base_filter, "status": "cancelled"}},
+        {"$group": {"_id": {"$ifNull": ["$cancellation_reason", "Nie podano"]}, "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$project": {"_id": 0, "reason": "$_id", "count": 1}}
+    ]
+    cancellations_by_reason = await db.patients.aggregate(cancel_pipeline).to_list(50)
+    
     return {
         "total_patients": total,
         "by_status": by_status,
+        "cancellations_by_reason": cancellations_by_reason,
         "procedures_by_month": procedures_by_month,
         "revenue_by_month": revenue_by_month,
         "revenue_by_month_operated": revenue_by_month_operated,

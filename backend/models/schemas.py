@@ -40,6 +40,7 @@ class PatientUpdate(BaseModel):
     price: Optional[float] = None
     notes: Optional[str] = None
     asap: Optional[bool] = None
+    cancellation_reason: Optional[str] = None
 
 class VisitBase(BaseModel):
     date: str
