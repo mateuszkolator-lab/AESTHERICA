@@ -3,6 +3,7 @@ import { History, User, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import api from "../utils/api";
 
 const ACTION_LABELS = {
+  "survey_completed": "Wypełniono ankietę",
   "create": "Utworzono pacjenta",
   "update": "Zaktualizowano dane",
   "delete": "Usunięto pacjenta",

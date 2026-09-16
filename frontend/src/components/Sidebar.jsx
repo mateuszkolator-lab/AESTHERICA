@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../utils/api";
 import { 
   Users, Calendar, BarChart3, Settings, LogOut, 
-  Menu, Home, CalendarPlus, Shield, User, ClipboardCheck
+  Menu, Home, CalendarPlus, Shield, User, ClipboardCheck, ClipboardList
 } from "lucide-react";
 
 const Sidebar = ({ currentPath }) => {
@@ -30,6 +30,7 @@ const Sidebar = ({ currentPath }) => {
     { path: "/planning", icon: CalendarPlus, label: "Planowanie" },
     { path: "/calendar", icon: Calendar, label: "Kalendarz" },
     { path: "/controls", icon: ClipboardCheck, label: "Kontrole" },
+    { path: "/surveys", icon: ClipboardList, label: "Ankiety" },
     { path: "/stats", icon: BarChart3, label: "Statystyki", adminOnly: true },
     { path: "/settings", icon: Settings, label: "Ustawienia" },
   ];
@@ -63,7 +64,7 @@ const Sidebar = ({ currentPath }) => {
               <button
                 onClick={() => navigate(item.path)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  currentPath === item.path 
+                  currentPath === item.path || (item.path !== "/" && currentPath.startsWith(item.path + "/"))
                     ? item.adminOnly ? 'bg-purple-50 text-purple-700' : 'bg-teal-50 text-teal-700'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}

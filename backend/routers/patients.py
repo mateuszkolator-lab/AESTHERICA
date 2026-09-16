@@ -180,6 +180,10 @@ async def create_patient(patient: PatientCreate, user: dict = Depends(get_auth))
     
     await db.patients.insert_one(patient_dict)
     
+    if patient_dict.get("survey_template_ids"):
+        from routers.surveys import _sync_patient_assignments
+        await _sync_patient_assignments(db, patient_dict["id"], patient_dict["survey_template_ids"])
+    
     # Log creation
     await log_patient_change(
         patient_id=patient_dict["id"],
@@ -267,7 +271,8 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
         "deposit": "Zaliczka",
         "notes": "Notatki",
         "asap": "ASAP",
-        "cancellation_reason": "Powód rezygnacji"
+        "cancellation_reason": "Powód rezygnacji",
+        "survey_template_ids": "Ankiety"
     }
     
     for key, new_value in update_data.items():
@@ -281,6 +286,10 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
     result = await db.patients.update_one({"id": patient_id}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Patient not found")
+    
+    if "survey_template_ids" in update_data and update_data["survey_template_ids"] is not None:
+        from routers.surveys import _sync_patient_assignments
+        await _sync_patient_assignments(db, patient_id, update_data["survey_template_ids"])
     
     # Log changes if any
     if changes:

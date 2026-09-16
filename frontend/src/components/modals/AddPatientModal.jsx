@@ -27,11 +27,13 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
     location_id: "",
     price: "",
     notes: "",
-    asap: false
+    asap: false,
+    survey_template_ids: []
   });
   const [preferredDates, setPreferredDates] = useState(initPreferredDates(initialData));
   const [locations, setLocations] = useState([]);
   const [procedureTypes, setProcedureTypes] = useState([]);
+  const [surveyTemplates, setSurveyTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
@@ -43,15 +45,22 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
 
   const loadData = async () => {
     try {
-      const [locRes, ptRes] = await Promise.all([
+      const [locRes, ptRes, svRes] = await Promise.all([
         api.get("/locations"),
-        api.get("/procedure-types")
+        api.get("/procedure-types"),
+        api.get("/surveys/templates")
       ]);
       setLocations(locRes.data);
       setProcedureTypes(ptRes.data);
+      setSurveyTemplates(svRes.data);
     } catch (err) {
       toast.error("Nie udało się załadować danych");
     }
+  };
+
+  const toggleSurvey = (tid) => {
+    const cur = formData.survey_template_ids || [];
+    setFormData({ ...formData, survey_template_ids: cur.includes(tid) ? cur.filter(x => x !== tid) : [...cur, tid] });
   };
 
   const handleProcedureTypeChange = (value) => {
@@ -162,6 +171,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       } else {
         delete data.cancellation_reason;
       }
+      if (!Array.isArray(data.survey_template_ids)) data.survey_template_ids = [];
       // Strip server-side fields that aren't part of the update schema
       ["visits", "photos", "google_event_id", "google_calendar_event_id", "created_at", "updated_at", "id",
        "cancelled_at", "cancelled_surgery_date", "surgery_confirmed_by", "surgery_confirmed_at", "confirmed",
@@ -482,6 +492,28 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                     </p>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Ankiety do wypełnienia przez pacjenta (PROMs)</label>
+                {surveyTemplates.length === 0 ? (
+                  <p className="text-xs text-slate-400">Brak aktywnych ankiet – dodaj je w zakładce Ankiety</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" data-testid="survey-templates-picker">
+                    {surveyTemplates.map((t) => {
+                      const on = (formData.survey_template_ids || []).includes(t.id);
+                      return (
+                        <label key={t.id} className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${on ? "bg-teal-50 border-teal-300" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                          <input type="checkbox" checked={on} onChange={() => toggleSurvey(t.id)} className="mt-0.5 w-4 h-4 text-teal-600 border-slate-300 rounded" data-testid={`survey-checkbox-${t.id}`} />
+                          <span className="min-w-0">
+                            <span className="block text-sm font-medium text-slate-800">{t.code ? `${t.code} – ` : ""}{t.name.replace(/^[A-Z\-]+ – /, "")}</span>
+                            <span className="block text-[11px] text-slate-500">{(t.timepoints || []).map(tp => tp.label).join(" · ")}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>

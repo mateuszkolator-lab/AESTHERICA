@@ -33,8 +33,8 @@ async def log_patient_change(
     db = get_db()
     
     # Get user name from database
-    user_data = await db.users.find_one({"id": user.get("user_id")})
-    user_name = f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}" if user_data else "Nieznany"
+    user_data = await db.users.find_one({"id": user.get("user_id")}) if user.get("user_id") else None
+    user_name = user.get("user_name") or (f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}" if user_data else "Nieznany")
     
     log_entry = {
         "id": f"audit-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}",

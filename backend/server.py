@@ -20,6 +20,7 @@ from routers.users import router as users_router
 from routers.audit import router as audit_router
 from routers.controls import router as controls_router
 from routers.backup import router as backup_router, backup_scheduler
+from routers.surveys import router as surveys_router, seed_survey_templates
 import asyncio
 
 # Import database
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
     # Startup
     await init_default_admin()
     await migrate_users_location_fields()
+    await seed_survey_templates()
     scheduler_task = asyncio.create_task(backup_scheduler())
     yield
     # Shutdown
@@ -59,6 +61,7 @@ api_router.include_router(rhinoplanner_router)
 api_router.include_router(audit_router)
 api_router.include_router(controls_router)
 api_router.include_router(backup_router)
+api_router.include_router(surveys_router)
 
 # Mount API router under /api prefix
 app.mount("/api", api_router)

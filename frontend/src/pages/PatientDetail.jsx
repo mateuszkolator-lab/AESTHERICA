@@ -12,6 +12,7 @@ import { AddVisitModal, VisitCard } from "../components/patients/VisitComponents
 import PhotoCompareModal from "../components/modals/PhotoCompareModal";
 import PatientAuditLog from "../components/PatientAuditLog";
 import CancelReasonModal from "../components/modals/CancelReasonModal";
+import PatientSurveysCard from "../components/surveys/PatientSurveysCard";
 
 const PatientDetail = () => {
   const { id } = useParams();
@@ -336,6 +337,9 @@ const PatientDetail = () => {
             <p className="text-slate-600 whitespace-pre-wrap">{patient.notes}</p>
           </div>
         )}
+
+        {/* Ankiety PROMs */}
+        <PatientSurveysCard patientId={patient.id} />
 
         {/* Quick Photo Summary */}
         {combinedPhotos.length > 0 && (

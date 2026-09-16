@@ -17,6 +17,9 @@ import SettingsPage from "./pages/SettingsPage";
 import RhinoPlannerPage from "./pages/RhinoPlannerPage";
 import UsersPage from "./pages/UsersPage";
 import ControlsPage from "./pages/ControlsPage";
+import SurveysPage from "./pages/SurveysPage";
+import SurveyBuilderPage from "./pages/SurveyBuilderPage";
+import SurveyFillPage from "./pages/SurveyFillPage";
 
 // Layout component with sidebar
 const AppLayout = ({ children }) => {
@@ -54,6 +57,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPageWrapper />} />
+          <Route path="/ankieta/:token" element={<SurveyFillPage />} />
+          <Route path="/surveys" element={<ProtectedRoute><SurveysPage /></ProtectedRoute>} />
+          <Route path="/surveys/builder" element={<ProtectedRoute><SurveyBuilderPage /></ProtectedRoute>} />
+          <Route path="/surveys/builder/:id" element={<ProtectedRoute><SurveyBuilderPage /></ProtectedRoute>} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/patients" element={<ProtectedRoute><PatientsList /></ProtectedRoute>} />
           <Route path="/patients/:id" element={<ProtectedRoute><PatientDetail /></ProtectedRoute>} />
