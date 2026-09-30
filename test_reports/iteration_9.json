@@ -1,0 +1,27 @@
+{
+  "summary": "E2E for 3 items on AestheticaMD: (1) Patients-list filter persistence via sessionStorage['patients_list_filters']; (2) Inline status change sync between /patients row and /patients/:id detail; (3) NEW bulk survey export /surveys → Wyniki → bulk-export-modal → POST /api/surveys/export-bulk. ALL PASS. Backend pytest 3/3 (test_export_bulk.py). Frontend flows all green: filter persistence via back-button + browser Back; cleared filters stay cleared; sidebar logout clears sessionStorage['patients_list_filters'] and search resets to '' with hidden-statuses-hint visible on re-login; inline status change list→detail (thinking → 'Zastanawia się' on detail-status-badge) and detail→list (awaiting → 'Oczekujący' on row badge, list reloads on mount); Bulk modal shows 3 template chips (NOSE/ROE/SCHNOS) all selected by default, ROE deselect + timepoint 'pre' + status 'planned' → confirm triggered .xlsx download (filename ankiety_zbiorczo_YYYYMMDD_HHMM.xlsx). Backend export-bulk: 200 xlsx with sheets Podsumowanie + NOSE + ROE + SCHNOS; Podsumowanie header exactly [Nazwisko, Imię, Status, Placówka, Zabieg, Data zabiegu, …]; patient_ids restricted to 'Ankieta Anna' → exactly 1 data row with matching last_name. Regression: /surveys templates tab still lists all 3 presets.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "PatientsList filters area", "issues": ["Minor race: the results-counter briefly shows 'Wyświetlono: 0 z 0' immediately after navigating back via back-button because loadData() is still in flight (patients state is empty for a tick). State itself (search, sort_by, sort_order, chip) is correctly restored from sessionStorage. Cosmetic only — could be masked by rendering counter only when !loading."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_export_bulk.py", "/app/test_reports/pytest/bulk_export.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PatientsList.jsx: FILTERS_KEY persistence effect writes on every change — clean. Restored via loadSavedFilters() at useState init — good; no flicker. Consider gating results-counter behind !loading to avoid the transient '0 z 0' after back-nav.",
+    "AuthContext.logout(): correctly clears 'patients_list_filters' and 'surgery_confirm_*' keys from sessionStorage — verified.",
+    "BulkExportModal.jsx: templates default-selected; timepoints union recomputes as templates toggle; export uses responseType:'blob' + filename parsed from Content-Disposition — solid. Minor: when no templates selected, handleExport toasts and stops before request — good UX.",
+    "surveys.py export_bulk: correct location filter propagation via get_patient_location_filter for RBAC; sheet titles truncated to 30 chars (Excel limit); Podsumowanie header order matches spec. Sub-scales expanded per timepoint per template."
+  ],
+  "updated_files": ["/app/backend/tests/test_export_bulk.py (new)"],
+  "success_rate": {"backend": "100% (3/3 pytest + curl-verified xlsx contents)", "frontend": "100% (persistence, browser-back, cleared, logout-clears, status list↔detail, bulk export download)"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123! works.",
+  "seed_data_creation": "Created 1 test patient via API for status-sync flow (id df713bf0-…), deleted at end of that script. Also test patients from backend pytest (TEST_ prefixed) created & deleted in same test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Filter persistence key is sessionStorage['patients_list_filters'] (fields: searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, sortBy, sortOrder). Logout drops it. On login, /dashboard opens a 'Czy zabiegi się odbyły?' modal — dismiss via 'Przypomnij później' before other UI interactions. Bulk export download filename pattern: ankiety_zbiorczo_YYYYMMDD_HHMM.xlsx. Preset codes: NOSE, ROE, SCHNOS (3 templates).",
+  "rca of the issue": "N/A — no bugs found in the requested features."
+}

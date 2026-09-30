@@ -395,7 +395,7 @@ const PatientsList = () => {
             )}
           </div>
           <div className="text-sm font-medium text-slate-600" data-testid="results-counter">
-            Wyświetlono: <span className="text-teal-700">{filteredPatients.length}</span> z {patients.length}
+            {loading ? "Ładowanie..." : <>Wyświetlono: <span className="text-teal-700">{filteredPatients.length}</span> z {patients.length}</>}
           </div>
         </div>
       </div>
