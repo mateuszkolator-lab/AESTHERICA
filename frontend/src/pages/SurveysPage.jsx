@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ClipboardList, Plus, Edit, Copy, Trash2, FileSpreadsheet, Eye, BarChart3, Layers } from "lucide-react";
+import { ClipboardList, Plus, Edit, Copy, Trash2, FileSpreadsheet, Eye, BarChart3, Layers, Users } from "lucide-react";
 import api from "../utils/api";
 import SurveyResultModal from "../components/surveys/SurveyResultModal";
+import BulkExportModal from "../components/surveys/BulkExportModal";
 
 const saveBlob = (blob, filename) => {
   const url = window.URL.createObjectURL(blob);
@@ -68,6 +69,7 @@ const ResultsTab = ({ templates }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [viewId, setViewId] = useState(null);
+  const [showBulk, setShowBulk] = useState(false);
   const navigate = useNavigate();
   const template = templates.find(t => t.id === templateId);
 
@@ -113,7 +115,10 @@ const ResultsTab = ({ templates }) => {
           {tps.map(tp => <option key={tp.key} value={tp.key}>{tp.label}</option>)}
         </select>
         <span className="text-sm text-slate-500">{rows.length} odpowiedzi</span>
-        <button onClick={handleExport} disabled={!templateId} className="ml-auto flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50" data-testid="export-results-button">
+        <button onClick={() => setShowBulk(true)} className="ml-auto flex items-center gap-2 border border-emerald-600 text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-lg font-medium" data-testid="bulk-export-button">
+          <Users className="w-4 h-4" /> Eksport zbiorczy (grupa pacjentów)
+        </button>
+        <button onClick={handleExport} disabled={!templateId} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50" data-testid="export-results-button">
           <FileSpreadsheet className="w-4 h-4" /> Eksport do Excela
         </button>
       </div>
@@ -163,6 +168,7 @@ const ResultsTab = ({ templates }) => {
         </div>
       )}
       {viewId && <SurveyResultModal assignmentId={viewId} onClose={() => setViewId(null)} />}
+      {showBulk && <BulkExportModal templates={templates} onClose={() => setShowBulk(false)} />}
     </div>
   );
 };

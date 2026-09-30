@@ -388,6 +388,133 @@ async def results_summary(user: dict = Depends(get_auth)):
         out.setdefault(r["_id"]["t"], {"pending": 0, "completed": 0})[r["_id"]["s"]] = r["n"]
     return out
 
+class BulkExport(BaseModel):
+    template_ids: List[str] = []
+    timepoints: List[str] = []
+    location_id: Optional[str] = None
+    procedure_type: Optional[str] = None
+    surgery_from: Optional[str] = None
+    surgery_to: Optional[str] = None
+    statuses: List[str] = []
+    patient_ids: List[str] = []
+
+def _answer_label(q: dict, v):
+    if q.get("type") in ("scale", "single", "yesno") and q.get("options"):
+        opt = next((o for o in q["options"] if str(o.get("value")) == str(v)), None)
+        return f"{v} – {opt.get('label')}" if opt and opt.get("label") else v
+    if isinstance(v, list):
+        return ", ".join(map(str, v))
+    return v
+
+def _bold(ws, row, ncols):
+    for c in range(1, ncols + 1):
+        ws.cell(row=row, column=c).font = openpyxl.styles.Font(bold=True)
+
+@router.post("/export-bulk")
+async def export_bulk(f: BulkExport, user: dict = Depends(get_auth)):
+    """Export several surveys for a filtered group of patients: summary sheet + one sheet per survey."""
+    db = get_db()
+    # Patient group
+    pq = {}
+    loc_filter = get_patient_location_filter(user)
+    if loc_filter:
+        pq = {"$and": [pq, loc_filter]} if pq else dict(loc_filter)
+    if f.location_id:
+        pq["location_id"] = f.location_id
+    if f.procedure_type:
+        pq["procedure_type"] = f.procedure_type
+    if f.statuses:
+        pq["status"] = {"$in": f.statuses}
+    if f.surgery_from or f.surgery_to:
+        rng = {}
+        if f.surgery_from:
+            rng["$gte"] = f.surgery_from
+        if f.surgery_to:
+            rng["$lte"] = f.surgery_to
+        pq["surgery_date"] = rng
+    if f.patient_ids:
+        pq["id"] = {"$in": f.patient_ids}
+    patients = await db.patients.find(pq, {"_id": 0, "visits": 0}).sort("last_name", 1).to_list(5000)
+    pids = [p["id"] for p in patients]
+    pmap = {p["id"]: p for p in patients}
+
+    tq = {"active": {"$ne": False}} if not f.template_ids else {"id": {"$in": f.template_ids}}
+    templates = await db.survey_templates.find(tq, {"_id": 0}).sort("name", 1).to_list(100)
+    locations = {l["id"]: l["name"] for l in await db.locations.find({}, {"_id": 0}).to_list(100)}
+
+    aq = {"patient_id": {"$in": pids}, "template_id": {"$in": [t["id"] for t in templates]}}
+    if f.timepoints:
+        aq["timepoint_key"] = {"$in": f.timepoints}
+    assignments = await db.survey_assignments.find(aq, {"_id": 0}).to_list(20000)
+    by_key = {(a["patient_id"], a["template_id"], a["timepoint_key"]): a for a in assignments}
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Podsumowanie"
+    head = ["Nazwisko", "Imię", "Status", "Placówka", "Zabieg", "Data zabiegu"]
+    cols = []
+    for t in templates:
+        for tp in t.get("timepoints", []):
+            if f.timepoints and tp["key"] not in f.timepoints:
+                continue
+            cols.append((t, tp))
+            head.append(f"{t.get('code') or t['name']} – {tp['label']}")
+            for s in (t.get("scoring") or {}).get("subscales") or []:
+                head.append(f"{t.get('code') or t['name']} – {tp['label']} – {s.get('label') or s.get('key')}")
+    for c, h in enumerate(head, 1):
+        ws.cell(row=1, column=c, value=h)
+    _bold(ws, 1, len(head))
+    status_pl = {"consultation": "Konsultacja", "planned": "Zaplanowany", "awaiting": "Oczekujący", "thinking": "Zastanawia się", "operated": "Zoperowany", "cancelled": "Rezygnacja"}
+    r = 2
+    for p in patients:
+        row = [p.get("last_name"), p.get("first_name"), status_pl.get(p.get("status"), p.get("status")),
+               locations.get(p.get("location_id"), ""), p.get("procedure_type"), p.get("surgery_date")]
+        for t, tp in cols:
+            a = by_key.get((p["id"], t["id"], tp["key"]))
+            sc = (a or {}).get("score") or {}
+            row.append((sc.get("total") or {}).get("value") if a and a.get("status") == "completed" else ("oczekuje" if a else None))
+            for s in (t.get("scoring") or {}).get("subscales") or []:
+                k = s.get("key") or s.get("label")
+                row.append(((sc.get("subscales") or {}).get(k) or {}).get("value") if a and a.get("status") == "completed" else None)
+        for c, v in enumerate(row, 1):
+            ws.cell(row=r, column=c, value=v)
+        r += 1
+    for c in range(1, len(head) + 1):
+        ws.column_dimensions[get_column_letter(c)].width = 20
+
+    # Detail sheet per template
+    for t in templates:
+        wsd = wb.create_sheet(title=(t.get("code") or t["name"])[:30])
+        qs = t.get("questions", [])
+        sub_keys = [s.get("key") or s.get("label") for s in (t.get("scoring") or {}).get("subscales") or []]
+        h = ["Nazwisko", "Imię", "Placówka", "Zabieg", "Data zabiegu", "Moment", "Data wypełnienia", "Wynik", "Max"] + sub_keys + \
+            [f"P{i+1}: {q.get('text','')[:60]}" for i, q in enumerate(qs)]
+        for c, v in enumerate(h, 1):
+            wsd.cell(row=1, column=c, value=v)
+        _bold(wsd, 1, len(h))
+        rr = 2
+        for a in sorted([a for a in assignments if a["template_id"] == t["id"] and a.get("status") == "completed"],
+                        key=lambda a: (pmap[a["patient_id"]].get("last_name", ""), a["timepoint_key"])):
+            p = pmap[a["patient_id"]]
+            sc = a.get("score") or {}
+            vals = [p.get("last_name"), p.get("first_name"), locations.get(p.get("location_id"), ""), p.get("procedure_type"), p.get("surgery_date"),
+                    a.get("timepoint_label"), (a.get("completed_at") or "")[:16].replace("T", " "),
+                    (sc.get("total") or {}).get("value"), (sc.get("total") or {}).get("max")]
+            vals += [((sc.get("subscales") or {}).get(k) or {}).get("value") for k in sub_keys]
+            vals += [_answer_label(q, (a.get("answers") or {}).get(q["id"])) for q in qs]
+            for c, v in enumerate(vals, 1):
+                wsd.cell(row=rr, column=c, value=v)
+            rr += 1
+        for c in range(1, len(h) + 1):
+            wsd.column_dimensions[get_column_letter(c)].width = 18
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    fname = f"ankiety_zbiorczo_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                             headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+
 @router.get("/export")
 async def export_results(template_id: str, user: dict = Depends(get_auth)):
     db = get_db()

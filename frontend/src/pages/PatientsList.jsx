@@ -10,20 +10,30 @@ import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS, getLoc
 import AddPatientModal from "../components/modals/AddPatientModal";
 import CancelReasonModal from "../components/modals/CancelReasonModal";
 
+const FILTERS_KEY = "patients_list_filters";
+const loadSavedFilters = () => {
+  try { return JSON.parse(sessionStorage.getItem(FILTERS_KEY)) || {}; } catch { return {}; }
+};
+
 const PatientsList = () => {
+  const saved = loadSavedFilters();
   const [patients, setPatients] = useState([]);
   const [locations, setLocations] = useState([]);
   const [procedureTypes, setProcedureTypes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilters, setStatusFilters] = useState([]);
-  const [procedureFilters, setProcedureFilters] = useState([]);
-  const [locationFilter, setLocationFilter] = useState("");
-  const [asapFilter, setAsapFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(saved.searchQuery || "");
+  const [statusFilters, setStatusFilters] = useState(saved.statusFilters || []);
+  const [procedureFilters, setProcedureFilters] = useState(saved.procedureFilters || []);
+  const [locationFilter, setLocationFilter] = useState(saved.locationFilter || "");
+  const [asapFilter, setAsapFilter] = useState(saved.asapFilter || false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
-  const [sortBy, setSortBy] = useState("created_at");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortBy, setSortBy] = useState(saved.sortBy || "created_at");
+  const [sortOrder, setSortOrder] = useState(saved.sortOrder || "desc");
+
+  useEffect(() => {
+    sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, sortBy, sortOrder }));
+  }, [searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, sortBy, sortOrder]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [statusChangeId, setStatusChangeId] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);

@@ -1,0 +1,31 @@
+{
+  "summary": "Full E2E for new Ankiety/PROMs module (AestheticaMD). Backend was pre-verified by main agent; this run focused on frontend flows + integration and re-verified critical API contracts. All target flows PASS: (1) /surveys lists 3 seeded presets NOSE/ROE/SCHNOS; (2) Builder create 'Test PROM' with 2 questions (scale + text), multiplier=25, scale-to-100 off → preview-score-result shows 'Wynik: 100 / 100'; save → URL becomes /surveys/builder/<id>, template appears in list, edit persistence OK; (3) Patient 'Ankieta Testowa' created via AddPatientModal with NOSE + TST checked, location Pro-Familia, surgery_date 2026-11-01 (status auto-promoted to 'planned'). survey_template_ids saved on patient (verified via GET /api/patients). Assignment sync produced 5 pending assignments (NOSE×3 + TST×2), patient-surveys-card shows groups 'NOSE' and 'TST' with progress badge 0/5; (4) QR modal opens with QRCode SVG + survey-link-text containing /ankieta/<token>; close works; (5) Public fill page /ankieta/<token>?mode=tablet loads at 390px viewport WITHOUT any auth token in localStorage (fresh browser context) — survey-fill-page renders; submit with no answers is blocked; answering all 5 NOSE questions with value=2 and submitting shows survey-thank-you; reload → thank-you (already completed); POST resubmit via API → 409; (6) Patient row for NOSE 'Przed zabiegiem' shows 'wynik 50/100'; survey-view opens SurveyResultModal with survey-result-total '50 / 100'; survey-reset (native confirm auto-accepted) archives history (history length=1) and creates fresh token; (7) Edit patient → uncheck TST → save → TST pending assignments removed (GET returns 0 TST entries), NOSE preserved; (8) Results tab: selecting NOSE in results-template-select shows result rows (existing 'Ankieta Anna' patient's NOSE pre completion visible); GET /api/surveys/export?template_id=<NOSE> returns 200 with Content-Disposition attachment filename ankieta_NOSE_YYYYMMDD.xlsx; (9) Delete Test PROM template (no completed responses left after cleanup) → 200 deleted; (10) Regression: /patients list loads (37 patients total).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global dev overlay (all pages)", "issues": ["Persistent React hydration warnings from the Emergent visual-editor wrapper injecting <span data-ve-dynamic style='display:contents'> as parent of <option>, <th>, <tr>, <tbody>, <td>. Same class of warnings noted in iterations 6 & 7 — purely cosmetic dev-time noise from tooling; does not affect functionality."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_comprehensive_api.py"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "surveys.py compute_scores: solid safe_eval whitelisting AST nodes (Add/Sub/Mult/Div/Pow/USub/UAdd + sum/min/max/abs/round/len/mean). Rejects arbitrary names/calls — good.",
+    "surveys.py _sync_patient_assignments: correctly deletes only status='pending' for unselected templates, preserving completed responses (matches the tested scenario: uncheck TST removes future/pending, keeps completed NOSE).",
+    "surveys.py public_submit: correctly enforces status!='completed' → 409, and validates required questions returning 422 {missing:[…]}. Public GET strips scoring config from template so patients never see scoring weights.",
+    "SurveyBuilderPage.jsx handleSave: strips id/created_at/updated_at/preset before PUT/POST — good. Multiplier '' vs number handled.",
+    "AddPatientModal.jsx handleSurgeryDateChange: nice UX auto-promoting consultation→planned when a surgery_date is picked (verified in test).",
+    "Minor: PatientSurveysCard uses native window.confirm for reset; Sonner modal would be more consistent with rest of the app (same comment as backup delete in iter 7).",
+    "Minor: SurveyBuilderPage timepoint delete button lacks data-testid (only the +preset buttons have `add-timepoint-<key>`). Not blocking; presets can be added/removed via targeted testids in future tests.",
+    "Minor: survey-copy-link (QR modal) copies to navigator.clipboard which may be blocked in headless — code already catches error and shows toast, fine."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (all touched endpoints returned expected status; export xlsx 200 with CD header; resubmit 409; assignments sync CRUD OK)", "frontend": "100% (all target flows passed)"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123! — works. jan.kowalski@klinika.pl seed still not present in DB (unchanged from iter 7).",
+  "seed_data_creation": "Test artefacts created and cleaned up in the same run: template 'Test PROM' (code TST) created via builder then DELETEd; patient 'Ankieta Testowa' created via AddPatientModal (id 307da4fa-…) with NOSE+TST assignments, one NOSE pre response submitted (value=2 ×5 → 50/100), then reset (history retained), then the whole patient DELETEd. Existing 'Ankieta Anna' preserved.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Ankiety module is stable end-to-end. Preset survey ids on this env: NOSE=6a1f029b-308d-4111-a142-4bc4bc957742. Locations: Pro-Familia=05d9b792-07f3-43f4-ace2-89d4ec9cc57d, Medicus=589030c5-d58e-4ef7-a262-cd2b672bb4c8. Public fill route is /ankieta/:token (no auth). When creating patients via UI, be aware AddPatientModal auto-promotes status consultation→planned when surgery_date is set. window.confirm is used for reset & 'no location' warning — register page.on('dialog', accept) BEFORE clicking. Location <select> is a controlled React component; page.select_option works when the modal (and thus <option> list from /api/locations) is fully loaded — wait for [data-testid='survey-templates-picker'] to ensure loadData() completed.",
+  "rca of the issue": "N/A — no bugs found in the tested feature. Only note is a first-run flake: when the modal's location <select> was clicked before /api/locations resolved, page.select_option silently no-op'd; solved by waiting for survey-templates-picker (shared loadData Promise.all) before selecting."
+}
