@@ -1,0 +1,29 @@
+{
+  "summary": "E2E for AestheticaMD two-way Google Calendar sync refactor (routers/calendar.py + patients.py + surgery_slots.py + SettingsPage.jsx). Google Calendar is NOT connected in preview, so a FakeService (events/calendarList) is monkeypatched into routers.calendar.get_calendar_service for all push/pull tests; the 'no mock / real preview' scenario is also covered. Backend pytest 9/9 PASS (test_calendar_sync.py). Frontend verified: /settings renders 'Nie połączono' with connect-google-button and NO sync-all-button; after injecting a settings doc {key:'google_calendar_sync', last_error:'TEST_INJECTED_ERROR'} directly in Mongo, gcal-sync-info + gcal-last-error render the error text correctly; patients page and dashboard still load fine (regression).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_calendar_sync.py",
+    "/app/test_reports/pytest/calendar_sync.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "upsert_patient_event correctly short-circuits for cancelled / missing date / missing calendar before any Google call; stores google_event_id + google_calendar_id + google_synced_at. On location change it deletes the event from the previous calendar before re-inserting on the new one. Summary format matches spec ('<Last> <First> - <procedure>', 'P/ ' prefix when confirmed). ExtendedProperties.private.aesthetica_patient_id is set.",
+    "pull_from_google: date-change path updates patient.surgery_date + writes audit log 'Termin zmieniony w Google Calendar'; cancellation path clears date, sets status planned→awaiting, unsets google_event_id/google_calendar_id and logs 'Wydarzenie usunięte w Google Calendar'. Pagination via nextPageToken verified; unknown event ids ignored.",
+    "sync-all response contains all required keys (synced,total,errors,pulled_moved,pulled_removed,orphans_removed,moved,removed,error_messages); last_sync.at persisted to settings. /pull works. /status returns connected=true with mock, and connected=false + error text when calendarList raises, and last_error is persisted in settings.",
+    "Helper integration verified end-to-end via httpx AsyncClient against the FastAPI app (same event loop as motor): PUT /api/patients/{id} with new surgery_date triggers insert/update; PUT with surgery_date=null triggers delete; PUT status='cancelled' triggers delete; POST /api/surgery-slots/{id}/assign/{pid} triggers upsert; /unassign triggers delete.",
+    "Regression (no mock, no Google creds): POST /api/calendar/sync-all returns 400 'Google Calendar nie jest połączony'; GET /api/calendar/status returns connected=false (no 500). Patient create/update/delete still works. Frontend /settings, /patients, / dashboard load without errors.",
+    "Minor nit (not blocking): server-side hydration warnings in console for <select>/<option> wrapping (ve-dynamic spans) on Dashboard — pre-existing, unrelated to this review.",
+    "Minor nit: build_calendar_event is used both from upsert_patient_event (shared helper) and from routers/patients.py::toggle_confirm (which bypasses upsert_patient_event to directly call service.events().update). This duplicates logic; consider routing confirm-toggle through upsert_patient_event so prefix/location-change handling stays in one place."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_calendar_sync.py (new, 9 pytest tests, uses httpx.ASGITransport + monkeypatch)"
+  ],
+  "success_rate": {"backend": "100% (9/9 pytest)", "frontend": "100% (settings not-connected state, gcal-last-error rendering with injected settings doc, dashboard + patients regression)"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123! works. User jan.kowalski@klinika.pl / haslo123 also exists per /app/memory/test_credentials.md.",
+  "seed_data_creation": "Each pytest run creates one TEST_ patient + two TEST_ locations (calA/calB google_calendar_id) and one TEST_ surgery slot; all deleted in fixture teardown. For the UI gcal-last-error check, a settings doc {key:'google_calendar_sync', last_error:'TEST_INJECTED_ERROR'} was inserted and REMOVED after verification. No pre-existing data touched.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests MUST be run with REACT_APP_BACKEND_URL exported in the shell env (otherwise 7 of 9 tests skip). Run: `cd /app/backend && REACT_APP_BACKEND_URL=https://clinic-scheduler-pro-1.preview.emergentagent.com python -m pytest tests/test_calendar_sync.py -v`. Key: motor's AsyncIOMotorClient is bound to the loop that first awaits it, so DO NOT use fastapi.testclient.TestClient against this app in-process (it spawns a BlockingPortal on a different loop → 'Future attached to a different loop'). Instead use httpx.ASGITransport + AsyncClient driven by the same event_loop fixture — see test_calendar_sync.py::client fixture. For direct DB seeding/cleanup outside the app, remember to load_dotenv() first — the shell shim does NOT auto-export backend/.env, so DB_NAME would default to 'aesthetica_md' instead of the real 'test_database'. The SurgeryConfirmModal pops after admin login; dismiss via [data-testid=surgery-confirm-later].",
+  "rca of the issue": "N/A — review refactor behaves as specified; all 6 feature items in the request verified green."
+}
