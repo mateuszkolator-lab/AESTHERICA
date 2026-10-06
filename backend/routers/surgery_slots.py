@@ -260,23 +260,13 @@ async def assign_patient(slot_id: str, patient_id: str, user: dict = Depends(get
     # Auto-sync to Google Calendar if location has a calendar configured
     if new_location_id:
         try:
-            location = await db.locations.find_one({"id": new_location_id})
-            if location and location.get("google_calendar_id"):
-                from routers.calendar import get_calendar_service, build_calendar_event
-                service = await get_calendar_service()
-                if service:
-                    event_body = build_calendar_event(patient, slot["date"], location.get('name', ''))
-                    existing_event_id = patient.get('google_event_id')
-                    if existing_event_id:
-                        try:
-                            event = service.events().update(calendarId=location['google_calendar_id'], eventId=existing_event_id, body=event_body).execute()
-                        except Exception:
-                            event = service.events().insert(calendarId=location['google_calendar_id'], body=event_body).execute()
-                    else:
-                        event = service.events().insert(calendarId=location['google_calendar_id'], body=event_body).execute()
-                    await db.patients.update_one({"id": patient_id}, {"$set": {"google_event_id": event['id']}})
+            from routers.calendar import upsert_patient_event
+            fresh = await db.patients.find_one({"id": patient_id}, {"_id": 0})
+            await upsert_patient_event(db, fresh)
         except Exception as e:
             print(f"Auto-sync to Google Calendar failed: {e}")
+            from routers.calendar import record_sync_error
+            await record_sync_error(f"Auto-sync po przypisaniu terminu ({patient.get('last_name')}): {str(e)[:200]}")
     
     return {"message": "Patient assigned to slot successfully"}
 
@@ -300,15 +290,10 @@ async def unassign_patient(slot_id: str, user: dict = Depends(get_auth)):
         )
         
         # Remove from Google Calendar if synced
-        if patient and patient.get("google_event_id") and patient.get("location_id"):
+        if patient and patient.get("google_event_id"):
             try:
-                location = await db.locations.find_one({"id": patient["location_id"]})
-                if location and location.get("google_calendar_id"):
-                    from routers.calendar import get_calendar_service
-                    service = await get_calendar_service()
-                    if service:
-                        service.events().delete(calendarId=location['google_calendar_id'], eventId=patient['google_event_id']).execute()
-                        await db.patients.update_one({"id": patient_id}, {"$unset": {"google_event_id": ""}})
+                from routers.calendar import delete_patient_event
+                await delete_patient_event(db, patient)
             except Exception as e:
                 print(f"Auto-remove from Google Calendar failed: {e}")
     

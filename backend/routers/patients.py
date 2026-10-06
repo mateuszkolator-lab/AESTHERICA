@@ -33,18 +33,11 @@ class SurgeryOutcome(BaseModel):
 
 async def delete_google_event(db, patient: dict):
     """Remove patient's Google Calendar event (best-effort)."""
-    if not patient.get("google_event_id") or not patient.get("location_id"):
-        return
+    from routers.calendar import delete_patient_event
     try:
-        location = await db.locations.find_one({"id": patient["location_id"]})
-        if location and location.get("google_calendar_id"):
-            from routers.calendar import get_calendar_service
-            service = await get_calendar_service()
-            if service:
-                service.events().delete(calendarId=location["google_calendar_id"], eventId=patient["google_event_id"]).execute()
+        await delete_patient_event(db, patient)
     except Exception as e:
         print(f"Google Calendar event delete failed: {e}")
-    await db.patients.update_one({"id": patient["id"]}, {"$unset": {"google_event_id": ""}})
 
 @router.get("/pending-surgery-confirmations")
 async def get_pending_surgery_confirmations(user: dict = Depends(get_auth)):
@@ -195,16 +188,12 @@ async def create_patient(patient: PatientCreate, user: dict = Depends(get_auth))
     # Auto-sync to Google Calendar if patient has surgery_date and location
     if patient_dict.get("surgery_date") and patient_dict.get("location_id"):
         try:
-            location = await db.locations.find_one({"id": patient_dict["location_id"]})
-            if location and location.get("google_calendar_id"):
-                from routers.calendar import get_calendar_service, build_calendar_event
-                service = await get_calendar_service()
-                if service:
-                    event_body = build_calendar_event(patient_dict, patient_dict["surgery_date"], location.get("name", ""))
-                    event = service.events().insert(calendarId=location["google_calendar_id"], body=event_body).execute()
-                    await db.patients.update_one({"id": patient_dict["id"]}, {"$set": {"google_event_id": event["id"]}})
+            from routers.calendar import upsert_patient_event
+            await upsert_patient_event(db, patient_dict)
         except Exception as e:
             print(f"Auto-sync new patient to Google Calendar failed: {e}")
+            from routers.calendar import record_sync_error
+            await record_sync_error(f"Auto-sync nowego pacjenta {patient_dict.get('last_name')}: {str(e)[:200]}")
     
     return {"id": patient_dict["id"], "message": "Patient created successfully"}
 
@@ -323,26 +312,14 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
         if date_cleared and old_patient.get("google_event_id"):
             await delete_google_event(db, old_patient)
         elif surgery_date and location_id:
-            # Create or update event
             try:
-                location = await db.locations.find_one({"id": location_id})
-                if location and location.get("google_calendar_id"):
-                    from routers.calendar import get_calendar_service, build_calendar_event
-                    service = await get_calendar_service()
-                    if service:
-                        merged = {**old_patient, **update_data}
-                        event_body = build_calendar_event(merged, surgery_date, location.get('name', ''))
-                        existing_event_id = old_patient.get('google_event_id')
-                        if existing_event_id:
-                            try:
-                                event = service.events().update(calendarId=location['google_calendar_id'], eventId=existing_event_id, body=event_body).execute()
-                            except Exception:
-                                event = service.events().insert(calendarId=location['google_calendar_id'], body=event_body).execute()
-                        else:
-                            event = service.events().insert(calendarId=location['google_calendar_id'], body=event_body).execute()
-                        await db.patients.update_one({"id": patient_id}, {"$set": {"google_event_id": event['id']}})
+                from routers.calendar import upsert_patient_event
+                merged = {**old_patient, **update_data}
+                await upsert_patient_event(db, merged)
             except Exception as e:
                 print(f"Auto-sync to Google Calendar failed: {e}")
+                from routers.calendar import record_sync_error
+                await record_sync_error(f"Auto-sync pacjenta {old_patient.get('last_name')}: {str(e)[:200]}")
     
     return {"message": "Patient updated successfully"}
 

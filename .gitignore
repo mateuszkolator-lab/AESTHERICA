@@ -256,3 +256,4 @@ frontend/node_modules/.cache/default-development/16.pack
 
 # Database backups
 backend/backups/
+frontend/node_modules/.cache/default-development/2.pack_

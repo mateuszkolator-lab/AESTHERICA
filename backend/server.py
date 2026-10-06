@@ -21,6 +21,7 @@ from routers.audit import router as audit_router
 from routers.controls import router as controls_router
 from routers.backup import router as backup_router, backup_scheduler
 from routers.surveys import router as surveys_router, seed_survey_templates
+from routers.calendar import calendar_pull_scheduler
 import asyncio
 
 # Import database
@@ -33,9 +34,11 @@ async def lifespan(app: FastAPI):
     await migrate_users_location_fields()
     await seed_survey_templates()
     scheduler_task = asyncio.create_task(backup_scheduler())
+    gcal_task = asyncio.create_task(calendar_pull_scheduler())
     yield
     # Shutdown
     scheduler_task.cancel()
+    gcal_task.cancel()
     get_client().close()
 
 app = FastAPI(

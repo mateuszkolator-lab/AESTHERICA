@@ -19,6 +19,7 @@ const SettingsPage = () => {
   const [editProcedure, setEditProcedure] = useState(null);
   const [calendarStatus, setCalendarStatus] = useState(null);
   const [googleCalendars, setGoogleCalendars] = useState([]);
+  const [syncingAll, setSyncingAll] = useState(false);
   const [connectingCalendar, setConnectingCalendar] = useState(false);
   const [loadingCalendars, setLoadingCalendars] = useState(false);
 
@@ -288,12 +289,29 @@ const SettingsPage = () => {
                 </p>
                 <p className={`text-sm mt-1 ${calendarStatus?.connected ? "text-emerald-700" : "text-amber-700"}`}>
                   {calendarStatus?.connected 
-                    ? "Integracja z Kalendarzem Google jest aktywna. Przypisz kalendarze do lokalizacji poniżej."
-                    : calendarStatus?.configured 
-                      ? "Kliknij przycisk poniżej, aby połączyć z kontem Google."
-                      : "Kalendarz Google nie jest skonfigurowany. Skontaktuj się z administratorem."
+                    ? "Integracja z Kalendarzem Google jest aktywna (dwukierunkowa: zmiany terminów i usunięcia w Google są pobierane automatycznie co 15 min)."
+                    : calendarStatus?.error
+                      ? calendarStatus.error
+                      : calendarStatus?.configured 
+                        ? "Kliknij przycisk poniżej, aby połączyć z kontem Google."
+                        : "Kalendarz Google nie jest skonfigurowany. Skontaktuj się z administratorem."
                   }
                 </p>
+                {(calendarStatus?.last_sync || calendarStatus?.last_error) && (
+                  <div className="mt-2 text-xs space-y-0.5" data-testid="gcal-sync-info">
+                    {calendarStatus.last_sync && (
+                      <p className="text-slate-600">
+                        Ostatnia pełna synchronizacja: {new Date(calendarStatus.last_sync.at).toLocaleString("pl-PL")} – wysłano {calendarStatus.last_sync.synced}/{calendarStatus.last_sync.total}
+                        {calendarStatus.last_sync.pulled_moved > 0 && `, przeniesiono z Google: ${calendarStatus.last_sync.pulled_moved}`}
+                        {calendarStatus.last_sync.pulled_removed > 0 && `, usunięto wg Google: ${calendarStatus.last_sync.pulled_removed}`}
+                        {calendarStatus.last_sync.errors > 0 && <span className="text-red-600">, błędy: {calendarStatus.last_sync.errors}</span>}
+                      </p>
+                    )}
+                    {calendarStatus.last_error && (
+                      <p className="text-red-600" data-testid="gcal-last-error">Ostatni błąd ({new Date(calendarStatus.last_error_at).toLocaleString("pl-PL")}): {calendarStatus.last_error}</p>
+                    )}
+                  </div>
+                )}
                 
                 {!calendarStatus?.connected && calendarStatus?.configured && (
                   <button
@@ -303,25 +321,37 @@ const SettingsPage = () => {
                     data-testid="connect-google-button"
                   >
                     <Link2 className="w-4 h-4" />
-                    {connectingCalendar ? "Przekierowywanie..." : "Połącz z Google"}
+                    {connectingCalendar ? "Przekierowywanie..." : calendarStatus?.error ? "Połącz ponownie z Google" : "Połącz z Google"}
                   </button>
                 )}
                 
                 {calendarStatus?.connected && (
                   <button
                     onClick={async () => {
+                      setSyncingAll(true);
                       try {
                         const res = await api.post("/calendar/sync-all");
-                        toast.success(`Zsynchronizowano ${res.data.synced} z ${res.data.total} pacjentów (błędy: ${res.data.errors})`);
+                        const d = res.data;
+                        const parts = [`wysłano ${d.synced}/${d.total}`];
+                        if (d.pulled_moved) parts.push(`przeniesiono z Google: ${d.pulled_moved}`);
+                        if (d.pulled_removed) parts.push(`usunięto wg Google: ${d.pulled_removed}`);
+                        if (d.errors) parts.push(`błędy: ${d.errors}`);
+                        (d.errors ? toast.warning : toast.success)(`Synchronizacja zakończona – ${parts.join(", ")}`, { duration: 6000 });
+                        if (d.error_messages?.length) toast.error(d.error_messages[0], { duration: 8000 });
+                        loadData();
                       } catch (err) {
                         toast.error(err.response?.data?.detail || "Nie udało się zsynchronizować");
+                        loadData();
+                      } finally {
+                        setSyncingAll(false);
                       }
                     }}
-                    className="mt-4 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
+                    disabled={syncingAll}
+                    className="mt-4 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
                     data-testid="sync-all-button"
                   >
-                    <Calendar className="w-4 h-4" />
-                    Synchronizuj wszystko z Google Calendar
+                    <Calendar className={`w-4 h-4 ${syncingAll ? "animate-pulse" : ""}`} />
+                    {syncingAll ? "Synchronizacja..." : "Synchronizuj wszystko (Google ⇄ aplikacja)"}
                   </button>
                 )}
               </div>
