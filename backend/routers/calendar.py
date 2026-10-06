@@ -265,6 +265,23 @@ def build_calendar_event(patient, surgery_date, location_name=""):
     }
 
 
+@router.get("/health")
+async def get_calendar_health(user: dict = Depends(get_auth)):
+    """Cheap status for the dashboard alert – no Google API call, uses data recorded by scheduler/syncs."""
+    db = get_db()
+    creds = await db.settings.find_one({"key": "google_calendar"}, {"_id": 0, "key": 1})
+    info = await db.settings.find_one({"key": "google_calendar_sync"}, {"_id": 0}) or {}
+    return {
+        "configured": get_google_client_config() is not None,
+        "has_credentials": creds is not None,
+        "health": info.get("health"),
+        "last_error": info.get("last_error"),
+        "last_error_at": info.get("last_error_at"),
+        "last_sync": info.get("last_sync"),
+        "last_pull_at": info.get("last_pull_at"),
+    }
+
+
 @router.get("/status")
 async def get_calendar_status(user: dict = Depends(get_auth)):
     """Check if Google Calendar is connected (performs a real API call)."""
@@ -285,7 +302,9 @@ async def get_calendar_status(user: dict = Depends(get_auth)):
         service.calendarList().list(maxResults=1).execute()
     except Exception as e:
         await record_sync_error(f"Połączenie z Google nie działa: {str(e)[:200]}")
+        await db.settings.update_one({"key": "google_calendar_sync"}, {"$set": {"health": {"ok": False, "at": datetime.now(timezone.utc).isoformat(), "error": str(e)[:200]}}}, upsert=True)
         return {"connected": False, "error": f"Google odrzuca połączenie: {str(e)[:160]}", **base}
+    await db.settings.update_one({"key": "google_calendar_sync"}, {"$set": {"health": {"ok": True, "at": datetime.now(timezone.utc).isoformat()}}}, upsert=True)
     return {"connected": True, **base}
 
 
@@ -549,18 +568,30 @@ async def sync_all_to_calendar(user: dict = Depends(get_auth)):
 
 
 async def calendar_pull_scheduler(interval_seconds: int = 900):
-    """Background two-way sync: periodically apply changes made in Google Calendar."""
+    """Background two-way sync + health check: periodically apply changes made in Google Calendar."""
+    delay = 15
     while True:
-        await asyncio.sleep(interval_seconds)
+        await asyncio.sleep(delay)
+        delay = interval_seconds
+        db = get_db()
+        if not await db.settings.find_one({"key": "google_calendar"}):
+            continue
+        now = datetime.now(timezone.utc).isoformat()
         try:
-            db = get_db()
-            if not await db.settings.find_one({"key": "google_calendar"}):
-                continue
             service = await get_calendar_service()
-            if service:
-                res = await pull_from_google(db, service)
-                if res["moved"] or res["removed"]:
-                    print(f"[gcal] Auto-pull: moved={len(res['moved'])} removed={len(res['removed'])}")
-                await db.settings.update_one({"key": "google_calendar_sync"}, {"$set": {"last_pull_at": datetime.now(timezone.utc).isoformat()}}, upsert=True)
+            if not service:
+                raise RuntimeError("Nie udało się uzyskać dostępu do Google Calendar (token)")
+            service.calendarList().list(maxResults=1).execute()
+            res = await pull_from_google(db, service)
+            if res["moved"] or res["removed"]:
+                print(f"[gcal] Auto-pull: moved={len(res['moved'])} removed={len(res['removed'])}")
+            await db.settings.update_one({"key": "google_calendar_sync"}, {
+                "$set": {"last_pull_at": now, "health": {"ok": res["errors"] == 0, "at": now}},
+                **({"$unset": {"last_error": "", "last_error_at": ""}} if res["errors"] == 0 else {})
+            }, upsert=True)
         except Exception as e:
-            print(f"[gcal] Auto-pull failed: {e}")
+            msg = str(e)
+            print(f"[gcal] Auto-pull failed: {msg}")
+            await db.settings.update_one({"key": "google_calendar_sync"}, {
+                "$set": {"health": {"ok": False, "at": now, "error": msg[:200]}, "last_error": f"Automatyczna synchronizacja: {msg[:200]}", "last_error_at": now}
+            }, upsert=True)

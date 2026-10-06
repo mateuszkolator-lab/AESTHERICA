@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import GlobalSearch from "./components/GlobalSearch";
 import SurgeryConfirmModal from "./components/modals/SurgeryConfirmModal";
+import CalendarSyncAlert from "./components/CalendarSyncAlert";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
@@ -28,6 +29,7 @@ const AppLayout = ({ children }) => {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar currentPath={location.pathname} />
       <main className="flex-1 overflow-auto">
+        <CalendarSyncAlert />
         <GlobalSearch />
         <SurgeryConfirmModal />
         {children}
