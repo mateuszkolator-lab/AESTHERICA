@@ -1,0 +1,25 @@
+{
+  "summary": "E2E for AestheticaMD PROMs new features: (1) Dashboard SurveyRemindersCard + GET /api/surveys/due; (2) Survey builder timepoint offsets + presets; (3) Pre/post trend chart in /surveys → Wyniki with patient chips & SCHNOS metric select. ALL PASS. Backend pytest 8/8 (test_surveys_due_offsets.py): offset migration verified for NOSE (pre=0, 90, 365) and all templates; /api/surveys/due returns 'Due Test' NOSE 3m overdue 10 days and excludes its pre+12m rows; API-created planned patient (surgery=today+5) assigned NOSE via POST /api/surveys/patients/{pid}/sync appears with pre-op row days_overdue=-5 and no post-op rows; patient with surgery=today+60 is NOT in /due; RBAC subset check for jan.kowalski (user-visible rows ⊆ admin rows, within allowed locations). UI: dashboard survey-reminders-card renders 'Test Due' in red with '10 dni po terminie', survey-overdue-count='1 zaległych', survey-due-count='1'; survey-due-copy-<id> triggers 'Link skopiowany – Test Due' toast; patient name navigates to /patients/<id> and PatientSurveysCard still works. Builder: NOSE edit shows offsets 0/90/365 for 3 timepoints; new survey add-timepoint-6m inserts offset=180, add-timepoint-custom inserts empty offset. Chart: survey-trend-chart visible with NOSE default; footer 'Przed zabiegiem: 100 (n=1)' from Ankieta Anna; chart-patient-select → chart-patient-chip-<pid> added (svg path count 2→4 confirms dashed line); chip click removes it; SCHNOS template reveals chart-metric-select with options 'Wynik całkowity / SCHNOS-O / SCHNOS-C'; results-timepoint-select hides chart on filter and 'Wszystkie momenty' restores it.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_surveys_due_offsets.py", "/app/test_reports/pytest/surveys_due.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "surveys.py /due: correct window logic — pre window 14, post window 7; pre-op suppressed after surgery_date; sorted by -days_overdue; location filter via get_patient_location_filter.",
+    "SurveyRemindersCard renders 'termin dziś'/'termin za N dni' negative-overdue copy and 'N dni po terminie' positive — spec match; styling red bg when overdue.",
+    "SurveyTrendChart: max 5 patient lines enforced in toggle(); maxY computed from first row's total.max or subscale.max — fine; connectNulls=true so a single pre-op datapoint still shows a dot. Minor: when a timepoint filter is active in ResultsTab the chart is hidden via parent gate (confirmed by UI test).",
+    "SurveyBuilderPage: timepoint-offset-{i} inputs rendered per row; presets add-timepoint-pre/1m/3m/6m/12m/custom supply correct offsets (0/30/90/180/365/empty). Save→reload persistence verified in a previous iteration; this iteration confirmed indexes stay stable while adding."
+  ],
+  "updated_files": ["/app/backend/tests/test_surveys_due_offsets.py (new)"],
+  "success_rate": {"backend": "100% (8/8 pytest incl. RBAC + planned patient create/assign/cleanup)", "frontend": "100% (dashboard reminders, copy toast, patient nav, builder offsets+presets, chart + chips + metric + timepoint hide/show)"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123! and user jan.kowalski@klinika.pl / haslo123 both work.",
+  "seed_data_creation": "Backend test fixtures create two TEST_ planned patients (today+5, today+60) with NOSE assigned via /surveys/patients/{pid}/sync; both deleted in fixture teardown. Pre-existing 'Due Test' and 'Ankieta Anna' untouched.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Assign-template endpoint is POST /api/surveys/patients/{pid}/sync with body {template_ids:[...]}. SurveyRemindersCard renders '{last_name} {first_name}' so 'Due Test' patient (first=Due,last=Test) displays as 'Test Due'. BASE_URL in tests is sourced from /app/frontend/.env (REACT_APP_BACKEND_URL) via helper in test_surveys_due_offsets.py since env isn't exported to shell. SurgeryConfirmModal pops post-login — dismiss via 'Przypomnij później' text or [data-testid=surgery-confirm-later].",
+  "rca of the issue": "N/A — no bugs found; all 5 feature items in the review request behaved as specified."
+}

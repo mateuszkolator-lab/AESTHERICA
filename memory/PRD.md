@@ -16,6 +16,8 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - Historia zmian pacjentów (Audit Log)
 
 ## Ostatnie zmiany (17.06.2026)
+- Przypomnienia ankiet: timepointy mają `offset_days` (0 = przed zabiegiem; migracja przy starcie infer_offset z klucza), GET /api/surveys/due (okno: pre 14 dni przed zabiegiem, post 7 dni przed terminem + zaległe), karta „Ankiety do wypełnienia” na pulpicie (SurveyRemindersCard)
+- Wykres przed/po: SurveyTrendChart (recharts) w zakładce Wyniki – średnia grupy + do 5 pacjentów, wybór metryki (podskale)
 - Moduł Ankiety/PROMs: routers/surveys.py (+ survey_presets.py: NOSE, ROE, SCHNOS po polsku, seed przy starcie). Kolekcje `survey_templates` (pytania, sekcje, timepointy, scoring: sum/mean, mnożnik, 0–100, podskale, formuła) i `survey_assignments` (patient×template×timepoint, token publiczny, answers, score, history). Pacjent ma `survey_template_ids` – sync przypisań przy tworzeniu/edycji
 - Strony: /surveys (Szablony + Wyniki, eksport xlsx per ankieta, eksport zbiorczy POST /api/surveys/export-bulk z filtrami grupy pacjentów), /surveys/builder/:id (kreator), /ankieta/:token (publiczne wypełnianie, mobile-first, ?mode=tablet). Karta pacjenta: PatientSurveysCard (checklista, link/QR/tablet, podgląd, reset). Formularz pacjenta: wybór ankiet
 - Lista pacjentów: filtry/sortowanie zapamiętywane w sessionStorage (patients_list_filters), czyszczone przy wylogowaniu
