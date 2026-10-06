@@ -18,7 +18,7 @@ const scaleOptions = (n, start = 0) => Array.from({ length: n }, (_, i) => ({ va
 
 const emptyTemplate = {
   name: "", code: "", description: "", instructions: "", active: true,
-  timepoints: [{ key: "pre", label: "Przed zabiegiem" }, { key: "12m", label: "12 miesięcy po zabiegu" }],
+  timepoints: [{ key: "pre", label: "Przed zabiegiem", offset_days: 0 }, { key: "12m", label: "12 miesięcy po zabiegu", offset_days: 365 }],
   sections: [], questions: [],
   scoring: { mode: "sum", multiplier: "", scale_to_100: true, formula: "", subscales: [], note: "" },
 };
@@ -190,17 +190,19 @@ export default function SurveyBuilderPage() {
           <p className="text-xs text-slate-500 mb-3">Każdy moment = osobny link/QR dla pacjenta (np. przed zabiegiem i 12 mies. po).</p>
           <div className="space-y-2">
             {t.timepoints.map((tp, i) => (
-              <div key={i} className="flex gap-2">
-                <Input value={tp.key} placeholder="klucz" onChange={(e) => { const tps = [...t.timepoints]; tps[i] = { ...tp, key: e.target.value.replace(/\s/g, "_") }; set({ timepoints: tps }); }} className="w-24" data-testid={`timepoint-key-${i}`} />
+              <div key={i} className="flex gap-2 items-center">
+                <Input value={tp.key} placeholder="klucz" onChange={(e) => { const tps = [...t.timepoints]; tps[i] = { ...tp, key: e.target.value.replace(/\s/g, "_") }; set({ timepoints: tps }); }} className="w-20" data-testid={`timepoint-key-${i}`} />
                 <Input value={tp.label} placeholder="Etykieta (np. 3 miesiące po)" onChange={(e) => { const tps = [...t.timepoints]; tps[i] = { ...tp, label: e.target.value }; set({ timepoints: tps }); }} className="flex-1" data-testid={`timepoint-label-${i}`} />
+                <Input type="number" value={tp.offset_days ?? ""} placeholder="dni" title="Dni od zabiegu (0 = przed zabiegiem) – do przypomnień na pulpicie" onChange={(e) => { const tps = [...t.timepoints]; tps[i] = { ...tp, offset_days: e.target.value === "" ? null : Number(e.target.value) }; set({ timepoints: tps }); }} className="w-20" data-testid={`timepoint-offset-${i}`} />
                 <button type="button" onClick={() => set({ timepoints: t.timepoints.filter((_, j) => j !== i) })} className="p-2 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
               </div>
             ))}
+            <p className="text-[11px] text-slate-400">Kolumna „dni” = liczba dni od zabiegu, po której ankieta jest wymagana (0 = przed zabiegiem). Używana do przypomnień na pulpicie.</p>
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {[["pre", "Przed zabiegiem"], ["1m", "1 miesiąc po zabiegu"], ["3m", "3 miesiące po zabiegu"], ["6m", "6 miesięcy po zabiegu"], ["12m", "12 miesięcy po zabiegu"]].map(([k, l]) => (
-                <button key={k} type="button" disabled={t.timepoints.some(tp => tp.key === k)} onClick={() => set({ timepoints: [...t.timepoints, { key: k, label: l }] })} className="px-2 py-1 text-xs rounded-full border border-slate-200 hover:bg-slate-50 disabled:opacity-40" data-testid={`add-timepoint-${k}`}>+ {l}</button>
+              {[["pre", "Przed zabiegiem", 0], ["1m", "1 miesiąc po zabiegu", 30], ["3m", "3 miesiące po zabiegu", 90], ["6m", "6 miesięcy po zabiegu", 180], ["12m", "12 miesięcy po zabiegu", 365]].map(([k, l, d]) => (
+                <button key={k} type="button" disabled={t.timepoints.some(tp => tp.key === k)} onClick={() => set({ timepoints: [...t.timepoints, { key: k, label: l, offset_days: d }] })} className="px-2 py-1 text-xs rounded-full border border-slate-200 hover:bg-slate-50 disabled:opacity-40" data-testid={`add-timepoint-${k}`}>+ {l}</button>
               ))}
-              <button type="button" onClick={() => set({ timepoints: [...t.timepoints, { key: `tp${t.timepoints.length + 1}`, label: "" }] })} className="px-2 py-1 text-xs rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100" data-testid="add-timepoint-custom">+ własny</button>
+              <button type="button" onClick={() => set({ timepoints: [...t.timepoints, { key: `tp${t.timepoints.length + 1}`, label: "", offset_days: null }] })} className="px-2 py-1 text-xs rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100" data-testid="add-timepoint-custom">+ własny</button>
             </div>
           </div>
         </div>

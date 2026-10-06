@@ -3,10 +3,11 @@ from fastapi.responses import StreamingResponse
 from typing import Optional, List, Any
 from pydantic import BaseModel
 import uuid
+import re
 import ast
 import io
 import operator
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -157,11 +158,32 @@ def compute_scores(template: dict, answers: dict) -> dict:
     return result
 
 # ---------- Seed ----------
+KEY_OFFSETS = {"pre": 0, "before": 0, "1w": 7, "2w": 14, "1m": 30, "3m": 90, "6m": 180, "12m": 365, "1y": 365, "24m": 730, "2y": 730}
+
+def infer_offset(key: str):
+    if key in KEY_OFFSETS:
+        return KEY_OFFSETS[key]
+    m = re.match(r"^(\d+)(d|w|m|y)$", key or "")
+    if m:
+        n, unit = int(m.group(1)), m.group(2)
+        return n * {"d": 1, "w": 7, "m": 30, "y": 365}[unit]
+    return None
+
 async def seed_survey_templates():
     db = get_db()
     for preset in PRESET_TEMPLATES:
         if not await db.survey_templates.find_one({"code": preset["code"]}):
             await db.survey_templates.insert_one({**preset, "id": str(uuid.uuid4()), "preset": True, "created_at": now_iso(), "updated_at": now_iso()})
+    # Migration: infer offset_days for timepoints missing it
+    async for t in db.survey_templates.find({"timepoints.offset_days": {"$exists": False}}):
+        tps = t.get("timepoints", [])
+        changed = False
+        for tp in tps:
+            if "offset_days" not in tp:
+                tp["offset_days"] = infer_offset(tp.get("key"))
+                changed = True
+        if changed:
+            await db.survey_templates.update_one({"_id": t["_id"]}, {"$set": {"timepoints": tps}})
 
 # ---------- Templates ----------
 def _normalize_template(data: dict) -> dict:
@@ -351,6 +373,56 @@ async def public_submit(token: str, data: PublicSubmit):
     await log_patient_change(patient_id=a["patient_id"], action="survey_completed", user={"user_id": None, "user_name": "Pacjent"},
                              details=f"Pacjent wypełnił ankietę {t.get('name')} ({a.get('timepoint_label')})")
     return {"message": "saved", "score": score}
+
+# ---------- Reminders ----------
+PRE_WINDOW_DAYS = 14   # show "before surgery" surveys from 14 days ahead
+POST_WINDOW_DAYS = 7   # show post-op surveys from 7 days before due date
+
+@router.get("/due")
+async def due_surveys(user: dict = Depends(get_auth)):
+    """Pending assignments whose timepoint is due (or overdue) based on patient's surgery date."""
+    db = get_db()
+    today = datetime.now(timezone.utc).date()
+    pending = await db.survey_assignments.find({"status": "pending"}, {"_id": 0}).to_list(20000)
+    if not pending:
+        return []
+    pq = {"id": {"$in": list({a["patient_id"] for a in pending})}, "surgery_date": {"$nin": [None, ""]},
+          "status": {"$nin": ["cancelled"]}}
+    loc_filter = get_patient_location_filter(user)
+    if loc_filter:
+        pq = {"$and": [pq, loc_filter]}
+    patients = {p["id"]: p for p in await db.patients.find(pq, {"_id": 0, "visits": 0, "photos": 0}).to_list(5000)}
+    templates = {t["id"]: t for t in await db.survey_templates.find({}, {"_id": 0}).to_list(200)}
+    out = []
+    for a in pending:
+        p = patients.get(a["patient_id"])
+        t = templates.get(a["template_id"])
+        if not p or not t:
+            continue
+        tp = next((x for x in t.get("timepoints", []) if x["key"] == a["timepoint_key"]), None)
+        if not tp or tp.get("offset_days") is None:
+            continue
+        try:
+            sd = datetime.strptime(p["surgery_date"][:10], "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        offset = int(tp["offset_days"])
+        due = sd + timedelta(days=offset)
+        window = PRE_WINDOW_DAYS if offset <= 0 else POST_WINDOW_DAYS
+        if (due - today).days > window:
+            continue
+        if offset <= 0 and today > sd:
+            continue  # pre-op survey no longer relevant after surgery
+        out.append({
+            "assignment_id": a["id"], "token": a["token"],
+            "patient_id": p["id"], "first_name": p.get("first_name"), "last_name": p.get("last_name"),
+            "phone": p.get("phone"), "email": p.get("email"), "location_id": p.get("location_id"),
+            "surgery_date": p["surgery_date"], "template_name": t.get("name"), "template_code": t.get("code"),
+            "timepoint_label": a.get("timepoint_label") or tp.get("label"),
+            "due_date": due.isoformat(), "days_overdue": (today - due).days
+        })
+    out.sort(key=lambda x: -x["days_overdue"])
+    return out
 
 # ---------- Results ----------
 async def _results_rows(db, user, template_id: str, timepoint: Optional[str] = None):

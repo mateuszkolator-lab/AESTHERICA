@@ -5,6 +5,7 @@ import { ClipboardList, Plus, Edit, Copy, Trash2, FileSpreadsheet, Eye, BarChart
 import api from "../utils/api";
 import SurveyResultModal from "../components/surveys/SurveyResultModal";
 import BulkExportModal from "../components/surveys/BulkExportModal";
+import SurveyTrendChart from "../components/surveys/SurveyTrendChart";
 
 const saveBlob = (blob, filename) => {
   const url = window.URL.createObjectURL(blob);
@@ -124,6 +125,8 @@ const ResultsTab = ({ templates }) => {
       </div>
 
       {loading ? <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div> : (
+        <>
+        {!timepoint && rows.length > 0 && <SurveyTrendChart template={template} rows={rows} />}
         <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
@@ -166,6 +169,7 @@ const ResultsTab = ({ templates }) => {
           </table>
           {rows.length === 0 && <p className="text-center text-slate-500 py-12">Brak wypełnionych ankiet</p>}
         </div>
+        </>
       )}
       {viewId && <SurveyResultModal assignmentId={viewId} onClose={() => setViewId(null)} />}
       {showBulk && <BulkExportModal templates={templates} onClose={() => setShowBulk(false)} />}

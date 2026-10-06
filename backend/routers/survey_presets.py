@@ -36,9 +36,9 @@ ROE_ITEMS = [
 ]
 
 DEFAULT_TIMEPOINTS = [
-    {"key": "pre", "label": "Przed zabiegiem"},
-    {"key": "3m", "label": "3 miesiące po zabiegu"},
-    {"key": "12m", "label": "12 miesięcy po zabiegu"},
+    {"key": "pre", "label": "Przed zabiegiem", "offset_days": 0},
+    {"key": "3m", "label": "3 miesiące po zabiegu", "offset_days": 90},
+    {"key": "12m", "label": "12 miesięcy po zabiegu", "offset_days": 365},
 ]
 
 PRESET_TEMPLATES = [

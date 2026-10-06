@@ -11,6 +11,7 @@ import {
   getProcedureAbbrev, getDaysInMonth, DAY_NAMES, formatDateLocal 
 } from "../utils/constants";
 import DashboardDayModal from "../components/modals/DashboardDayModal";
+import SurveyRemindersCard from "../components/surveys/SurveyRemindersCard";
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -411,6 +412,10 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <SurveyRemindersCard />
       </div>
       
       {selectedDay && (
