@@ -16,6 +16,7 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - Historia zmian pacjentów (Audit Log)
 
 ## Ostatnie zmiany (17.06.2026)
+- Alert synchronizacji Google: CalendarSyncAlert (czerwony pasek w AppLayout) na podstawie GET /api/calendar/health (bez wywołań Google; stan `health` zapisywany przez scheduler co 15 min i /status); ukrycie na 4h w sessionStorage
 - Google Calendar – naprawa i prawdziwa dwukierunkowość (calendar.py): token expiry przywracany i odświeżany proaktywnie (zapis do DB), wspólne helpery `upsert_patient_event`/`delete_patient_event` (używane w patients.py i surgery_slots.py; zmiana lokalizacji = przeniesienie eventu między kalendarzami), `pull_from_google` (zmiana daty w Google → surgery_date; usunięcie w Google → data wyczyszczona, planned→awaiting; wpisy audytu), POST /api/calendar/pull, sync-all = pull + push + usunięcie sierot, scheduler auto-pull co 15 min, status z realnym wywołaniem API i `last_sync`/`last_error` (settings key google_calendar_sync) pokazywane w Ustawieniach
 - Przypomnienia ankiet: timepointy mają `offset_days` (0 = przed zabiegiem; migracja przy starcie infer_offset z klucza), GET /api/surveys/due (okno: pre 14 dni przed zabiegiem, post 7 dni przed terminem + zaległe), karta „Ankiety do wypełnienia” na pulpicie (SurveyRemindersCard)
 - Wykres przed/po: SurveyTrendChart (recharts) w zakładce Wyniki – średnia grupy + do 5 pacjentów, wybór metryki (podskale)
