@@ -313,7 +313,7 @@ const CalendarPage = () => {
                   </button>
                 </div>
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 capitalize">{monthName}</h2>
+              <h2 className="text-xl font-semibold text-slate-900 capitalize" data-testid="calendar-month-name">{monthName}</h2>
               <div className="w-28" /> {/* Spacer */}
             </div>
 
@@ -349,6 +349,7 @@ const CalendarPage = () => {
                       onDragOver={day && !isPast ? handleDragOver : undefined}
                       onDrop={day && !isPast ? (e) => handleDrop(e, day) : undefined}
                       onClick={day && (dayPatients.length > 0 || hasSlot) ? () => setSelectedDay(day) : undefined}
+                      data-testid={day ? `calendar-day-${day.getDate()}` : undefined}
                       className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative cursor-pointer ${
                         !day 
                           ? "bg-slate-100" 

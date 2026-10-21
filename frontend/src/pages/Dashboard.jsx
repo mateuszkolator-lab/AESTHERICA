@@ -87,18 +87,20 @@ const Dashboard = () => {
                 <button
                   onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
                   className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  data-testid="dashboard-prev-month"
                 >
                   <ChevronLeft className="w-5 h-5 text-slate-600" />
                 </button>
                 <button
                   onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
                   className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  data-testid="dashboard-next-month"
                 >
                   <ChevronRight className="w-5 h-5 text-slate-600" />
                 </button>
               </div>
             </div>
-            <h2 className="text-xl font-semibold text-slate-900 capitalize" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <h2 className="text-xl font-semibold text-slate-900 capitalize" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="dashboard-month-name">
               {monthName}
             </h2>
             <div className="w-24" /> {/* Spacer for balance */}

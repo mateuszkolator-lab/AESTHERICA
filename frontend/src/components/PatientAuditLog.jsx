@@ -27,7 +27,7 @@ const ACTION_COLORS = {
   "delete_photo": "bg-pink-100 text-pink-700"
 };
 
-const PatientAuditLog = ({ patientId }) => {
+const PatientAuditLog = ({ patientId, refreshKey = 0 }) => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -35,7 +35,8 @@ const PatientAuditLog = ({ patientId }) => {
 
   useEffect(() => {
     loadLogs();
-  }, [patientId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patientId, refreshKey]);
 
   const loadLogs = async () => {
     try {
@@ -67,7 +68,7 @@ const PatientAuditLog = ({ patientId }) => {
   };
 
   const formatValue = (value) => {
-    if (value === null || value === undefined) return <span className="text-slate-400 italic">brak</span>;
+    if (value === null || value === undefined || value === "") return <span className="text-slate-400 italic">brak</span>;
     if (typeof value === "boolean") return value ? "Tak" : "Nie";
     if (typeof value === "number") return value.toLocaleString("pl-PL");
     return String(value);

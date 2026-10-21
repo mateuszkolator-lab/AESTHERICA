@@ -424,7 +424,7 @@ const PatientDetail = () => {
 
       {/* Historia zmian */}
       <div className="mt-8">
-        <PatientAuditLog patientId={id} />
+        <PatientAuditLog patientId={id} refreshKey={patient.updated_at} />
       </div>
 
       {showEditModal && (

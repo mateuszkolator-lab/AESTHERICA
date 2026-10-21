@@ -266,13 +266,24 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
         "hospital_registration_date": "Data zgłoszenia do szpitala"
     }
     
+    # Normalise empty strings to None for date-like fields so ''<->None is not a change
+    for dk in ["surgery_date", "documents_sent_date", "hospital_registration_date", "date_of_birth", "preferred_date_start", "preferred_date_end"]:
+        if dk in update_data and update_data[dk] == "":
+            update_data[dk] = None
+    
     for key, new_value in update_data.items():
         if key in ["updated_at", "cancelled_at", "cancelled_surgery_date", "confirmed"]:
             continue
         old_value = old_patient.get(key)
+        if (old_value or None) == (new_value or None) and not isinstance(new_value, (int, float, bool)):
+            continue
         if old_value != new_value:
             label = field_labels.get(key, key)
-            changes[label] = {"old": old_value, "new": new_value}
+            if key == "location_id":
+                loc_names = {l["id"]: l["name"] for l in await db.locations.find({"id": {"$in": [v for v in [old_value, new_value] if v]}}, {"_id": 0}).to_list(10)}
+                changes[label] = {"old": loc_names.get(old_value, old_value), "new": loc_names.get(new_value, new_value)}
+            else:
+                changes[label] = {"old": old_value, "new": new_value}
     
     result = await db.patients.update_one({"id": patient_id}, {"$set": update_data})
     if result.matched_count == 0:

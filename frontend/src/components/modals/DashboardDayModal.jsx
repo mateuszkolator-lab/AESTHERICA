@@ -29,6 +29,12 @@ const DashboardDayModal = ({ day, surgeries, slot, locations, onClose, onRefresh
     }
   };
 
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const handleDeleteSlot = async () => {
     if (!slot || !window.confirm("Czy na pewno chcesz usunąć ten termin?")) return;
     try {

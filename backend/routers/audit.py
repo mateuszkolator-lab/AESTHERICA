@@ -134,7 +134,11 @@ async def get_date_history(date: str, user: dict = Depends(get_auth)):
         {"$or": [{"changes.Data zabiegu.old": date}, {"changes.Data zabiegu.new": date}]},
         {"_id": 0}
     ).sort("timestamp", -1).to_list(500)
-    return await _enrich_date_entries(db, entries)
+    enriched = await _enrich_date_entries(db, entries)
+    if not user.get("global_access"):
+        allowed = set(await db.patients.distinct("id", {"location_id": {"$in": user.get("location_ids") or []}}))
+        enriched = [e for e in enriched if e["patient_id"] in allowed]
+    return enriched
 
 @router.get("/date-changes/recent")
 async def get_recent_date_changes(days: int = 14, limit: int = 50, user: dict = Depends(get_auth)):

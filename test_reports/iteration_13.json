@@ -1,0 +1,50 @@
+{
+  "summary": "Tested 3 features: (1) calendar month persistence on Dashboard and /calendar, (2) the new patient date fields documents_sent_date and hospital_registration_date, (3) surgery-date history (assign/unassign/move/cancel audit, GET /api/audit/date/{date}, GET /api/audit/date-changes/recent, DateHistory in both day modals, DateChangesFeed on Dashboard). The core flows work end-to-end. Backend: 9/11 pytest passed. The 2 failures are real bugs, both minor/medium: a spurious 'removed' entry when surgery_date goes null->'', and no location scoping on GET /audit/date/{date}. Frontend: all requested flows pass, including drag&drop regression. All test patients, slots and their audit rows were cleaned up.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/patients/{id} -> audit / GET /api/audit/date-changes/recent", "issue": "When surgery_date changes from null to '' (for example an edit modal submit where the date input was cleared, or a patient whose date was null after unassign/cancel), update_patient treats it as a change and logs 'Data zabiegu' {old:null,new:''}. _classify_date_change returns 'removed', so a fake 'Usunięto z terminu' alert with no date appears in the Dashboard feed and raises the red badge. Reproduced in test_empty_string_surgery_date_no_noise and seen in the UI feed. Fix: normalise ''->None for surgery_date (and other date fields) in update_patient/create_patient before diffing, and/or skip changes where both old and new are falsy."},
+      {"endpoint": "GET /api/audit/date/{date}", "issue": "No location scoping. A non-global user (jan.kowalski, Pro-Familia only) gets history entries (patient names, procedure) for patients outside his locations. get_recent_date_changes filters by location_ids but get_date_history does not. Apply the same allowed-patient filter (get_patient_location_filter)."},
+      {"endpoint": "GET /api/audit/date-changes/recent", "issue": "The location filter is applied after fetching limit*3 rows. For a non-global user the feed can come back truncated or empty even when relevant entries exist within the window. Prefer filtering by patient_id $in allowed inside the Mongo query."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "PatientAuditLog (PatientDetail)", "issue": "History is not refreshed after saving the edit modal. It still shows '1 wpis' until the page is reloaded, because loadLogs only depends on patientId. Pass a refresh key or reload logs after onSuccess.", "selector": "[data-testid='patient-audit-log']", "priority": "LOW"},
+      {"component": "DashboardDayModal", "issue": "Escape does not close the dashboard day modal. The overlay stays and blocks sidebar clicks. The /calendar day modal does close on Esc.", "selector": "DashboardDayModal", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Day modal 'Historia tego terminu'", "issues": ["'moved' entries show only 'Przeniesiono' with no dates (showDates=false), so the user cannot tell if the patient was moved TO or FROM this date. Show 'na/z <date>' at least for moved entries."]},
+      {"screen": "PatientAuditLog details for slot assign", "issues": ["The 'Lokalizacja' change shows a raw location UUID (05d9b792-...) instead of the location name (written by surgery_slots.assign_patient).", "Old value '' is rendered blank instead of 'brak'."]},
+      {"screen": "PatientDetail", "issues": ["No spacing between the 'Zgłoszenie do szpitala' value and the 'Potwierdź termin telefonicznie' button below it (they touch)."]},
+      {"screen": "AddPatientModal", "issues": ["The new date fields use the native browser date picker (type=date, mm/dd/yyyy in en locale) instead of the shadcn calendar. This is consistent with the other date fields in the modal."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_date_history.py", "/app/test_reports/pytest/date_history.xml"],
+  "action_items": [
+    "Normalise empty-string surgery_date to None in PUT/POST /api/patients (or ignore falsy->falsy diffs) so the feed has no spurious 'removed' entries",
+    "Add location scoping to GET /api/audit/date/{date} for non-global users",
+    "Move the location filter in /audit/date-changes/recent into the Mongo query",
+    "Refresh PatientAuditLog after the patient edit succeeds",
+    "Optional UX: show the direction/dates for 'moved' entries in the day-modal history; show the location name instead of the UUID in assign audit entries; Esc-to-close for DashboardDayModal"
+  ],
+  "critical_code_review_comments": [
+    "audit.py _classify_date_change: anything that is not cancelled/google/not_performed/moved/assigned falls through to 'removed', including ''-only diffs. Add an explicit guard: if not ch.get('old') and not ch.get('new') -> skip/ignore.",
+    "Deleting a patient keeps its audit rows. The feed and day history then show '(pacjent usunięty)', and clicking the name navigates to /patients/<id>, which returns 404. Consider disabling the link when the patient is missing.",
+    "_enrich_date_entries reads cancellation_reason from the CURRENT patient, not from the time of the entry. After restore (which $unsets cancellation_reason) the old 'cancelled' history entries lose their reason. Consider storing the reason in the audit entry itself (it is already in changes['Powód rezygnacji'] when set in the same PUT).",
+    "Assign endpoint: the details text uses patient.get('surgery_date') truthiness, so '' gives 'Przypisano'. This is OK but shows the same ''/None inconsistency."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_date_history.py",
+    "/app/frontend/src/pages/Dashboard.jsx (added data-testid dashboard-prev-month, dashboard-next-month, dashboard-month-name)",
+    "/app/frontend/src/pages/CalendarPage.jsx (added data-testid calendar-day-<n>, calendar-month-name)"
+  ],
+  "success_rate": {"backend": "82% (9/11; the 2 failures are real minor bugs)", "frontend": "100% of requested flows (month persistence, patient dates, day-modal history on Dashboard and /calendar, feed filters/badge/navigation, drag&drop)"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123!; user jan.kowalski@klinika.pl / haslo123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Test patients (TEST_ prefix) and slots 2027-04-10 and 2027-04-12 were created and then deleted, along with their audit_log rows. The main agent's 'Termin Hist' patient (7ced8429...) and its audit rows were also deleted. The recent feed is now empty for the last 14 days.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: REACT_APP_BACKEND_URL=... pytest tests/test_date_history.py -p no:randomly. Tests are order-dependent (module-level state S). Set KEEP_DATA=1 to keep the data for UI testing (ids are written to /app/memory/tmp/hist_test_ids.json). Teardown deletes patients, slots and their audit rows. Server clock is Oct 2026. AddPatientModal shows window.confirm when there is no location, so Playwright must accept the dialog. Sidebar nav testids are nav-pulpit / nav-pacjenci / nav-kalendarz. The PatientAuditLog labels are behind 'Pokaż szczegóły'.",
+  "rca of the issue": "Spurious 'removed': update_patient diffs old_patient.get('surgery_date') (None) against the request value '' and finds them unequal, so a 'Data zabiegu' change is logged; _classify_date_change falls through to 'removed'. History leak: get_date_history queries audit_log by date only, with no user location filter."
+}

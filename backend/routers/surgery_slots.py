@@ -260,7 +260,8 @@ async def assign_patient(slot_id: str, patient_id: str, user: dict = Depends(get
     from routers.audit import log_patient_change
     changes = {"Data zabiegu": {"old": patient.get("surgery_date"), "new": slot["date"]}}
     if new_location_id != patient.get("location_id"):
-        changes["Lokalizacja"] = {"old": patient.get("location_id"), "new": new_location_id}
+        loc_names = {l["id"]: l["name"] for l in await db.locations.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(100)}
+        changes["Lokalizacja"] = {"old": loc_names.get(patient.get("location_id"), patient.get("location_id")), "new": loc_names.get(new_location_id, new_location_id)}
     await log_patient_change(patient_id=patient_id, action="update", user=user, changes=changes,
                              details=("Przeniesiono na termin " if patient.get("surgery_date") else "Przypisano do terminu ") + slot["date"])
     

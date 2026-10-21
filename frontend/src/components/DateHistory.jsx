@@ -27,7 +27,7 @@ export const DateHistoryEntry = ({ e, onOpen, showDates = true }) => {
         </p>
         <p className="text-xs opacity-90">
           {meta.label}
-          {showDates && e.kind === "moved" && ` ${e.old_date} → ${e.new_date}`}
+          {e.kind === "moved" && (showDates || !e.contextDate ? ` ${e.old_date} → ${e.new_date}` : (e.new_date === e.contextDate ? ` na ten termin (z ${e.old_date})` : ` z tego terminu (na ${e.new_date})`))}
           {showDates && e.kind !== "moved" && (e.new_date || e.old_date) && ` (${e.new_date || e.old_date})`}
           {e.cancellation_reason && e.kind === "cancelled" && ` – powód: ${e.cancellation_reason}`}
         </p>
@@ -63,7 +63,7 @@ export const DateHistory = ({ date, defaultOpen = false }) => {
         <div className="mt-3 space-y-2">
           {entries === null ? <p className="text-xs text-slate-400">Ładowanie...</p>
             : entries.length === 0 ? <p className="text-xs text-slate-400">Brak zapisanych zmian dla tego terminu</p>
-            : entries.map(e => <DateHistoryEntry key={e.id} e={e} onOpen={(pid) => navigate(`/patients/${pid}`)} showDates={false} />)}
+            : entries.map(e => <DateHistoryEntry key={e.id} e={{ ...e, contextDate: date }} onOpen={(pid) => navigate(`/patients/${pid}`)} showDates={false} />)}
         </div>
       )}
     </div>
