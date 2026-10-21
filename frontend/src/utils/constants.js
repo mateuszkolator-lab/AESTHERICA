@@ -181,3 +181,12 @@ export const formatDateLocal = (date) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+// Persist calendar month per login session (cleared on logout)
+export const loadPersistedMonth = (key) => {
+  const v = sessionStorage.getItem(key);
+  if (!v) return new Date();
+  const [y, m] = v.split("-").map(Number);
+  return Number.isFinite(y) && Number.isFinite(m) ? new Date(y, m, 1) : new Date();
+};
+export const savePersistedMonth = (key, date) => sessionStorage.setItem(key, `${date.getFullYear()}-${date.getMonth()}`);

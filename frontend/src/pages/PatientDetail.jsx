@@ -247,6 +247,14 @@ const PatientDetail = () => {
               <p className="text-sm text-slate-500">Data operacji</p>
               <p className="font-medium text-slate-900">{patient.surgery_date || "-"}</p>
             </div>
+            <div>
+              <p className="text-sm text-slate-500">Dokumenty wysłane do pacjenta</p>
+              <p className={`font-medium ${patient.documents_sent_date ? "text-slate-900" : "text-amber-600"}`} data-testid="documents-sent-date">{patient.documents_sent_date || "nie wysłano"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Zgłoszenie do szpitala</p>
+              <p className={`font-medium ${patient.hospital_registration_date ? "text-slate-900" : "text-amber-600"}`} data-testid="hospital-registration-date">{patient.hospital_registration_date || "nie zgłoszono"}</p>
+            </div>
             {patient.status === "cancelled" && (
               <div className="p-3 bg-red-50 border border-red-100 rounded-lg" data-testid="cancellation-info">
                 {patient.cancelled_surgery_date && (

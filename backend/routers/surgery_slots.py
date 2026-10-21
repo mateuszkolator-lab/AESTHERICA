@@ -252,10 +252,17 @@ async def assign_patient(slot_id: str, patient_id: str, user: dict = Depends(get
         {"id": patient_id},
         {"$set": {
             "surgery_date": slot["date"],
-            "status": "planned" if patient.get("status") in ["consultation", "awaiting"] else patient.get("status"),
+            "status": "planned" if patient.get("status") in ["consultation", "awaiting", "thinking"] else patient.get("status"),
             "location_id": new_location_id
         }}
     )
+    
+    from routers.audit import log_patient_change
+    changes = {"Data zabiegu": {"old": patient.get("surgery_date"), "new": slot["date"]}}
+    if new_location_id != patient.get("location_id"):
+        changes["Lokalizacja"] = {"old": patient.get("location_id"), "new": new_location_id}
+    await log_patient_change(patient_id=patient_id, action="update", user=user, changes=changes,
+                             details=("Przeniesiono na termin " if patient.get("surgery_date") else "Przypisano do terminu ") + slot["date"])
     
     # Auto-sync to Google Calendar if location has a calendar configured
     if new_location_id:
@@ -288,6 +295,11 @@ async def unassign_patient(slot_id: str, user: dict = Depends(get_auth)):
             {"id": patient_id},
             {"$set": {"surgery_date": None, "status": "awaiting"}}
         )
+        if patient:
+            from routers.audit import log_patient_change
+            await log_patient_change(patient_id=patient_id, action="update", user=user,
+                                     changes={"Data zabiegu": {"old": patient.get("surgery_date"), "new": None}},
+                                     details=f"Usunięto z terminu {slot['date']}")
         
         # Remove from Google Calendar if synced
         if patient and patient.get("google_event_id"):

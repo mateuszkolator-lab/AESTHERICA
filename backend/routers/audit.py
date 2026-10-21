@@ -90,3 +90,65 @@ ACTION_LABELS = {
     "update_rhinoplan": "Zaktualizowano plan operacji",
     "delete_rhinoplan": "Usunięto plan operacji"
 }
+
+
+def _classify_date_change(entry: dict) -> str:
+    ch = (entry.get("changes") or {}).get("Data zabiegu") or {}
+    details = (entry.get("details") or "").lower()
+    status_new = ((entry.get("changes") or {}).get("Status") or {}).get("new")
+    if status_new == "cancelled" or "zrezygnował" in details:
+        return "cancelled"
+    if "google" in details:
+        return "google"
+    if "nie odbył" in details:
+        return "not_performed"
+    if ch.get("old") and ch.get("new"):
+        return "moved"
+    if ch.get("new"):
+        return "assigned"
+    return "removed"
+
+async def _enrich_date_entries(db, entries: list) -> list:
+    pids = list({e["patient_id"] for e in entries})
+    patients = {p["id"]: p for p in await db.patients.find({"id": {"$in": pids}}, {"_id": 0, "id": 1, "first_name": 1, "last_name": 1, "status": 1, "procedure_type": 1, "cancellation_reason": 1}).to_list(5000)}
+    out = []
+    for e in entries:
+        p = patients.get(e["patient_id"])
+        ch = (e.get("changes") or {}).get("Data zabiegu") or {}
+        out.append({
+            "id": e["id"], "patient_id": e["patient_id"],
+            "patient_name": f"{p['last_name']} {p['first_name']}" if p else "(pacjent usunięty)",
+            "patient_status": (p or {}).get("status"), "procedure_type": (p or {}).get("procedure_type"),
+            "cancellation_reason": (p or {}).get("cancellation_reason"),
+            "old_date": ch.get("old"), "new_date": ch.get("new"),
+            "kind": _classify_date_change(e), "user_name": e.get("user_name"),
+            "timestamp": e.get("timestamp"), "details": e.get("details")
+        })
+    return out
+
+@router.get("/date/{date}")
+async def get_date_history(date: str, user: dict = Depends(get_auth)):
+    """Who assigned / moved / removed which patient for a given surgery date."""
+    db = get_db()
+    entries = await db.audit_log.find(
+        {"$or": [{"changes.Data zabiegu.old": date}, {"changes.Data zabiegu.new": date}]},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(500)
+    return await _enrich_date_entries(db, entries)
+
+@router.get("/date-changes/recent")
+async def get_recent_date_changes(days: int = 14, limit: int = 50, user: dict = Depends(get_auth)):
+    """Recent removals / cancellations / moves of surgery dates (dashboard feed)."""
+    from datetime import timedelta
+    db = get_db()
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    entries = await db.audit_log.find(
+        {"timestamp": {"$gte": since}, "changes.Data zabiegu": {"$exists": True}},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(limit * 3)
+    enriched = await _enrich_date_entries(db, entries)
+    loc_filter = user.get("location_ids") if not user.get("global_access") else None
+    if loc_filter is not None:
+        allowed = set(await db.patients.distinct("id", {"location_id": {"$in": loc_filter}}))
+        enriched = [e for e in enriched if e["patient_id"] in allowed]
+    return enriched[:limit]

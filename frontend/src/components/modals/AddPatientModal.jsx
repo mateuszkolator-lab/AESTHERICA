@@ -24,6 +24,8 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
     status: "consultation",
     procedure_type: "",
     surgery_date: "",
+    documents_sent_date: "",
+    hospital_registration_date: "",
     location_id: "",
     price: "",
     notes: "",
@@ -148,6 +150,8 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       const data = { ...formData };
       if (data.price) data.price = parseFloat(data.price);
       else delete data.price;
+      data.documents_sent_date = data.documents_sent_date || null;
+      data.hospital_registration_date = data.hospital_registration_date || null;
       
       // Set preferred_dates and legacy fields
       const validRanges = preferredDates.filter(r => r.start || r.end);
@@ -454,6 +458,29 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                   <span className="font-medium text-amber-900">Jak najszybciej</span>
                   <p className="text-xs text-amber-700 mt-0.5">Pacjent jest gotowy zmienić termin na wcześniejszy w razie rezygnacji innego pacjenta</p>
                 </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Data wysłania dokumentów do pacjenta</label>
+                  <input
+                    type="date"
+                    value={formData.documents_sent_date || ""}
+                    onChange={(e) => setFormData({ ...formData, documents_sent_date: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    data-testid="documents-sent-date-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Data zgłoszenia do szpitala</label>
+                  <input
+                    type="date"
+                    value={formData.hospital_registration_date || ""}
+                    onChange={(e) => setFormData({ ...formData, hospital_registration_date: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    data-testid="hospital-registration-date-input"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

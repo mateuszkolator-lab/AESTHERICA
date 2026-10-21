@@ -20,6 +20,8 @@ class PatientBase(BaseModel):
     notes: Optional[str] = None
     asap: bool = False
     survey_template_ids: Optional[List[str]] = None
+    documents_sent_date: Optional[str] = None
+    hospital_registration_date: Optional[str] = None
 
 class PatientCreate(PatientBase):
     pass
@@ -43,6 +45,8 @@ class PatientUpdate(BaseModel):
     asap: Optional[bool] = None
     cancellation_reason: Optional[str] = None
     survey_template_ids: Optional[List[str]] = None
+    documents_sent_date: Optional[str] = None
+    hospital_registration_date: Optional[str] = None
 
 class VisitBase(BaseModel):
     date: str

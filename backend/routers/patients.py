@@ -261,7 +261,9 @@ async def update_patient(patient_id: str, patient: PatientUpdate, user: dict = D
         "notes": "Notatki",
         "asap": "ASAP",
         "cancellation_reason": "Powód rezygnacji",
-        "survey_template_ids": "Ankiety"
+        "survey_template_ids": "Ankiety",
+        "documents_sent_date": "Data wysłania dokumentów",
+        "hospital_registration_date": "Data zgłoszenia do szpitala"
     }
     
     for key, new_value in update_data.items():

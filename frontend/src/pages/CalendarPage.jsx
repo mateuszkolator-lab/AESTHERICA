@@ -6,17 +6,18 @@ import {
   Phone, X, Zap, GripVertical, AlertTriangle
 } from "lucide-react";
 import api from "../utils/api";
+import DateHistory from "../components/DateHistory";
 import { 
   STATUS_LABELS, getStatusColorBg, getLocationColor, 
-  getDaysInMonth, formatDateLocal
-} from "../utils/constants";
+  getDaysInMonth, formatDateLocal, loadPersistedMonth, savePersistedMonth } from "../utils/constants";
 
 const CalendarPage = () => {
   const [calendarData, setCalendarData] = useState(null);
   const [patients, setPatients] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(() => loadPersistedMonth("calendar_month"));
+  useEffect(() => { savePersistedMonth("calendar_month", currentMonth); }, [currentMonth]);
   const [draggedPatient, setDraggedPatient] = useState(null);
   const [showUnassigned, setShowUnassigned] = useState(true);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -605,6 +606,7 @@ const CalendarPage = () => {
                   </div>
                 );
               })()}
+              <DateHistory date={formatDateLocal(selectedDay)} />
             </div>
             
             <div className="px-6 py-4 border-t border-slate-100 flex gap-3 bg-slate-50">

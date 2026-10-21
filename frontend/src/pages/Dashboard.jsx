@@ -8,16 +8,17 @@ import {
 import api from "../utils/api";
 import { 
   STATUS_LABELS, getStatusColor, getStatusColorBg, getLocationColor, 
-  getProcedureAbbrev, getDaysInMonth, DAY_NAMES, formatDateLocal 
-} from "../utils/constants";
+  getProcedureAbbrev, getDaysInMonth, DAY_NAMES, formatDateLocal, loadPersistedMonth, savePersistedMonth } from "../utils/constants";
 import DashboardDayModal from "../components/modals/DashboardDayModal";
 import SurveyRemindersCard from "../components/surveys/SurveyRemindersCard";
+import DateChangesFeed from "../components/DateChangesFeed";
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(() => loadPersistedMonth("dashboard_month"));
+  useEffect(() => { savePersistedMonth("dashboard_month", currentMonth); }, [currentMonth]);
   const [selectedDay, setSelectedDay] = useState(null);
   const [locations, setLocations] = useState([]);
   const [upcomingFilter, setUpcomingFilter] = useState("");
@@ -414,7 +415,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <DateChangesFeed />
         <SurveyRemindersCard />
       </div>
       

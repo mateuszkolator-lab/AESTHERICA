@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { X, MapPin, User, Phone, Calendar, ChevronRight, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
-import { STATUS_LABELS, getStatusColorBg } from "../../utils/constants";
+import DateHistory from "../DateHistory";
+import { STATUS_LABELS, getStatusColorBg, formatDateLocal } from "../../utils/constants";
 
 const DashboardDayModal = ({ day, surgeries, slot, locations, onClose, onRefresh, navigate }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -204,6 +205,7 @@ const DashboardDayModal = ({ day, surgeries, slot, locations, onClose, onRefresh
               )}
             </div>
           )}
+          <DateHistory date={formatDateLocal(day)} />
         </div>
         
         <div className="px-6 py-4 border-t border-slate-200 flex gap-3">
