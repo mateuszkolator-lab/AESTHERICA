@@ -85,7 +85,7 @@ const SurgeryConfirmModal = () => {
             return (
               <div
                 key={p.id}
-                className={`flex items-center gap-3 p-3 rounded-xl border ${isPast ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-200"}`}
+                className={`flex max-sm:flex-col sm:items-center gap-3 p-3 rounded-xl border ${isPast ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-200"}`}
                 data-testid={`surgery-confirm-row-${p.id}`}
               >
                 <div className="flex-1 min-w-0">

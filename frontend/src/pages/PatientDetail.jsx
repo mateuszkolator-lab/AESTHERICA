@@ -372,8 +372,8 @@ const PatientDetail = () => {
       </div>
 
       {/* Right Panel - Visits & Photos */}
-      <div className="flex-1 bg-slate-50 p-6 md:p-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="flex-1 bg-slate-50 p-4 md:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Wizyty i zdjęcia</h2>
           <div className="flex gap-3">
             {combinedPhotos.length >= 2 && (
@@ -423,7 +423,7 @@ const PatientDetail = () => {
       </div>
 
       {/* Historia zmian */}
-      <div className="mt-8">
+      <div className="mt-8 max-lg:px-4 max-lg:pb-6">
         <PatientAuditLog patientId={id} refreshKey={patient.updated_at} />
       </div>
 

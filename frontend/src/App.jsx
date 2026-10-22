@@ -26,9 +26,9 @@ import SurveyFillPage from "./pages/SurveyFillPage";
 const AppLayout = ({ children }) => {
   const location = useLocation();
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex max-lg:flex-col min-h-screen bg-slate-50">
       <Sidebar currentPath={location.pathname} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto max-lg:min-w-0 max-lg:overflow-x-hidden">
         <CalendarSyncAlert />
         <GlobalSearch />
         <SurgeryConfirmModal />

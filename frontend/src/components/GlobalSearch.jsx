@@ -104,7 +104,7 @@ const GlobalSearch = () => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors max-lg:fixed max-lg:top-2.5 max-lg:right-3 max-lg:z-30"
         data-testid="global-search-trigger"
       >
         <Search className="w-4 h-4" />

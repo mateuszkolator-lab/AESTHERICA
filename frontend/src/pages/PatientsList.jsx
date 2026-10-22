@@ -9,6 +9,7 @@ import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS, getLocationColor, HIDDEN_BY_DEFAULT_STATUSES } from "../utils/constants";
 import AddPatientModal from "../components/modals/AddPatientModal";
 import CancelReasonModal from "../components/modals/CancelReasonModal";
+import { useIsDesktop } from "../hooks/useIsDesktop";
 
 const FILTERS_KEY = "patients_list_filters";
 const loadSavedFilters = () => {
@@ -35,9 +36,12 @@ const PatientsList = () => {
     sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, sortBy, sortOrder }));
   }, [searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, sortBy, sortOrder]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const activeFilterCount = statusFilters.length + procedureFilters.length + (locationFilter ? 1 : 0) + (asapFilter ? 1 : 0);
   const [statusChangeId, setStatusChangeId] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
 
   const loadData = useCallback(async () => {
     try {
@@ -156,16 +160,103 @@ const PatientsList = () => {
     }
   };
 
+  const renderStatusBadge = (patient) => (
+    <div className="relative flex items-center gap-2">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setStatusChangeId(statusChangeId === patient.id ? null : patient.id);
+        }}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full cursor-pointer transition-all hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 ${getStatusColor(patient.status)}`}
+        data-testid={`status-badge-${patient.id}`}
+        title="Kliknij aby zmienić status"
+      >
+        {STATUS_LABELS[patient.status] || patient.status}
+        <ChevronRight className={`w-3 h-3 transition-transform ${statusChangeId === patient.id ? 'rotate-90' : ''}`} />
+      </button>
+      {patient.asap && (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700" title="Jak najszybciej">
+          <Sparkles className="w-3 h-3" />
+        </span>
+      )}
+      {statusChangeId === patient.id && (
+        <div
+          className="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-30 py-1"
+          data-testid={`status-dropdown-${patient.id}`}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={(e) => handleStatusChange(patient.id, option.value, e)}
+              className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                patient.status === option.value
+                  ? "bg-slate-100 font-semibold"
+                  : "hover:bg-slate-50"
+              }`}
+              data-testid={`status-option-${patient.id}-${option.value}`}
+            >
+              <span className={`w-2 h-2 rounded-full ${getStatusColorBg(option.value)}`} />
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderLocationBadge = (patient) => {
+    const loc = locations.find(l => l.id === patient.location_id);
+    if (!loc) return <span className="text-slate-400">-</span>;
+    const color = getLocationColor(loc.name);
+    return (
+      <span 
+        className="px-2 py-0.5 text-xs font-bold rounded text-white"
+        style={{ backgroundColor: color?.hex || '#94a3b8' }}
+      >
+        {loc.name.trim().substring(0, 3).toUpperCase()}
+      </span>
+    );
+  };
+
+  const renderActions = (patient) => (
+    <div className="flex items-center justify-end gap-2">
+      {patient.status === "cancelled" && (
+        <button
+          onClick={(e) => handleRestore(patient.id, e)}
+          className="p-2 hover:bg-emerald-50 rounded-lg transition-colors"
+          title="Przywróć do oczekujących"
+          data-testid={`restore-${patient.id}`}
+        >
+          <RotateCcw className="w-4 h-4 text-emerald-600" />
+        </button>
+      )}
+      <button
+        onClick={(e) => { e.stopPropagation(); navigate(`/patients/${patient.id}`); }}
+        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+        data-testid={`view-${patient.id}`}
+      >
+        <Eye className="w-4 h-4 text-slate-600" />
+      </button>
+      <button
+        onClick={(e) => handleDelete(patient.id, e)}
+        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+        data-testid={`delete-${patient.id}`}
+      >
+        <Trash2 className="w-4 h-4 text-red-500" />
+      </button>
+    </div>
+  );
+
   return (
-    <div className="p-8" data-testid="patients-page">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div className="p-4 lg:p-8" data-testid="patients-page">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 lg:mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Pacjenci</h1>
+          <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Pacjenci</h1>
           <p className="text-slate-500 mt-1">{patients.length} pacjentów łącznie</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+          className="flex items-center justify-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
           data-testid="add-patient-button"
         >
           <Plus className="w-5 h-5" />
@@ -175,19 +266,29 @@ const PatientsList = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Szukaj pacjentów..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              data-testid="search-input"
-            />
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex gap-2 flex-1">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Szukaj pacjentów..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                data-testid="search-input"
+              />
+            </div>
+            <button
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className={`lg:hidden px-3 py-2.5 border rounded-lg flex items-center gap-2 text-sm font-medium ${showMobileFilters || activeFilterCount > 0 ? 'border-teal-600 text-teal-700 bg-teal-50' : 'border-slate-200 text-slate-700'}`}
+              data-testid="mobile-filters-toggle"
+            >
+              <Filter className="w-4 h-4" />
+              Filtry{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </button>
           </div>
-          
+          <div className={`${showMobileFilters ? 'flex' : 'hidden'} flex-col gap-3 lg:contents`}>
           <div className="relative">
             <button
               onClick={() => setShowStatusDropdown(!showStatusDropdown)}
@@ -329,9 +430,10 @@ const PatientsList = () => {
           >
             {sortOrder === "asc" ? "Rosnąco" : "Malejąco"}
           </button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-4 pt-4 border-t border-slate-100">
           <div className="flex items-center gap-2 flex-wrap">
             {statusFilters.length === 0 && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 bg-slate-100 rounded-full" data-testid="hidden-statuses-hint">
@@ -409,7 +511,7 @@ const PatientsList = () => {
         <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          {isDesktop && <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
@@ -449,62 +551,10 @@ const PatientsList = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="relative flex items-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setStatusChangeId(statusChangeId === patient.id ? null : patient.id);
-                          }}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full cursor-pointer transition-all hover:ring-2 hover:ring-offset-1 hover:ring-slate-300 ${getStatusColor(patient.status)}`}
-                          data-testid={`status-badge-${patient.id}`}
-                          title="Kliknij aby zmienić status"
-                        >
-                          {STATUS_LABELS[patient.status] || patient.status}
-                          <ChevronRight className={`w-3 h-3 transition-transform ${statusChangeId === patient.id ? 'rotate-90' : ''}`} />
-                        </button>
-                        {patient.asap && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700" title="Jak najszybciej">
-                            <Sparkles className="w-3 h-3" />
-                          </span>
-                        )}
-                        {statusChangeId === patient.id && (
-                          <div
-                            className="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-30 py-1"
-                            data-testid={`status-dropdown-${patient.id}`}
-                          >
-                            {STATUS_OPTIONS.map((option) => (
-                              <button
-                                key={option.value}
-                                onClick={(e) => handleStatusChange(patient.id, option.value, e)}
-                                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
-                                  patient.status === option.value
-                                    ? "bg-slate-100 font-semibold"
-                                    : "hover:bg-slate-50"
-                                }`}
-                                data-testid={`status-option-${patient.id}-${option.value}`}
-                              >
-                                <span className={`w-2 h-2 rounded-full ${getStatusColorBg(option.value)}`} />
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      {renderStatusBadge(patient)}
                     </td>
                     <td className="px-6 py-4">
-                      {(() => {
-                        const loc = locations.find(l => l.id === patient.location_id);
-                        if (!loc) return <span className="text-slate-400">-</span>;
-                        const color = getLocationColor(loc.name);
-                        return (
-                          <span 
-                            className="px-2 py-0.5 text-xs font-bold rounded text-white"
-                            style={{ backgroundColor: color?.hex || '#94a3b8' }}
-                          >
-                            {loc.name.trim().substring(0, 3).toUpperCase()}
-                          </span>
-                        );
-                      })()}
+                      {renderLocationBadge(patient)}
                     </td>
                     <td className="px-6 py-4">
                       {(() => {
@@ -534,38 +584,45 @@ const PatientsList = () => {
                       {patient.procedure_type || "-"}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {patient.status === "cancelled" && (
-                          <button
-                            onClick={(e) => handleRestore(patient.id, e)}
-                            className="p-2 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="Przywróć do oczekujących"
-                            data-testid={`restore-${patient.id}`}
-                          >
-                            <RotateCcw className="w-4 h-4 text-emerald-600" />
-                          </button>
-                        )}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/patients/${patient.id}`); }}
-                          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                          data-testid={`view-${patient.id}`}
-                        >
-                          <Eye className="w-4 h-4 text-slate-600" />
-                        </button>
-                        <button
-                          onClick={(e) => handleDelete(patient.id, e)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                          data-testid={`delete-${patient.id}`}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
-                      </div>
+                      {renderActions(patient)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </div>}
+
+          {!isDesktop && <div className="divide-y divide-slate-100" data-testid="patients-mobile-list">
+            {filteredPatients.map((patient) => (
+              <div
+                key={patient.id}
+                className="p-4 active:bg-slate-50 cursor-pointer"
+                onClick={() => navigate(`/patients/${patient.id}`)}
+                data-testid={`patient-card-${patient.id}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                    <User className="w-5 h-5 text-teal-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-slate-900 truncate">{patient.last_name} {patient.first_name}</p>
+                      {renderLocationBadge(patient)}
+                    </div>
+                    <p className="text-sm text-slate-500 truncate">{patient.procedure_type || "Zabieg do ustalenia"}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <span>Operacja: <span className="text-slate-700 font-medium">{patient.surgery_date || "-"}</span></span>
+                      {patient.phone && <span>{patient.phone}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+                  {renderStatusBadge(patient)}
+                  {renderActions(patient)}
+                </div>
+              </div>
+            ))}
+          </div>}
           {filteredPatients.length === 0 && (
             <div className="p-12 text-center">
               <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />

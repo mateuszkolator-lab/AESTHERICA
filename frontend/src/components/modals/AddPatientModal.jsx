@@ -263,7 +263,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
         <form onSubmit={handleSubmit} className="p-6">
           {activeTab === "info" ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Nazwisko *</label>
                   <input
@@ -288,7 +288,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
                   <input
@@ -311,7 +311,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Data urodzenia</label>
                   <input
@@ -338,7 +338,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
                   <select
@@ -460,7 +460,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                 </label>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Data wysłania dokumentów do pacjenta</label>
                   <input
@@ -483,7 +483,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Data operacji</label>
                   <input
@@ -594,7 +594,7 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
                   <h3 className="text-sm font-semibold text-slate-700">
                     Dodane zdjęcia ({photos.length})
                   </h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {photos.map((photo, index) => (
                       <div key={index} className="relative border border-slate-200 rounded-lg overflow-hidden">
                         <img

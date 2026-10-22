@@ -66,17 +66,17 @@ const Dashboard = () => {
 
 
   return (
-    <div className="p-8" data-testid="dashboard-page">
+    <div className="p-4 lg:p-8" data-testid="dashboard-page">
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Pulpit</h1>
+        <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Pulpit</h1>
         <p className="text-slate-500 mt-1">Witaj ponownie! Oto przegląd Twojej praktyki.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar Preview - Google/Apple style */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
-            <div className="flex items-center gap-4">
+          <div className="px-3 lg:px-6 py-3 lg:py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-slate-50 to-white">
+            <div className="flex items-center gap-2 lg:gap-4 max-lg:order-2">
               <button
                 onClick={() => setCurrentMonth(new Date())}
                 className="px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors"
@@ -100,19 +100,19 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            <h2 className="text-xl font-semibold text-slate-900 capitalize" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="dashboard-month-name">
+            <h2 className="text-lg lg:text-xl font-semibold text-slate-900 capitalize max-lg:order-1 max-lg:w-full" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="dashboard-month-name">
               {monthName}
             </h2>
-            <div className="w-24" /> {/* Spacer for balance */}
+            <div className="w-24 hidden lg:block" /> {/* Spacer for balance */}
           </div>
           
-          <div className="p-4">
+          <div className="p-2 lg:p-4">
             {/* Day headers */}
             <div className="grid grid-cols-7 mb-2">
               {["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"].map((day, i) => (
                 <div key={day} className={`text-center text-xs font-semibold py-3 ${i >= 5 ? 'text-slate-400' : 'text-slate-600'}`}>
                   <span className="hidden lg:inline">{day}</span>
-                  <span className="lg:hidden">{day.slice(0, 3)}</span>
+                  <span className="lg:hidden">{day.slice(0, 2)}</span>
                 </div>
               ))}
             </div>
@@ -136,7 +136,7 @@ const Dashboard = () => {
                     key={i}
                     onClick={() => day && (hasSlot || hasPatients) && setSelectedDay(day)}
                     data-testid={day ? `dashboard-day-${day.getDate()}` : undefined}
-                    className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative ${
+                    className={`min-h-[64px] md:min-h-[110px] lg:min-h-[120px] p-1 lg:p-2 transition-all relative ${
                       !day 
                         ? "bg-slate-100" 
                         : isPast 
@@ -169,7 +169,7 @@ const Dashboard = () => {
                           }`}>
                             {day.getDate()}
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 max-md:hidden">
                             {hasSlot && slot.location_name && (
                               <span 
                                 className="px-1.5 py-0.5 text-[9px] font-bold rounded text-white"
@@ -186,8 +186,17 @@ const Dashboard = () => {
                           </div>
                         </div>
                         
+                        {/* Events (mobile: dots) */}
+                        <div className="md:hidden flex flex-wrap gap-0.5 px-0.5">
+                          {surgeries.slice(0, 6).map((patient, idx) => (
+                            <span key={idx} className={`w-2 h-2 rounded-full ${patient.asap ? 'bg-amber-500' : 'bg-teal-600'}`} />
+                          ))}
+                          {!hasPatients && hasSlot && !isFull && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+                          {isFull && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                        </div>
+
                         {/* Events */}
-                        <div className="space-y-1 relative z-20">
+                        <div className="space-y-1 relative z-20 max-md:hidden">
                           {surgeries.slice(0, 3).map((patient, idx) => (
                             <div 
                               key={idx}
