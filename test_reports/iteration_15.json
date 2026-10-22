@@ -1,0 +1,29 @@
+{
+  "summary": "Frontend-only test of Stage 1 mobile responsiveness (390x844), plus a quick tablet check (768x1024) and a desktop regression check (1920x800). Every requested item passed and there were no page errors. Mobile: the top bar is visible, the sidebar starts off-screen (x=-288) and slides in to x=0 with an overlay, and the close button, an overlay tap and nav-pacjenci each close it (nav-pacjenci also goes to /patients). Horizontal width (scrollWidth) is 390 on Dashboard, /patients, patient detail and inside modals. Dashboard: month navigation, Dziś and the prev/next arrows work; the 7-column grid fits (cells ~47.7px); weekday names are 2-letter; cells show dots on mobile. Patients: cards are shown and there is no <table>; the Filtry toggle shows and hides all 6 filters; search narrows the list (1 card for a name, 0 for nonsense text); status badge -> dropdown -> Konsultacja showed the toast and the new label, then I reverted it to Zaplanowany (API check: status=planned, surgery_date unchanged); tapping a card opens /patients/{id}. Patient detail is one column; the edit modal sits at 16-374px with every grid in 1 column, and close-modal works. SurgeryConfirmModal (16 records) fits and dismiss closes it. Desktop: top bar hidden; sidebar sticky at x=0 and 256px wide, toggles to 80px and back; table rendered and patients-mobile-list not in the DOM; all 7 filter controls in one row (same y); no Filtry button; status change in a table row works (and was reverted); full weekday names; GlobalSearch trigger sits inside main and is not fixed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Patients list mobile - Filtry panel", "issues": ["status-filter-button and procedure-filter-button are content-width (~208px), while location/asap/sort controls are full width. The column looks uneven; consider w-full on those two buttons below lg."]},
+      {"screen": "Patient detail at tablet width (768px)", "issues": ["The 3-column layout (info / visits / history) is used at md, so each column is very narrow (~210-240px). Text wraps heavily ('Brak zarejestrowanych wizyt', 'Historia zmian'). Consider a single column or 2 columns until lg."]},
+      {"screen": "AddPatientModal (mobile)", "issues": ["'Data urodzenia' uses the browser's native date input (existed before this change, not a regression)."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: make the status and procedure filter buttons full width in the mobile Filtry panel",
+    "Optional: improve the PatientDetail layout at 768-1023px (avoid 3 narrow columns)"
+  ],
+  "critical_code_review_comments": [
+    "PatientsList.jsx is 647 lines and growing. Consider moving the mobile card list and the table into separate components.",
+    "Dashboard calendar only renders data.upcoming_surgeries, so past days never show names or dots. The env currently has 0 upcoming surgeries, so the desktop 'names in cells' check was confirmed by code review (names are max-md:hidden, dots are md:hidden) rather than with live data.",
+    "useIsDesktop reads window.matchMedia synchronously in the initial state. Fine for CRA (no SSR)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not requested)", "frontend": "100% of requested checks"},
+  "seed_data_creation": "None. Patient 27aead79 (Ankieta Anna) was switched planned->consultation->planned in both mobile and desktop tests; the final state is planned with surgery_date 2026-10-01 kept.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Stage 1 mobile is verified. Stage 2 candidates (not tested): Planning, Calendar, Controls, Surveys, Settings, Users pages at 390px. SurgeryConfirmModal shows after every login in this env (16 past surgeries); close it with surgery-confirm-dismiss. Breakpoint is lg = 1024px (useIsDesktop)."
+}

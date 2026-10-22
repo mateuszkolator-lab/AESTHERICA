@@ -15,6 +15,18 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - RhinoPlanner (canvas Fabric.js, eksport PDF)
 - Historia zmian pacjentów (Audit Log)
 
+## Ostatnie zmiany (18.06.2026) – responsywność mobilna, Etap 1
+- Zasada: desktop (>=1024px) ma pozostać IDENTYCZNY – zmiany tylko przez warianty `max-lg:`, `sm:`, `md:` lub hook `useIsDesktop` (hooks/useIsDesktop.js)
+- Sidebar.jsx: na <1024px pasek górny (mobile-topbar, hamburger) + wysuwany drawer z overlayem; zamyka się po zmianie trasy
+- App.jsx: layout `max-lg:flex-col`; GlobalSearch trigger na mobile przypięty w pasku górnym
+- Dashboard: padding/nagłówki mniejsze, kalendarz 7 kolumn z kropkami zamiast nazwisk (<768px), 2-literowe dni
+- PatientsList: na <1024px karty pacjentów (patient-card-{id}) zamiast tabeli (tabela renderowana tylko gdy isDesktop), przycisk „Filtry” (mobile-filters-toggle) zwijający filtry; helpery renderStatusBadge/renderLocationBadge/renderActions
+- PatientDetail, AddPatientModal (grid 1 kol. <640px), SurgeryConfirmModal (wiersze w kolumnie <640px)
+- Test: /app/test_reports/iteration_15.json – wszystko PASS (mobile + regresja desktop)
+- Etap 2 (nie zrobione): Kalendarz/Planowanie na telefonie (lista dni, przypisanie bez drag&drop), Ankiety/Kontrole/Statystyki/Ustawienia/Użytkownicy, PWA
+- Wysyłka linków do ankiet (WhatsApp wa.me / e-mail / bramka) – użytkownik ZAWIESIŁ decyzję
+
+
 ## Ostatnie zmiany (17.06.2026)
 - Miesiąc kalendarza zapamiętywany w sesji (sessionStorage dashboard_month / calendar_month; constants.loadPersistedMonth/savePersistedMonth), czyszczony przy wylogowaniu
 - Pola pacjenta: documents_sent_date, hospital_registration_date (formularz, karta, audyt)
