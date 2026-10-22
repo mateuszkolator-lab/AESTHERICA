@@ -1,0 +1,24 @@
+{
+  "summary": "Retested the iteration_13 fixes. Backend: the new tests/test_date_history_fixes.py passed 6/6 and the regression tests/test_date_history.py passed 11/11 (both earlier failures now pass). Confirmed: (a) a PUT with '' surgery_date/documents_sent_date creates no audit entry and nothing in /date-changes/recent. Assigned and then moved dates show up correctly under both dates. (b) /audit/date/{date} is location-scoped: jan gets an empty list for a Medicus patient, still sees his Pro-Familia patient, and admin sees everything. (c) The 'Lokalizacja' audit field stores location names for both a PUT location change and a slot assign. Frontend: PatientAuditLog refreshes after the edit modal is saved (2 -> 3 entries, no reload), and null/empty old values render as 'brak'. DashboardDayModal closes on Escape. The /calendar 'Historia tego terminu' shows 'Przeniesiono na ten termin (z 2027-05-05)' on 7 May and 'Przeniesiono z tego terminu (na 2027-05-07)' on 5 May. One minor issue: the /calendar day modal (in CalendarPage) does NOT close on Escape, because it has no keydown handler. iteration_13 said this worked. All test data was cleaned up.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "CalendarPage day modal", "issue": "Escape does not close the /calendar day modal: there is no keydown handler in CalendarPage.jsx (only DashboardDayModal has one). Reproduced twice. The modal stayed open after Esc, including when focus was on the date-history toggle.", "selector": "[data-testid='calendar-day-5'] -> modal", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_date_history_fixes.py", "/app/backend/tests/test_date_history.py", "/app/test_reports/pytest/date_history_fixes.xml"],
+  "action_items": ["Add Escape-to-close to the CalendarPage day modal, using the same useEffect keydown listener as DashboardDayModal"],
+  "critical_code_review_comments": [
+    "patients.update_patient: the guard '(old or None) == (new or None)' also hides real changes from 0/False to None for non-numeric fields. That is acceptable, but note that a list [] -> None change is silently skipped as well.",
+    "audit.get_recent_date_changes still applies the location filter after to_list(limit*3), so the feed for a non-global user can be truncated (carried over from iteration_13)."
+  ],
+  "updated_files": ["/app/backend/tests/test_date_history_fixes.py"],
+  "success_rate": {"backend": "100% (17/17 across both date-history files)", "frontend": "~90% (all requested flows pass; /calendar Esc not handled)"},
+  "test_credentials": "Admin mateusz.kolator@gmail.com / Matikolati123!; user jan.kowalski@klinika.pl / haslo123",
+  "seed_data_creation": "The TEST_Fix patients (3), the slot on 2027-05-09 and their audit rows were created and then deleted.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run with KEEP_DATA=1 to keep the data (ids go to /app/memory/tmp/hist_fix_ids.json). The SurgeryConfirmModal pops up on Dashboard/Calendar after login; dismiss it with the 'Przypomnij później' text. The server date is Oct 2026, so May 2027 is 7 'next' clicks away. Calendar testids: next-month, calendar-month-name, calendar-day-N. Dashboard testids: dashboard-next-month, dashboard-day-N."
+}

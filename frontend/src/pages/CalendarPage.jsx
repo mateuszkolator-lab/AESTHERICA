@@ -21,6 +21,12 @@ const CalendarPage = () => {
   const [draggedPatient, setDraggedPatient] = useState(null);
   const [showUnassigned, setShowUnassigned] = useState(true);
   const [selectedDay, setSelectedDay] = useState(null);
+  useEffect(() => {
+    if (!selectedDay) return;
+    const onKey = (e) => { if (e.key === "Escape") setSelectedDay(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedDay]);
   const [pendingDrop, setPendingDrop] = useState(null);
   const navigate = useNavigate();
 

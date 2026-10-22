@@ -289,7 +289,7 @@ const PatientDetail = () => {
             {patient.status === "planned" && patient.surgery_date && (
               <button
                 onClick={handleToggleConfirm}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                className={`w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
                   patient.confirmed
                     ? "bg-teal-100 text-teal-800 border border-teal-300 hover:bg-teal-200"
                     : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200"
