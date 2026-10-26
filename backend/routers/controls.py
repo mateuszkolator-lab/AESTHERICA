@@ -175,7 +175,7 @@ async def get_patients_with_controls(user: dict = Depends(get_auth)):
             "first_name": patient.get("first_name", ""),
             "last_name": patient.get("last_name", ""),
             "phone": patient.get("phone"),
-            "procedure_type": patient.get("procedure_type", ""),
+            "procedure_type": patient.get("procedure_type") or "",
             "surgery_date": surgery_date_str,
             "controls": controls,
             "next_control": next_control,

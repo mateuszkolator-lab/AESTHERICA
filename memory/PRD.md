@@ -15,6 +15,14 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - RhinoPlanner (canvas Fabric.js, eksport PDF)
 - Historia zmian pacjentów (Audit Log)
 
+## Ostatnie zmiany (19.06.2026) – responsywność Etap 2 + PWA
+- CalendarPage: na telefonie zamiast drag&drop tryb „dotknij pacjenta → dotknij dzień” (selectedForAssign, moveToDate, handleDayTap, startMobileAssign; baner assign-mode-banner; przycisk „Przenieś” mobile-move-{id} w oknie dnia); panel „Bez terminu” domyślnie zwinięty na mobile; kropki zamiast nazwisk <768px
+- PlanningPage: wiersze slotów w kolumnie <768px, lista przypisanych inline (slot-patients-mobile-{id}) zamiast tooltipa na mobile
+- Surveys/Stats/Settings/Users/Controls/SurveyBuilder: paddingi p-4 lg:p-8, nagłówki, zawijanie, tabele przewijane w karcie
+- PWA: public/manifest.json, icon-192/512(+maskable)/apple-touch-icon/favicon-64, sw.js (rejestrowany tylko w produkcji, network-first, pomija /api), meta w index.html; przycisk „Dodaj do ekranu głównego” (components/InstallAppButton.jsx) w drawerze mobilnym
+- Fix backend: controls.py – procedure_type None powodował 500 na GET /api/controls/patients
+- Test: /app/test_reports/iteration_16.json – wszystko PASS (mobile + regresja desktop)
+
 ## Ostatnie zmiany (18.06.2026) – responsywność mobilna, Etap 1
 - Zasada: desktop (>=1024px) ma pozostać IDENTYCZNY – zmiany tylko przez warianty `max-lg:`, `sm:`, `md:` lub hook `useIsDesktop` (hooks/useIsDesktop.js)
 - Sidebar.jsx: na <1024px pasek górny (mobile-topbar, hamburger) + wysuwany drawer z overlayem; zamyka się po zmianie trasy

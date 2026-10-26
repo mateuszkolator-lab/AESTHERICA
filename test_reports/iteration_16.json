@@ -1,0 +1,37 @@
+{
+  "summary": "Stage 2 mobile responsiveness + PWA tested (frontend, 390x844 and 1920x800). All requested flows PASS: no page-level horizontal overflow (scrollWidth=390) on /calendar, /planning, /surveys, /controls, /stats, /settings, /users; calendar tap-to-assign (panel subtitle, banner, teal rings on future days only, past-day error toast, cancel, future-day assign with toast + dot + API surgery_date verified), day modal 'Przenieś' -> assign mode, month nav + Dziś, 2-letter weekday headers; planning slot rows stack (flex-col), inline slot-patients-mobile list, no tooltip on mobile, suggestions stack with visible Przypisz (not clicked), AddSlotModal fits viewport; settings rows fit; users table scrolls inside card, add-user modal single column. PWA assets/manifest/meta all OK. Desktop regression OK. One pre-existing BACKEND bug found & fixed: GET /api/controls/patients returned 500 (procedure_type None).",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/controls/patients", "issue": "500 ResponseValidationError when a patient has procedure_type=null (patient.get('procedure_type','') returns None because key exists). /controls page showed no data. FIXED by tester in routers/controls.py: patient.get('procedure_type') or ''. Pre-existing, not caused by Stage 2.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/calendar mobile", "issues": ["'Bez terminu' panel is rendered ABOVE the page heading, so after tapping 'Pokaż pacjentów bez terminu' the heading and the toggle button jump down below the panel (panel appears out of the user's focus). Consider rendering the panel below the header on mobile (order classes).", "Toggle button 'Pokaż pacjentów bez terminu' has no data-testid."]},
+      {"screen": "/settings mobile", "issues": ["Section header 'Lokalizacje / Kliniki' wraps to 2 lines and 'Dodaj lokalizację' button wraps text to 2 lines; section headers keep px-6 on mobile (could be px-4)."]},
+      {"screen": "/planning mobile", "issues": ["For slots with 'Przypisani' badge the delete icon wraps to a second line (acceptable, cosmetic)."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Review tester fix in /app/backend/routers/controls.py (procedure_type null -> ''); consider auditing other routers for the same .get(key, default) with null values (response models with non-Optional str).",
+    "Optional: move mobile 'Bez terminu' panel below the calendar header; add data-testid to the panel toggle button.",
+    "Optional: tighten Settings section header layout on mobile."
+  ],
+  "critical_code_review_comments": [
+    "CalendarPage.jsx is 753 lines (>700) - consider splitting day modal / unassigned panel / location-change modal into components.",
+    "CalendarPage handleDayTap clears selectedForAssign even when moveToDate rejects a full slot (toast 'pełny'), forcing user to reselect - minor UX.",
+    "showUnassigned initial state is taken from isDesktop once; resizing across breakpoint doesn't update it (acceptable).",
+    "SW only registered in production; sw.js network-first caching looks fine and skips /api."
+  ],
+  "updated_files": ["/app/backend/routers/controls.py"],
+  "success_rate": {"backend": "N/A (frontend-only; 1 pre-existing API 500 found and fixed)", "frontend": "100%"},
+  "seed_data_creation": "Temporary patient TEST_Mobilny and two TEST slots (2026-10-28, 2026-10-30) created and deleted afterwards; no real patient modified.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Container date is 2026-10-26, so all existing slots are in the past and /planning shows none - create temporary future slots via POST /api/surgery-slots {date,notes} to test slot rows/suggestions, delete afterwards. Google Calendar not connected so calendar-location-{id} rows in Settings are not rendered (not verifiable). Console 'cannot be a child of <select>' errors come from visual-editor injected spans, not app code. install-app-button not shown in headless Chromium (expected).",
+  "rca of the issue": "controls 500: routers/controls.py built response with patient.get('procedure_type', '') but some Mongo docs store procedure_type: null, so value None violates PatientWithControls.procedure_type: str -> FastAPI ResponseValidationError -> 500 for the whole list. Mitigation applied: use `or ''`."
+}
