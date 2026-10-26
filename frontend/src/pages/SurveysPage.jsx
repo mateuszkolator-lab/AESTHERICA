@@ -116,7 +116,7 @@ const ResultsTab = ({ templates }) => {
           {tps.map(tp => <option key={tp.key} value={tp.key}>{tp.label}</option>)}
         </select>
         <span className="text-sm text-slate-500">{rows.length} odpowiedzi</span>
-        <button onClick={() => setShowBulk(true)} className="ml-auto flex items-center gap-2 border border-emerald-600 text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-lg font-medium" data-testid="bulk-export-button">
+        <button onClick={() => setShowBulk(true)} className="lg:ml-auto flex items-center gap-2 border border-emerald-600 text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-lg font-medium" data-testid="bulk-export-button">
           <Users className="w-4 h-4" /> Eksport zbiorczy (grupa pacjentów)
         </button>
         <button onClick={handleExport} disabled={!templateId} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium disabled:opacity-50" data-testid="export-results-button">
@@ -198,17 +198,17 @@ export default function SurveysPage() {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
-    <div className="p-8" data-testid="surveys-page">
+    <div className="p-4 lg:p-8" data-testid="surveys-page">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900 flex items-center gap-3" style={{ fontFamily: 'Manrope, sans-serif' }}><ClipboardList className="w-8 h-8 text-teal-600" /> Ankiety (PROMs)</h1>
+          <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900 flex items-center gap-3" style={{ fontFamily: 'Manrope, sans-serif' }}><ClipboardList className="w-8 h-8 text-teal-600" /> Ankiety (PROMs)</h1>
           <p className="text-slate-500 mt-1">Kwestionariusze wypełniane przez pacjentów przed i po zabiegu</p>
         </div>
         <button onClick={() => navigate("/surveys/builder")} className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-lg font-medium" data-testid="add-survey-button">
           <Plus className="w-5 h-5" /> Nowa ankieta
         </button>
       </div>
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         {[{ k: "templates", label: "Szablony", icon: Layers }, { k: "results", label: "Wyniki", icon: BarChart3 }].map(({ k, label, icon: Icon }) => (
           <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${tab === k ? "bg-teal-700 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`} data-testid={`surveys-tab-${k}`}>
             <Icon className="w-4 h-4" /> {label}

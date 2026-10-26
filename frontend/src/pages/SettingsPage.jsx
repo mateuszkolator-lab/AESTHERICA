@@ -139,9 +139,9 @@ const SettingsPage = () => {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
-    <div className="p-8" data-testid="settings-page">
+    <div className="p-4 lg:p-8" data-testid="settings-page">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Ustawienia</h1>
+        <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Ustawienia</h1>
         <p className="text-slate-500 mt-1">Zarządzaj ustawieniami praktyki</p>
       </div>
 
@@ -162,10 +162,10 @@ const SettingsPage = () => {
           {procedureTypes.length > 0 ? (
             <div className="space-y-3">
               {procedureTypes.map((pt) => (
-                <div key={pt.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg" data-testid={`procedure-type-${pt.id}`}>
+                <div key={pt.id} className="flex items-start sm:items-center justify-between gap-3 p-4 bg-slate-50 rounded-lg" data-testid={`procedure-type-${pt.id}`}>
                   <div>
                     <p className="font-medium text-slate-900">{pt.name}</p>
-                    <div className="flex gap-4 text-sm text-slate-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
                       {pt.description && <span>{pt.description}</span>}
                       {pt.default_price && <span className="text-teal-600 font-medium">{pt.default_price.toLocaleString('pl-PL')} PLN</span>}
                     </div>
@@ -377,7 +377,7 @@ const SettingsPage = () => {
               ) : (
                 <div className="space-y-3">
                   {locations.map((loc) => (
-                    <div key={loc.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg" data-testid={`calendar-location-${loc.id}`}>
+                    <div key={loc.id} className="flex max-sm:flex-col sm:items-center justify-between gap-3 p-4 bg-slate-50 rounded-lg" data-testid={`calendar-location-${loc.id}`}>
                       <div className="flex-1">
                         <p className="font-medium text-slate-900">{loc.name}</p>
                         {loc.address && <p className="text-sm text-slate-500">{loc.address}</p>}
@@ -387,7 +387,7 @@ const SettingsPage = () => {
                           <select
                             value={loc.google_calendar_id || ""}
                             onChange={(e) => handleAssignCalendar(loc.id, e.target.value)}
-                            className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[220px]"
+                            className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 sm:min-w-[220px] max-sm:w-full"
                             data-testid={`calendar-select-${loc.id}`}
                           >
                             <option value="">-- Wybierz kalendarz --</option>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../utils/api";
+import { InstallAppButton } from "./InstallAppButton";
 import { 
   Users, Calendar, BarChart3, Settings, LogOut, 
   Menu, Home, CalendarPlus, Shield, User, ClipboardCheck, ClipboardList, X
@@ -117,6 +118,8 @@ const Sidebar = ({ currentPath }) => {
           </ul>
         </nav>
         
+        <div className="lg:hidden"><InstallAppButton /></div>
+
         {/* User info */}
         {user && showLabels && (
           <div className="px-4 py-3 border-t border-slate-100">

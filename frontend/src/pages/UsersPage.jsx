@@ -139,9 +139,9 @@ const UsersPage = () => {
   }
 
   return (
-    <div className="p-6 lg:p-8" data-testid="users-page">
+    <div className="p-4 lg:p-8" data-testid="users-page">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/ustawienia")}
@@ -170,7 +170,7 @@ const UsersPage = () => {
       </div>
 
       {/* Users List */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -302,7 +302,7 @@ const UsersPage = () => {
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Dodaj użytkownika</h3>
             <form onSubmit={handleAddUser}>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Imię</label>
                     <input
@@ -429,7 +429,7 @@ const UsersPage = () => {
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Edytuj użytkownika</h3>
             <form onSubmit={handleEditUser}>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Imię</label>
                     <input

@@ -8,6 +8,7 @@ import {
 import api from "../utils/api";
 import { getLocationColor } from "../utils/constants";
 import AddSlotModal from "../components/modals/AddSlotModal";
+import { useIsDesktop } from "../hooks/useIsDesktop";
 
 const PlanningPage = () => {
   const [slots, setSlots] = useState([]);
@@ -21,6 +22,7 @@ const PlanningPage = () => {
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [locationFilter, setLocationFilter] = useState("");
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
 
   const loadData = useCallback(async () => {
     try {
@@ -116,10 +118,10 @@ const PlanningPage = () => {
   if (loading && activeTab === "slots") return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
-    <div className="p-8" data-testid="planning-page">
+    <div className="p-4 lg:p-8" data-testid="planning-page">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Planowanie operacji</h1>
+          <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Planowanie operacji</h1>
           <p className="text-slate-500 mt-1">Zarzadzaj terminami i przypisuj pacjentow</p>
         </div>
         <button
@@ -132,7 +134,7 @@ const PlanningPage = () => {
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         <button
           onClick={() => setActiveTab("slots")}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -157,7 +159,7 @@ const PlanningPage = () => {
 
       {activeTab === "slots" && (
         <div className="bg-white rounded-xl border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="px-4 lg:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-900">Dostepne terminy operacji</h2>
             <select
               value={locationFilter}
@@ -171,7 +173,7 @@ const PlanningPage = () => {
               ))}
             </select>
           </div>
-          <div className="p-6">
+          <div className="p-3 lg:p-6">
             {slots.filter(s => !locationFilter || s.location_id === locationFilter).length > 0 ? (
               <div className="space-y-3">
                 {slots.filter(s => !locationFilter || s.location_id === locationFilter).map((slot) => {
@@ -186,7 +188,7 @@ const PlanningPage = () => {
                       onMouseLeave={() => setHoveredSlot(null)}
                     >
                       <div
-                        className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                        className={`flex max-md:flex-col md:items-center justify-between gap-3 p-4 rounded-lg border transition-all ${
                           slot.is_full 
                             ? "bg-red-50 border-red-200" 
                             : slotPatients.length > 0
@@ -205,7 +207,7 @@ const PlanningPage = () => {
                             }`} />
                           </div>
                           <div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
                               <p className="font-semibold text-slate-900 text-lg">{slot.date}</p>
                               {getLocationBadge(slot.location_id)}
                               {slotPatients.length > 0 && (
@@ -225,7 +227,7 @@ const PlanningPage = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                           {slot.is_full ? (
                             <span className="px-3 py-1.5 bg-red-100 text-red-800 rounded-full text-sm font-medium">Pelny</span>
                           ) : slotPatients.length > 0 ? (
@@ -264,8 +266,21 @@ const PlanningPage = () => {
                         </div>
                       </div>
 
+                      {!isDesktop && slotPatients.length > 0 && (
+                        <div className="mt-1 ml-2 pl-3 border-l-2 border-teal-200 space-y-1" data-testid={`slot-patients-mobile-${slot.id}`}>
+                          {slotPatients.map((p) => (
+                            <button key={p.id} onClick={() => navigate(`/patients/${p.id}`)} className="flex items-center gap-2 text-sm text-slate-700 py-1 w-full text-left">
+                              <User className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                              <span className="font-medium truncate">{p.first_name} {p.last_name}</span>
+                              {p.asap && <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                              <span className="text-xs text-slate-400 truncate">{p.procedure_type || "Zabieg"}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Hover tooltip with assigned patients */}
-                      {hoveredSlot === slot.id && slotPatients.length > 0 && (
+                      {isDesktop && hoveredSlot === slot.id && slotPatients.length > 0 && (
                         <div className="absolute left-16 top-full mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-4 min-w-[280px]" data-testid={`slot-tooltip-${slot.id}`}>
                           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
                             Pacjenci na {slot.date}
@@ -321,7 +336,7 @@ const PlanningPage = () => {
             suggestions.map((item) => (
               <div key={item.slot.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div 
-                  className="px-6 py-4 bg-gradient-to-r from-teal-50 to-white border-b border-slate-100 flex items-center justify-between"
+                  className="px-4 lg:px-6 py-4 bg-gradient-to-r from-teal-50 to-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-3"
                   style={item.slot.location_name ? { borderLeftWidth: '6px', borderLeftColor: getLocationColor(item.slot.location_name)?.hex || '#94a3b8' } : {}}
                 >
                   <div className="flex items-center gap-4">
@@ -351,13 +366,13 @@ const PlanningPage = () => {
                   </div>
                 </div>
                 
-                <div className="p-6">
+                <div className="p-3 lg:p-6">
                   {item.suggested_patients.length > 0 ? (
                     <div className="space-y-3">
                       {item.suggested_patients.map((patient) => (
                         <div 
                           key={patient.id}
-                          className={`flex items-center justify-between p-4 rounded-lg hover:bg-slate-100 transition-colors ${
+                          className={`flex max-md:flex-col md:items-center justify-between gap-3 p-4 rounded-lg hover:bg-slate-100 transition-colors ${
                             patient.location_match && patient.date_match 
                               ? "bg-emerald-50 border border-emerald-200" 
                               : patient.location_match 
@@ -412,7 +427,7 @@ const PlanningPage = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-4 max-md:justify-between">
                             <div className="text-right">
                               <p className="text-xs text-slate-500">Preferowane daty</p>
                               {(patient.preferred_dates?.length ? patient.preferred_dates : 

@@ -153,10 +153,10 @@ export default function SurveyBuilderPage() {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
-    <div className="p-8 max-w-5xl" data-testid="survey-builder-page">
+    <div className="p-4 lg:p-8 max-w-5xl" data-testid="survey-builder-page">
       <button onClick={() => navigate("/surveys")} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4"><ChevronLeft className="w-4 h-4" /> Ankiety</button>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>{id ? "Edytuj ankietę" : "Nowa ankieta"}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>{id ? "Edytuj ankietę" : "Nowa ankieta"}</h1>
         <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-5 py-2.5 rounded-lg font-medium disabled:opacity-50" data-testid="save-survey-button">
           <Save className="w-4 h-4" /> {saving ? "Zapisywanie..." : "Zapisz ankietę"}
         </button>

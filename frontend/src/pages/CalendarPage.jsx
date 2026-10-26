@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import api from "../utils/api";
 import DateHistory from "../components/DateHistory";
+import { useIsDesktop } from "../hooks/useIsDesktop";
 import { 
   STATUS_LABELS, getStatusColorBg, getLocationColor, 
   getDaysInMonth, formatDateLocal, loadPersistedMonth, savePersistedMonth } from "../utils/constants";
@@ -18,8 +19,10 @@ const CalendarPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(() => loadPersistedMonth("calendar_month"));
   useEffect(() => { savePersistedMonth("calendar_month", currentMonth); }, [currentMonth]);
+  const isDesktop = useIsDesktop();
   const [draggedPatient, setDraggedPatient] = useState(null);
-  const [showUnassigned, setShowUnassigned] = useState(true);
+  const [selectedForAssign, setSelectedForAssign] = useState(null);
+  const [showUnassigned, setShowUnassigned] = useState(isDesktop);
   const [selectedDay, setSelectedDay] = useState(null);
   useEffect(() => {
     if (!selectedDay) return;
@@ -96,37 +99,51 @@ const CalendarPage = () => {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = async (e, date) => {
-    e.preventDefault();
-    if (!draggedPatient || !date) return;
-
+  const moveToDate = async (patient, date) => {
     const dateStr = formatDateLocal(date);
     const targetSlot = calendarData?.slots?.find(s => s.date === dateStr);
 
     if (targetSlot?.is_full) {
       toast.error("Ten termin jest oznaczony jako pełny");
-      setDraggedPatient(null);
       return;
     }
 
-    if (draggedPatient.surgery_date === dateStr) {
-      setDraggedPatient(null);
-      return;
-    }
+    if (patient.surgery_date === dateStr) return;
 
     // Check if moving between different locations
-    const patientLocId = draggedPatient.location_id;
+    const patientLocId = patient.location_id;
     const targetLocId = targetSlot?.location_id;
     if (patientLocId && targetLocId && patientLocId !== targetLocId) {
       const fromName = locations.find(l => l.id === patientLocId)?.name?.trim() || "Nieznana";
       const toName = (targetSlot.location_name?.trim()) || locations.find(l => l.id === targetLocId)?.name?.trim() || "Nieznana";
-      setPendingDrop({ patient: draggedPatient, date, dateStr, targetSlot, fromLocation: fromName, toLocation: toName });
-      setDraggedPatient(null);
+      setPendingDrop({ patient, date, dateStr, targetSlot, fromLocation: fromName, toLocation: toName });
       return;
     }
 
-    await executeDrop(draggedPatient, dateStr, targetSlot);
+    await executeDrop(patient, dateStr, targetSlot);
+  };
+
+  const handleDrop = async (e, date) => {
+    e.preventDefault();
+    if (!draggedPatient || !date) return;
+    await moveToDate(draggedPatient, date);
     setDraggedPatient(null);
+  };
+
+  const handleDayTap = (day, openable) => {
+    if (selectedForAssign) {
+      if (day < today) { toast.error("Nie można przypisać do przeszłej daty"); return; }
+      moveToDate(selectedForAssign, day);
+      setSelectedForAssign(null);
+      return;
+    }
+    if (openable) setSelectedDay(day);
+  };
+
+  const startMobileAssign = (patient) => {
+    setSelectedForAssign(patient);
+    setSelectedDay(null);
+    setShowUnassigned(false);
   };
 
   const executeDrop = async (patient, dateStr, targetSlot) => {
@@ -180,7 +197,7 @@ const CalendarPage = () => {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
-    <div className="p-6 lg:p-8" data-testid="calendar-page">
+    <div className="p-4 lg:p-8" data-testid="calendar-page">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Unassigned Patients Panel */}
         {showUnassigned && (
@@ -189,21 +206,22 @@ const CalendarPage = () => {
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-slate-900">Bez terminu</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Przeciągnij na kalendarz</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{isDesktop ? "Przeciągnij na kalendarz" : "Dotknij, aby wybrać termin"}</p>
                 </div>
                 <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
                   {calendarData?.unassigned_patients?.length || 0}
                 </span>
               </div>
-              <div className="p-3 max-h-[calc(100vh-250px)] overflow-y-auto">
+              <div className="p-3 max-h-64 lg:max-h-[calc(100vh-250px)] overflow-y-auto">
                 {sortedUnassignedPatients.length > 0 ? (
                   <div className="space-y-2">
                     {sortedUnassignedPatients.map((patient) => (
                       <div
                         key={patient.id}
-                        draggable
+                        draggable={isDesktop}
                         onDragStart={(e) => handleDragStart(e, patient)}
                         onDragEnd={handleDragEnd}
+                        onClick={!isDesktop ? () => startMobileAssign(patient) : undefined}
                         className={`group p-3 rounded-xl cursor-grab active:cursor-grabbing transition-all hover:shadow-md ${
                           patient.asap 
                             ? "bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 hover:border-amber-400"
@@ -281,7 +299,7 @@ const CalendarPage = () => {
               <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>
                 Kalendarz operacji
               </h1>
-              <p className="text-slate-500 mt-1 text-sm">Przeciągnij pacjentów na wybrane daty</p>
+              <p className="text-slate-500 mt-1 text-sm">{isDesktop ? "Przeciągnij pacjentów na wybrane daty" : "Wybierz pacjenta, potem dotknij dzień"}</p>
             </div>
             <button
               onClick={() => setShowUnassigned(!showUnassigned)}
@@ -291,11 +309,21 @@ const CalendarPage = () => {
             </button>
           </div>
 
+          {selectedForAssign && (
+            <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-800" data-testid="assign-mode-banner">
+              <GripVertical className="w-4 h-4 shrink-0" />
+              <span className="flex-1 min-w-0 truncate">
+                <strong>{selectedForAssign.last_name} {selectedForAssign.first_name}</strong> – dotknij dzień, aby {selectedForAssign.surgery_date ? "przenieść" : "przypisać"}
+              </span>
+              <button onClick={() => setSelectedForAssign(null)} className="px-3 py-1 bg-white border border-teal-200 rounded-lg font-medium" data-testid="assign-mode-cancel">Anuluj</button>
+            </div>
+          )}
+
           {/* Calendar Container */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             {/* Month Navigation */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
-              <div className="flex items-center gap-3">
+            <div className="px-3 lg:px-6 py-3 lg:py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center gap-3 max-lg:order-2">
                 <button
                   onClick={() => setCurrentMonth(new Date())}
                   className="px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors"
@@ -319,18 +347,18 @@ const CalendarPage = () => {
                   </button>
                 </div>
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 capitalize" data-testid="calendar-month-name">{monthName}</h2>
-              <div className="w-28" /> {/* Spacer */}
+              <h2 className="text-lg lg:text-xl font-semibold text-slate-900 capitalize max-lg:order-1 max-lg:w-full" data-testid="calendar-month-name">{monthName}</h2>
+              <div className="w-28 hidden lg:block" /> {/* Spacer */}
             </div>
 
             {/* Calendar Grid */}
-            <div className="p-4">
+            <div className="p-2 lg:p-4">
               {/* Day Headers */}
               <div className="grid grid-cols-7 mb-2">
                 {["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"].map((day, i) => (
                   <div key={day} className={`text-center text-xs font-semibold py-3 ${i >= 5 ? 'text-slate-400' : 'text-slate-600'}`}>
                     <span className="hidden lg:inline">{day}</span>
-                    <span className="lg:hidden">{day.slice(0, 3)}</span>
+                    <span className="lg:hidden">{day.slice(0, 2)}</span>
                   </div>
                 ))}
               </div>
@@ -354,9 +382,9 @@ const CalendarPage = () => {
                       key={i}
                       onDragOver={day && !isPast ? handleDragOver : undefined}
                       onDrop={day && !isPast ? (e) => handleDrop(e, day) : undefined}
-                      onClick={day && (dayPatients.length > 0 || hasSlot) ? () => setSelectedDay(day) : undefined}
+                      onClick={day ? () => handleDayTap(day, dayPatients.length > 0 || hasSlot) : undefined}
                       data-testid={day ? `calendar-day-${day.getDate()}` : undefined}
-                      className={`min-h-[110px] lg:min-h-[120px] p-2 transition-all relative cursor-pointer ${
+                      className={`min-h-[64px] md:min-h-[110px] lg:min-h-[120px] p-1 lg:p-2 transition-all relative cursor-pointer ${
                         !day 
                           ? "bg-slate-100" 
                           : isPast 
@@ -369,7 +397,7 @@ const CalendarPage = () => {
                                   ? "bg-emerald-50/50"
                                   : "bg-white"
                       } ${
-                        draggedPatient && day && !isPast && !isFull 
+                        (draggedPatient || selectedForAssign) && day && !isPast && !isFull 
                           ? "ring-2 ring-inset ring-teal-400 bg-teal-50/50" 
                           : ""
                       } ${
@@ -395,7 +423,7 @@ const CalendarPage = () => {
                             }`}>
                               {day.getDate()}
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 max-md:hidden">
                               {hasSlot && slot.location_name && (
                                 <span 
                                   className="px-1.5 py-0.5 text-[9px] font-bold rounded text-white"
@@ -411,9 +439,18 @@ const CalendarPage = () => {
                               )}
                             </div>
                           </div>
+
+                          {/* Events (mobile: dots) */}
+                          <div className="md:hidden flex flex-wrap gap-0.5 px-0.5">
+                            {dayPatients.slice(0, 6).map((patient) => (
+                              <span key={patient.id} className={`w-2 h-2 rounded-full ${patient.asap ? 'bg-amber-500' : 'bg-teal-600'}`} />
+                            ))}
+                            {!hasPatients && hasSlot && !isFull && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+                            {isFull && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                          </div>
                           
                           {/* Events */}
-                          <div className="space-y-1 relative z-20">
+                          <div className="space-y-1 relative z-20 max-md:hidden">
                             {dayPatients.slice(0, 3).map((patient) => (
                               <div
                                 key={patient.id}
@@ -513,9 +550,9 @@ const CalendarPage = () => {
             className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+            <div className="px-4 lg:px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">
+                <h2 className="text-lg lg:text-xl font-semibold text-slate-900">
                   {selectedDay.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </h2>
                 {(() => {
@@ -540,7 +577,7 @@ const CalendarPage = () => {
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
+            <div className="p-4 lg:p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
               {(() => {
                 const dayPatients = getPatientsByDate(selectedDay);
                 const slot = getSlotByDate(selectedDay);
@@ -563,7 +600,7 @@ const CalendarPage = () => {
                     {dayPatients.map((patient) => (
                       <div 
                         key={patient.id}
-                        className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                        className={`flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-xl cursor-pointer transition-all hover:shadow-md ${
                           patient.asap 
                             ? "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200"
                             : "bg-slate-50 hover:bg-slate-100"
@@ -607,7 +644,17 @@ const CalendarPage = () => {
                             </p>
                           )}
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
+                        {!isDesktop && selectedDay >= today ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); startMobileAssign(patient); }}
+                            className="px-2.5 py-1.5 text-xs font-medium bg-white border border-slate-200 rounded-lg shrink-0"
+                            data-testid={`mobile-move-${patient.id}`}
+                          >
+                            Przenieś
+                          </button>
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
+                        )}
                       </div>
                     ))}
                   </div>

@@ -137,11 +137,11 @@ const StatsPage = () => {
   })).sort((a, b) => b.total - a.total);
 
   return (
-    <div className="p-8" data-testid="statistics-page">
+    <div className="p-4 lg:p-8" data-testid="statistics-page">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Statystyki</h1>
+          <h1 className="text-2xl lg:text-3xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>Statystyki</h1>
           <p className="text-slate-500 mt-1">Przegląd wyników praktyki</p>
         </div>
         <div className="flex flex-wrap gap-3">

@@ -165,7 +165,7 @@ const ControlsPage = () => {
   }
 
   return (
-    <div className="p-6 lg:p-8" data-testid="controls-page">
+    <div className="p-4 lg:p-8" data-testid="controls-page">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>
@@ -278,7 +278,7 @@ const ControlsPage = () => {
             >
               {/* Patient Header */}
               <div 
-                className={`p-4 flex items-center justify-between cursor-pointer ${patient.no_contact ? 'hover:bg-slate-100' : 'hover:bg-slate-50'}`}
+                className={`p-4 flex max-md:flex-col md:items-center justify-between gap-3 cursor-pointer ${patient.no_contact ? 'hover:bg-slate-100' : 'hover:bg-slate-50'}`}
                 onClick={() => setExpandedPatient(expandedPatient === patient.id ? null : patient.id)}
               >
                 <div className="flex items-center gap-4">
@@ -305,7 +305,7 @@ const ControlsPage = () => {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-slate-500">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
                         Operacja: {formatDate(patient.surgery_date)}
