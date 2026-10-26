@@ -159,15 +159,14 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
       data.preferred_date_start = validRanges[0]?.start || null;
       data.preferred_date_end = validRanges[0]?.end || null;
       
-      // Auto-set status based on dates only for "scheduling" statuses;
-      // manual choices (Rezygnacja, Zastanawia się, Zoperowany) are respected
-      const autoStatuses = ["consultation", "awaiting", "planned"];
-      if (autoStatuses.includes(data.status)) {
-        if (!data.surgery_date) {
-          data.status = validRanges.length > 0 ? "awaiting" : "consultation";
-        } else {
-          data.status = "planned";
-        }
+      // Auto-correct status only where it conflicts with the surgery date;
+      // manual choices (Konsultacja/Oczekujący/Rezygnacja/Zastanawia się/Zoperowany) are respected
+      if (data.surgery_date && ["consultation", "awaiting"].includes(data.status)) {
+        data.status = "planned";
+      } else if (!data.surgery_date && data.status === "planned") {
+        data.status = validRanges.length > 0 ? "awaiting" : "consultation";
+      } else if (!initialData && data.status === "consultation" && validRanges.length > 0) {
+        data.status = "awaiting";
       }
       if (data.status === "cancelled") {
         data.surgery_date = null;

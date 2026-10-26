@@ -16,6 +16,7 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - Historia zmian pacjentów (Audit Log)
 
 ## Ostatnie zmiany (19.06.2026) – responsywność Etap 2 + PWA
+- Fix (20.06): AddPatientModal – ręczny wybór statusu Konsultacja/Oczekujący w formularzu edycji był nadpisywany automatem (brak daty + brak zakresów → consultation). Teraz auto-korekta tylko gdy status koliduje z datą zabiegu (data → planned; planned bez daty → awaiting/consultation); nowy pacjent z zakresami dat nadal domyślnie awaiting
 - CalendarPage: na telefonie zamiast drag&drop tryb „dotknij pacjenta → dotknij dzień” (selectedForAssign, moveToDate, handleDayTap, startMobileAssign; baner assign-mode-banner; przycisk „Przenieś” mobile-move-{id} w oknie dnia); panel „Bez terminu” domyślnie zwinięty na mobile; kropki zamiast nazwisk <768px
 - PlanningPage: wiersze slotów w kolumnie <768px, lista przypisanych inline (slot-patients-mobile-{id}) zamiast tooltipa na mobile
 - Surveys/Stats/Settings/Users/Controls/SurveyBuilder: paddingi p-4 lg:p-8, nagłówki, zawijanie, tabele przewijane w karcie
