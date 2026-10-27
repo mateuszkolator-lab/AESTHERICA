@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Calendar, CalendarPlus, Plus, Edit, Trash2, MapPin, 
-  User, Phone, Sparkles, UserCheck, CheckCircle2, AlertCircle, Zap
+  User, Phone, Sparkles, UserCheck, CheckCircle2, AlertCircle, Zap, UserPlus
 } from "lucide-react";
 import api from "../utils/api";
 import { getLocationColor } from "../utils/constants";
 import AddSlotModal from "../components/modals/AddSlotModal";
+import AssignPatientModal from "../components/modals/AssignPatientModal";
 import { useIsDesktop } from "../hooks/useIsDesktop";
 
 const PlanningPage = () => {
@@ -18,6 +19,7 @@ const PlanningPage = () => {
   const [loading, setLoading] = useState(true);
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [editSlot, setEditSlot] = useState(null);
+  const [assignSlot, setAssignSlot] = useState(null);
   const [activeTab, setActiveTab] = useState("slots");
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [locationFilter, setLocationFilter] = useState("");
@@ -85,6 +87,7 @@ const PlanningPage = () => {
       loadData();
     } catch (err) {
       toast.error("Nie udalo sie przypisac pacjenta");
+      throw err;
     }
   };
 
@@ -261,6 +264,16 @@ const PlanningPage = () => {
                             </span>
                           ) : (
                             <span className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">Wolny</span>
+                          )}
+                          {!slot.is_full && (
+                            <button
+                              onClick={() => setAssignSlot(slot)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-teal-700 text-white hover:bg-teal-800 transition-colors"
+                              data-testid={`assign-patient-${slot.id}`}
+                            >
+                              <UserPlus className="w-4 h-4" />
+                              Przypisz pacjenta
+                            </button>
                           )}
                           <button
                             onClick={() => handleToggleFull(slot.id)}
@@ -506,6 +519,16 @@ const PlanningPage = () => {
             </div>
           )}
         </div>
+      )}
+
+      {assignSlot && (
+        <AssignPatientModal
+          slot={assignSlot}
+          patients={patients}
+          locations={locations}
+          onClose={() => setAssignSlot(null)}
+          onAssign={(patientId) => handleAssignPatient(assignSlot.id, patientId)}
+        />
       )}
 
       {(showAddSlot || editSlot) && (

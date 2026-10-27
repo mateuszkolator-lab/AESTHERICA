@@ -18,6 +18,7 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 ## Ostatnie zmiany (20.06.2026) – terminy w karcie, filtr preferowanych dat, filtr Planowania
 - components/patients/SurgeryDatePicker.jsx – w AddPatientModal przy „Data operacji” przycisk kalendarza otwiera siatkę miesiąca z terminami z Planowania: zielony = wolny, bursztynowy = zajęty (są pacjenci), czerwony = pełny; kropka w kolorze placówki; chipy „Najbliższe wolne terminy”; dane z GET /surgery-slots + /patients (liczenie pacjentów na datę, bez cancelled i bez edytowanego pacjenta)
 - PatientsList: filtr „Preferowany termin” (Od/Do, sessionStorage) – pokazuje pacjentów, których dowolny preferowany zakres POKRYWA SIĘ z filtrem (overlap) ORAZ pacjentów bez preferowanych dat; chip + „Wyczyść wszystko”
+- PlanningPage: przycisk „Przypisz pacjenta” przy wolnym terminie → components/modals/AssignPatientModal.jsx (wyszukiwarka nazwisko/telefon/zabieg, ranking: pasuje do preferencji > ASAP > ta sama placówka > bez terminu; ostrzeżenia o przeniesieniu i zmianie placówki; POST /surgery-slots/{id}/assign/{pid})
 - PlanningPage: przełącznik Wolne / Pełne / Wszystkie (domyślnie Wolne), lista sortowana rosnąco po dacie (najbliższy u góry); pusty stan z linkiem „Pokaż wszystkie terminy”
 - Zweryfikowane screenshotami (desktop); w preview DB dodano 3 testowe sloty 2026-11-05/12 (wolne), 2026-11-19 (pełny)
 
