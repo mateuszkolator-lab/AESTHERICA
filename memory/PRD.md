@@ -15,6 +15,12 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - RhinoPlanner (canvas Fabric.js, eksport PDF)
 - Historia zmian pacjentów (Audit Log)
 
+## Ostatnie zmiany (21.06.2026) – weryfikacja GCal + szybki podgląd pacjenta
+- Google Calendar: pytest tests/test_calendar_sync.py 9/9 PASS (wymaga REACT_APP_BACKEND_URL w env); nowe flow (AssignPatientModal, tap-assign mobile, SurgeryDatePicker) używają tych samych endpointów (assign/unassign, PUT /patients) → sync objęty testami
+- Fix backend: assign endpoint zwalnia poprzedni slot pacjenta (update_many assigned_patient_id)
+- Fix test: test_status_connected_and_error zostawiał sztuczny błąd „boom” w settings (czerwony alert w UI) – teraz sprząta last_error/health
+- components/patients/PatientQuickView.jsx – boczny panel (prawa strona, 420px / pełna szerokość na mobile) z podsumowaniem pacjenta; otwierany w Planowaniu z tooltipa slotu, listy mobilnej i z nazwiska w „Automatyczne dopasowanie” (quick-view-trigger-{id}); Esc/overlay zamyka; „Otwórz pełną kartę”
+
 ## Ostatnie zmiany (20.06.2026) – terminy w karcie, filtr preferowanych dat, filtr Planowania
 - components/patients/SurgeryDatePicker.jsx – w AddPatientModal przy „Data operacji” przycisk kalendarza otwiera siatkę miesiąca z terminami z Planowania: zielony = wolny, bursztynowy = zajęty (są pacjenci), czerwony = pełny; kropka w kolorze placówki; chipy „Najbliższe wolne terminy”; dane z GET /surgery-slots + /patients (liczenie pacjentów na datę, bez cancelled i bez edytowanego pacjenta)
 - PatientsList: filtr „Preferowany termin” (Od/Do, sessionStorage) – pokazuje pacjentów, których dowolny preferowany zakres POKRYWA SIĘ z filtrem (overlap) ORAZ pacjentów bez preferowanych dat; chip + „Wyczyść wszystko”

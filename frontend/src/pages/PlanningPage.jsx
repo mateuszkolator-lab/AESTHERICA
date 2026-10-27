@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Calendar, CalendarPlus, Plus, Edit, Trash2, MapPin, 
@@ -9,6 +8,7 @@ import api from "../utils/api";
 import { getLocationColor } from "../utils/constants";
 import AddSlotModal from "../components/modals/AddSlotModal";
 import AssignPatientModal from "../components/modals/AssignPatientModal";
+import { PatientQuickView } from "../components/patients/PatientQuickView";
 import { useIsDesktop } from "../hooks/useIsDesktop";
 
 const PlanningPage = () => {
@@ -20,11 +20,11 @@ const PlanningPage = () => {
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [editSlot, setEditSlot] = useState(null);
   const [assignSlot, setAssignSlot] = useState(null);
+  const [quickViewId, setQuickViewId] = useState(null);
   const [activeTab, setActiveTab] = useState("slots");
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [locationFilter, setLocationFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("free");
-  const navigate = useNavigate();
   const isDesktop = useIsDesktop();
 
   const loadData = useCallback(async () => {
@@ -306,7 +306,7 @@ const PlanningPage = () => {
                       {!isDesktop && slotPatients.length > 0 && (
                         <div className="mt-1 ml-2 pl-3 border-l-2 border-teal-200 space-y-1" data-testid={`slot-patients-mobile-${slot.id}`}>
                           {slotPatients.map((p) => (
-                            <button key={p.id} onClick={() => navigate(`/patients/${p.id}`)} className="flex items-center gap-2 text-sm text-slate-700 py-1 w-full text-left">
+                            <button key={p.id} onClick={() => setQuickViewId(p.id)} className="flex items-center gap-2 text-sm text-slate-700 py-1 w-full text-left" data-testid={`quick-view-trigger-${p.id}`}>
                               <User className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                               <span className="font-medium truncate">{p.first_name} {p.last_name}</span>
                               {p.asap && <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
@@ -327,7 +327,8 @@ const PlanningPage = () => {
                               <div 
                                 key={p.id}
                                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
-                                onClick={() => navigate(`/patients/${p.id}`)}
+                                onClick={() => setQuickViewId(p.id)}
+                                data-testid={`quick-view-trigger-${p.id}`}
                               >
                                 <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
                                   <User className="w-4 h-4 text-teal-600" />
@@ -432,7 +433,13 @@ const PlanningPage = () => {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className="font-medium text-slate-900">{patient.first_name} {patient.last_name}</p>
+                                <button
+                                  onClick={() => setQuickViewId(patient.id)}
+                                  className="font-medium text-slate-900 hover:text-teal-700 hover:underline text-left"
+                                  data-testid={`quick-view-trigger-${patient.id}`}
+                                >
+                                  {patient.first_name} {patient.last_name}
+                                </button>
                                 {patient.asap && <Zap className="w-3.5 h-3.5 text-amber-500" />}
                                 {patient.location_name && (
                                   <span
@@ -519,6 +526,10 @@ const PlanningPage = () => {
             </div>
           )}
         </div>
+      )}
+
+      {quickViewId && (
+        <PatientQuickView patientId={quickViewId} locations={locations} onClose={() => setQuickViewId(null)} />
       )}
 
       {assignSlot && (

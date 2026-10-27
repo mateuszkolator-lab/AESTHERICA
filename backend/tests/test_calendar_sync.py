@@ -389,8 +389,10 @@ class TestHttpEndpoints:
                 assert doc and doc.get("last_error")
             event_loop.run_until_complete(_check_err())
         finally:
-            # Clean up seeded creds
+            # Clean up seeded creds and the artificial error
             event_loop.run_until_complete(db.settings.delete_one({"key": "google_calendar"}))
+            event_loop.run_until_complete(db.settings.update_one(
+                {"key": "google_calendar_sync"}, {"$unset": {"last_error": "", "last_error_at": "", "health": ""}}))
 
     def test_pull_endpoint_with_mock(self, client, admin_token, fake_service, monkeypatch):
         async def fake_get():

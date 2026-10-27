@@ -240,7 +240,11 @@ async def assign_patient(slot_id: str, patient_id: str, user: dict = Depends(get
     if slot.get("is_full"):
         raise HTTPException(status_code=400, detail="Slot is full")
     
-    # Update slot
+    # Update slot (and release any previous slot held by this patient)
+    await db.surgery_slots.update_many(
+        {"assigned_patient_id": patient_id, "id": {"$ne": slot_id}},
+        {"$set": {"assigned_patient_id": None}}
+    )
     await db.surgery_slots.update_one(
         {"id": slot_id},
         {"$set": {"assigned_patient_id": patient_id}}
