@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   Users, Search, Filter, Plus, ChevronRight, 
-  X, Eye, Trash2, User, Sparkles, MapPin, RotateCcw 
+  X, Eye, Trash2, User, Sparkles, MapPin, RotateCcw, CalendarRange 
 } from "lucide-react";
 import api from "../utils/api";
 import { STATUS_LABELS, getStatusColor, getStatusColorBg, STATUS_OPTIONS, getLocationColor, HIDDEN_BY_DEFAULT_STATUSES } from "../utils/constants";
@@ -11,6 +11,7 @@ import AddPatientModal from "../components/modals/AddPatientModal";
 import CancelReasonModal from "../components/modals/CancelReasonModal";
 import { useIsDesktop } from "../hooks/useIsDesktop";
 
+const formatShort = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit" }) : "";
 const FILTERS_KEY = "patients_list_filters";
 const loadSavedFilters = () => {
   try { return JSON.parse(sessionStorage.getItem(FILTERS_KEY)) || {}; } catch { return {}; }
@@ -27,17 +28,39 @@ const PatientsList = () => {
   const [procedureFilters, setProcedureFilters] = useState(saved.procedureFilters || []);
   const [locationFilter, setLocationFilter] = useState(saved.locationFilter || "");
   const [asapFilter, setAsapFilter] = useState(saved.asapFilter || false);
+  const [prefDateFrom, setPrefDateFrom] = useState(saved.prefDateFrom || "");
+  const [prefDateTo, setPrefDateTo] = useState(saved.prefDateTo || "");
+  const [showPrefDateDropdown, setShowPrefDateDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
   const [sortBy, setSortBy] = useState(saved.sortBy || "created_at");
   const [sortOrder, setSortOrder] = useState(saved.sortOrder || "desc");
 
   useEffect(() => {
-    sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, sortBy, sortOrder }));
-  }, [searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, sortBy, sortOrder]);
+    sessionStorage.setItem(FILTERS_KEY, JSON.stringify({ searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, prefDateFrom, prefDateTo, sortBy, sortOrder }));
+  }, [searchQuery, statusFilters, procedureFilters, locationFilter, asapFilter, prefDateFrom, prefDateTo, sortBy, sortOrder]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const activeFilterCount = statusFilters.length + procedureFilters.length + (locationFilter ? 1 : 0) + (asapFilter ? 1 : 0);
+  const prefDateActive = Boolean(prefDateFrom || prefDateTo);
+  const activeFilterCount = statusFilters.length + procedureFilters.length + (locationFilter ? 1 : 0) + (asapFilter ? 1 : 0) + (prefDateActive ? 1 : 0);
+
+  const getPreferredRanges = (p) => {
+    if (p.preferred_dates?.length) return p.preferred_dates.filter(r => r.start || r.end);
+    if (p.preferred_date_start || p.preferred_date_end) return [{ start: p.preferred_date_start, end: p.preferred_date_end }];
+    return [];
+  };
+
+  // Patient matches when no preferred dates are set, or any preferred range overlaps the filter range
+  const matchesPreferredRange = (p) => {
+    if (!prefDateActive) return true;
+    const ranges = getPreferredRanges(p);
+    if (ranges.length === 0) return true;
+    return ranges.some(r => {
+      const start = r.start || "0000-00-00";
+      const end = r.end || "9999-12-31";
+      return (!prefDateTo || start <= prefDateTo) && (!prefDateFrom || end >= prefDateFrom);
+    });
+  };
   const [statusChangeId, setStatusChangeId] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
   const navigate = useNavigate();
@@ -106,7 +129,7 @@ const PatientsList = () => {
     const matchesProcedure = procedureFilters.length === 0 || procedureFilters.includes(p.procedure_type);
     const matchesLocation = !locationFilter || p.location_id === locationFilter;
     const matchesAsap = !asapFilter || p.asap === true;
-    return matchesSearch && matchesStatus && matchesProcedure && matchesLocation && matchesAsap;
+    return matchesSearch && matchesStatus && matchesProcedure && matchesLocation && matchesAsap && matchesPreferredRange(p);
   });
 
   const handleDelete = async (id, e) => {
@@ -410,6 +433,66 @@ const PatientsList = () => {
             Jak najszybciej
           </button>
 
+          {/* Preferred date range filter */}
+          <div className="relative">
+            <button
+              onClick={() => { setShowPrefDateDropdown(!showPrefDateDropdown); setShowStatusDropdown(false); setShowProcedureDropdown(false); }}
+              className={`px-4 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors w-full ${
+                prefDateActive
+                  ? "bg-violet-600 text-white"
+                  : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+              }`}
+              data-testid="preferred-range-filter-button"
+            >
+              <CalendarRange className="w-4 h-4" />
+              {prefDateActive ? `${formatShort(prefDateFrom) || "…"} – ${formatShort(prefDateTo) || "…"}` : "Preferowany termin"}
+            </button>
+            {showPrefDateDropdown && (
+              <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-slate-200 rounded-lg shadow-lg z-20 p-3 space-y-3" data-testid="preferred-range-dropdown">
+                <p className="text-xs text-slate-500">Pokaż pacjentów, których preferowany termin pokrywa się z zakresem (oraz bez wpisanego terminu).</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="text-xs text-slate-600">
+                    Od
+                    <input
+                      type="date"
+                      value={prefDateFrom}
+                      onChange={(e) => setPrefDateFrom(e.target.value)}
+                      className="mt-1 w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      data-testid="preferred-range-from"
+                    />
+                  </label>
+                  <label className="text-xs text-slate-600">
+                    Do
+                    <input
+                      type="date"
+                      value={prefDateTo}
+                      min={prefDateFrom || undefined}
+                      onChange={(e) => setPrefDateTo(e.target.value)}
+                      className="mt-1 w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      data-testid="preferred-range-to"
+                    />
+                  </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => { setPrefDateFrom(""); setPrefDateTo(""); }}
+                    className="text-sm text-slate-500 hover:text-slate-700"
+                    data-testid="preferred-range-clear"
+                  >
+                    Wyczyść
+                  </button>
+                  <button
+                    onClick={() => setShowPrefDateDropdown(false)}
+                    className="px-3 py-1.5 text-sm font-medium bg-teal-700 text-white rounded-lg hover:bg-teal-800"
+                    data-testid="preferred-range-apply"
+                  >
+                    Gotowe
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -487,9 +570,18 @@ const PatientsList = () => {
                 </button>
               </span>
             )}
-            {(statusFilters.length > 0 || procedureFilters.length > 0 || locationFilter || asapFilter) && (
+            {prefDateActive && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-violet-100 text-violet-800" data-testid="preferred-range-chip">
+                <CalendarRange className="w-3 h-3" />
+                Termin: {formatShort(prefDateFrom) || "…"} – {formatShort(prefDateTo) || "…"}
+                <button onClick={() => { setPrefDateFrom(""); setPrefDateTo(""); }} className="ml-1 hover:opacity-70">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {(statusFilters.length > 0 || procedureFilters.length > 0 || locationFilter || asapFilter || prefDateActive) && (
               <button
-                onClick={() => { clearStatusFilters(); clearProcedureFilters(); setLocationFilter(""); setAsapFilter(false); }}
+                onClick={() => { clearStatusFilters(); clearProcedureFilters(); setLocationFilter(""); setAsapFilter(false); setPrefDateFrom(""); setPrefDateTo(""); }}
                 className="text-xs text-slate-500 hover:text-slate-700"
               >
                 Wyczyść wszystko

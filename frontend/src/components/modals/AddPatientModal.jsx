@@ -3,6 +3,7 @@ import { X, Image as ImageIcon, Sparkles, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../utils/api";
 import { STATUS_OPTIONS, CANCELLATION_REASONS } from "../../utils/constants";
+import { SurgeryDatePicker } from "../patients/SurgeryDatePicker";
 
 const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
   // Convert legacy single range to preferred_dates array
@@ -485,12 +486,10 @@ const AddPatientModal = ({ onClose, onSuccess, initialData = null }) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Data operacji</label>
-                  <input
-                    type="date"
-                    value={formData.surgery_date}
-                    onChange={(e) => handleSurgeryDateChange(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    data-testid="surgery-date-input"
+                  <SurgeryDatePicker
+                    value={formData.surgery_date || ""}
+                    onChange={handleSurgeryDateChange}
+                    excludePatientId={initialData?.id}
                   />
                   {formData.surgery_date && (formData.status === "consultation" || formData.status === "awaiting") && (
                     <p className="text-xs text-teal-600 mt-1">Status zostanie automatycznie zmieniony na "Zaplanowany"</p>

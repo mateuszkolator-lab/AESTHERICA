@@ -21,6 +21,7 @@ const PlanningPage = () => {
   const [activeTab, setActiveTab] = useState("slots");
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [locationFilter, setLocationFilter] = useState("");
+  const [availabilityFilter, setAvailabilityFilter] = useState("free");
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
 
@@ -115,6 +116,11 @@ const PlanningPage = () => {
     if (activeTab === "suggestions") loadSuggestions();
   }, [activeTab, loadSuggestions]);
 
+  const visibleSlots = slots
+    .filter(s => !locationFilter || s.location_id === locationFilter)
+    .filter(s => availabilityFilter === "all" || (availabilityFilter === "full" ? s.is_full : !s.is_full))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
   if (loading && activeTab === "slots") return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" /></div>;
 
   return (
@@ -161,6 +167,23 @@ const PlanningPage = () => {
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="px-4 lg:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-900">Dostepne terminy operacji</h2>
+            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg border border-slate-200 overflow-hidden text-sm" data-testid="availability-filter">
+              {[["free", "Wolne"], ["full", "Pełne"], ["all", "Wszystkie"]].map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setAvailabilityFilter(val)}
+                  className={`px-3 py-2 font-medium transition-colors ${
+                    availabilityFilter === val
+                      ? val === "full" ? "bg-red-600 text-white" : val === "free" ? "bg-emerald-600 text-white" : "bg-slate-700 text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                  data-testid={`availability-filter-${val}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <select
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
@@ -172,11 +195,12 @@ const PlanningPage = () => {
                 <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
+            </div>
           </div>
           <div className="p-3 lg:p-6">
-            {slots.filter(s => !locationFilter || s.location_id === locationFilter).length > 0 ? (
+            {visibleSlots.length > 0 ? (
               <div className="space-y-3">
-                {slots.filter(s => !locationFilter || s.location_id === locationFilter).map((slot) => {
+                {visibleSlots.map((slot) => {
                   const slotPatients = getPatientsForDate(slot.date);
                   const locColor = slot.location_id ? getLocationColor(getLocationName(slot.location_id)) : null;
                   
@@ -315,7 +339,14 @@ const PlanningPage = () => {
             ) : (
               <div className="text-center py-12">
                 <CalendarPlus className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">{locationFilter ? "Brak terminów dla wybranej placówki" : "Brak dodanych terminow operacji"}</p>
+                <p className="text-slate-500">
+                  {availabilityFilter === "free" ? "Brak wolnych terminów" : availabilityFilter === "full" ? "Brak pełnych terminów" : locationFilter ? "Brak terminów dla wybranej placówki" : "Brak dodanych terminow operacji"}
+                </p>
+                {availabilityFilter !== "all" && (
+                  <button onClick={() => setAvailabilityFilter("all")} className="mt-2 text-sm text-teal-600 hover:text-teal-700 font-medium" data-testid="show-all-slots">
+                    Pokaż wszystkie terminy
+                  </button>
+                )}
                 <button
                   onClick={() => setShowAddSlot(true)}
                   className="mt-4 text-teal-600 hover:text-teal-700 font-medium"

@@ -15,6 +15,12 @@ Aplikacja webowa do zarządzania pacjentami dla kliniki chirurgii plastycznej tw
 - RhinoPlanner (canvas Fabric.js, eksport PDF)
 - Historia zmian pacjentów (Audit Log)
 
+## Ostatnie zmiany (20.06.2026) – terminy w karcie, filtr preferowanych dat, filtr Planowania
+- components/patients/SurgeryDatePicker.jsx – w AddPatientModal przy „Data operacji” przycisk kalendarza otwiera siatkę miesiąca z terminami z Planowania: zielony = wolny, bursztynowy = zajęty (są pacjenci), czerwony = pełny; kropka w kolorze placówki; chipy „Najbliższe wolne terminy”; dane z GET /surgery-slots + /patients (liczenie pacjentów na datę, bez cancelled i bez edytowanego pacjenta)
+- PatientsList: filtr „Preferowany termin” (Od/Do, sessionStorage) – pokazuje pacjentów, których dowolny preferowany zakres POKRYWA SIĘ z filtrem (overlap) ORAZ pacjentów bez preferowanych dat; chip + „Wyczyść wszystko”
+- PlanningPage: przełącznik Wolne / Pełne / Wszystkie (domyślnie Wolne), lista sortowana rosnąco po dacie (najbliższy u góry); pusty stan z linkiem „Pokaż wszystkie terminy”
+- Zweryfikowane screenshotami (desktop); w preview DB dodano 3 testowe sloty 2026-11-05/12 (wolne), 2026-11-19 (pełny)
+
 ## Ostatnie zmiany (19.06.2026) – responsywność Etap 2 + PWA
 - Fix (20.06): AddPatientModal – ręczny wybór statusu Konsultacja/Oczekujący w formularzu edycji był nadpisywany automatem (brak daty + brak zakresów → consultation). Teraz auto-korekta tylko gdy status koliduje z datą zabiegu (data → planned; planned bez daty → awaiting/consultation); nowy pacjent z zakresami dat nadal domyślnie awaiting
 - CalendarPage: na telefonie zamiast drag&drop tryb „dotknij pacjenta → dotknij dzień” (selectedForAssign, moveToDate, handleDayTap, startMobileAssign; baner assign-mode-banner; przycisk „Przenieś” mobile-move-{id} w oknie dnia); panel „Bez terminu” domyślnie zwinięty na mobile; kropki zamiast nazwisk <768px
